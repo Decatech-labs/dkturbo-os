@@ -1,8 +1,8 @@
 import {
   nodeParamsSchema,
   registerNodeRequestSchema,
-  type NodeResponse,
   type NodeObservedStateResponse,
+  type NodeResponse,
   type NodeStatusResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
@@ -15,12 +15,12 @@ import {
   checkDatabase,
   type Database,
 } from '../../infrastructure/postgres/index.js';
+import { NodeHostnameAlreadyRegisteredError } from '../../modules/infra/application/errors/node-hostname-already-registered.error.js';
+import { NodeNotFoundError } from '../../modules/infra/application/errors/node-not-found.error.js';
 import type {
   Node,
   NodeId,
 } from '../../modules/infra/domain/node.js';
-import { NodeNotFoundError } from '../../modules/infra/application/errors/node-not-found.error.js';
-import { NodeHostnameAlreadyRegisteredError } from '../../modules/infra/application/errors/node-hostname-already-registered.error.js';
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
@@ -44,6 +44,32 @@ export const createHttpServer = ({
     logger: true,
   });
 
+  app.setErrorHandler(
+    (error, _request, reply) => {
+      if (error instanceof NodeNotFoundError) {
+        return reply.code(404).send({
+          error: 'node_not_found',
+        });
+      }
+
+      if (
+        error instanceof
+        NodeHostnameAlreadyRegisteredError
+      ) {
+        return reply.code(409).send({
+          error: 'node_hostname_already_registered',
+          hostname: error.hostname,
+        });
+      }
+
+      app.log.error(error);
+
+      return reply.code(500).send({
+        error: 'internal_error',
+      });
+    },
+  );
+
   app.get('/health/live', async () => ({
     status: 'ok',
   }));
@@ -65,9 +91,10 @@ export const createHttpServer = ({
   });
 
   app.post('/api/nodes', async (request, reply) => {
-    const parsed = registerNodeRequestSchema.safeParse(
-      request.body,
-    );
+    const parsed =
+      registerNodeRequestSchema.safeParse(
+        request.body,
+      );
 
     if (!parsed.success) {
       return reply.code(400).send({
@@ -76,28 +103,14 @@ export const createHttpServer = ({
       });
     }
 
-    try {
-      const node =
-        await controlPlane.infra.registerNode.execute(
-          parsed.data,
-        );
+    const node =
+      await controlPlane.infra.registerNode.execute(
+        parsed.data,
+      );
 
-      return reply
-        .code(201)
-        .send(toNodeResponse(node));
-    } catch (error) {
-      if (
-        error instanceof
-        NodeHostnameAlreadyRegisteredError
-      ) {
-        return reply.code(409).send({
-          error: 'node_hostname_already_registered',
-          hostname: error.hostname,
-        });
-      }
-
-      throw error;
-    }
+    return reply
+      .code(201)
+      .send(toNodeResponse(node));
   });
 
   app.get('/api/nodes', async () => {
@@ -107,35 +120,28 @@ export const createHttpServer = ({
     return nodes.map(toNodeResponse);
   });
 
-  app.get('/api/nodes/:id', async (request, reply) => {
-    const parsed = nodeParamsSchema.safeParse(
-      request.params,
-    );
+  app.get(
+    '/api/nodes/:id',
+    async (request, reply) => {
+      const parsed = nodeParamsSchema.safeParse(
+        request.params,
+      );
 
-    if (!parsed.success) {
-      return reply.code(400).send({
-        error: 'invalid_request',
-        details: parsed.error.issues,
-      });
-    }
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
 
-    try {
       const node =
         await controlPlane.infra.getNode.execute(
           parsed.data.id as NodeId,
         );
 
       return toNodeResponse(node);
-    } catch (error) {
-      if (error instanceof NodeNotFoundError) {
-        return reply.code(404).send({
-          error: 'node_not_found',
-        });
-      }
-
-      throw error;
-    }
-  });
+    },
+  );
 
   app.post(
     '/api/nodes/:id/heartbeat',
@@ -151,27 +157,17 @@ export const createHttpServer = ({
         });
       }
 
-      try {
-        const state =
-          await controlPlane.infra.recordNodeHeartbeat.execute(
-            parsed.data.id as NodeId,
-          );
+      const state =
+        await controlPlane.infra.recordNodeHeartbeat.execute(
+          parsed.data.id as NodeId,
+        );
 
-        const response: NodeObservedStateResponse = {
-          nodeId: state.nodeId,
-          lastSeenAt: state.lastSeenAt.toISOString(),
-        };
+      const response: NodeObservedStateResponse = {
+        nodeId: state.nodeId,
+        lastSeenAt: state.lastSeenAt.toISOString(),
+      };
 
-        return response;
-      } catch (error) {
-        if (error instanceof NodeNotFoundError) {
-          return reply.code(404).send({
-            error: 'node_not_found',
-          });
-        }
-
-        throw error;
-      }
+      return response;
     },
   );
 
@@ -189,28 +185,18 @@ export const createHttpServer = ({
         });
       }
 
-      try {
-        const state =
-          await controlPlane.infra.getNodeObservedState.execute(
-            parsed.data.id as NodeId,
-          );
+      const state =
+        await controlPlane.infra.getNodeObservedState.execute(
+          parsed.data.id as NodeId,
+        );
 
-        const response: NodeObservedStateResponse = {
-          nodeId: parsed.data.id,
-          lastSeenAt:
-            state?.lastSeenAt.toISOString() ?? null,
-        };
+      const response: NodeObservedStateResponse = {
+        nodeId: parsed.data.id,
+        lastSeenAt:
+          state?.lastSeenAt.toISOString() ?? null,
+      };
 
-        return response;
-      } catch (error) {
-        if (error instanceof NodeNotFoundError) {
-          return reply.code(404).send({
-            error: 'node_not_found',
-          });
-        }
-
-        throw error;
-      }
+      return response;
     },
   );
 
@@ -228,29 +214,19 @@ export const createHttpServer = ({
         });
       }
 
-      try {
-        const status =
-          await controlPlane.infra.getNodeStatus.execute(
-            parsed.data.id as NodeId,
-          );
+      const status =
+        await controlPlane.infra.getNodeStatus.execute(
+          parsed.data.id as NodeId,
+        );
 
-        const response: NodeStatusResponse = {
-          nodeId: status.nodeId,
-          status: status.status,
-          lastSeenAt:
-            status.lastSeenAt?.toISOString() ?? null,
-        };
+      const response: NodeStatusResponse = {
+        nodeId: status.nodeId,
+        status: status.status,
+        lastSeenAt:
+          status.lastSeenAt?.toISOString() ?? null,
+      };
 
-        return response;
-      } catch (error) {
-        if (error instanceof NodeNotFoundError) {
-          return reply.code(404).send({
-            error: 'node_not_found',
-          });
-        }
-
-        throw error;
-      }
+      return response;
     },
   );
 
