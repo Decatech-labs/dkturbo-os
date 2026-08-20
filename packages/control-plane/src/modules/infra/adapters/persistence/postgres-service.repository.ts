@@ -59,4 +59,25 @@ export class PostgresServiceRepository
       createdAt: row.created_at,
     }));
   }
+
+  async findById(
+    id: ServiceId,
+  ): Promise<Service | null> {
+    const row = await this.database
+      .selectFrom('infra.services')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst();
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id as ServiceId,
+      key: row.key as ServiceKey,
+      name: row.name,
+      createdAt: row.created_at,
+    };
+  }
 }

@@ -16,6 +16,9 @@ import { PostgresNodeCapabilityRepository } from '../modules/infra/adapters/pers
 import { ListServices } from '../modules/infra/application/list-services.js';
 import { RegisterService } from '../modules/infra/application/register-service.js';
 import { PostgresServiceRepository } from '../modules/infra/adapters/persistence/postgres-service.repository.js';
+import { ListServiceInstances } from '../modules/infra/application/list-service-instances.js';
+import { RegisterServiceInstance } from '../modules/infra/application/register-service-instance.js';
+import { PostgresServiceInstanceRepository } from '../modules/infra/adapters/persistence/postgres-service-instance.repository.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -32,6 +35,8 @@ export const createControlPlane = ({
   new PostgresNodeCapabilityRepository(database);
   const serviceRepository =
   new PostgresServiceRepository(database);
+  const serviceInstanceRepository =
+  new PostgresServiceInstanceRepository(database);
 
   return {
     infra: {
@@ -67,6 +72,15 @@ export const createControlPlane = ({
       ),
       listServices: new ListServices(
         serviceRepository,
+      ),
+      registerServiceInstance: new RegisterServiceInstance(
+        nodeRepository,
+        serviceRepository,
+        serviceInstanceRepository,
+        clock,
+      ),
+      listServiceInstances: new ListServiceInstances(
+        serviceInstanceRepository,
       ),
     },
   };

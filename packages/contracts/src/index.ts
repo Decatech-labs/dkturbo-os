@@ -26,3 +26,12 @@ export {
   type RegisterServiceRequest,
   type ServiceResponse,
 } from './infra/services.js';
+
+export {
+  environmentSchema,
+  registerServiceInstanceRequestSchema,
+  serviceInstanceKeySchema,
+  serviceInstanceResponseSchema,
+  type RegisterServiceInstanceRequest,
+  type ServiceInstanceResponse,
+} from './infra/service-instances.js';

@@ -3,11 +3,13 @@ import {
   registerNodeRequestSchema,
   nodeCapabilityParamsSchema,
   registerServiceRequestSchema,
+  registerServiceInstanceRequestSchema,
   type NodeObservedStateResponse,
   type NodeResponse,
   type NodeStatusResponse,
   type NodeCapabilityResponse,
   type ServiceResponse,
+  type ServiceInstanceResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -26,6 +28,9 @@ import type {
   NodeId,
 } from '../../modules/infra/domain/node.js';
 import { ServiceKeyAlreadyRegisteredError } from '../../modules/infra/application/errors/service-key-already-registered.error.js';
+import { ServiceInstanceKeyAlreadyRegisteredError } from '../../modules/infra/application/errors/service-instance-key-already-registered.error.js';
+import { ServiceNotFoundError } from '../../modules/infra/application/errors/service-not-found.error.js';
+import type { ServiceId } from '../../modules/infra/domain/service.js';
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
@@ -74,6 +79,23 @@ export const createHttpServer = ({
         return reply.code(409).send({
           error: 'service_key_already_registered',
           serviceKey: error.serviceKey,
+        });
+      }
+
+      if (error instanceof ServiceNotFoundError) {
+        return reply.code(404).send({
+          error: 'service_not_found',
+        });
+      }
+
+      if (
+        error instanceof
+        ServiceInstanceKeyAlreadyRegisteredError
+      ) {
+        return reply.code(409).send({
+          error:
+            'service_instance_key_already_registered',
+          instanceKey: error.instanceKey,
         });
       }
 
@@ -358,6 +380,69 @@ export const createHttpServer = ({
 
     return response;
   });
+
+  app.post(
+    '/api/service-instances',
+    async (request, reply) => {
+      const parsed =
+        registerServiceInstanceRequestSchema.safeParse(
+          request.body,
+        );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
+
+      const instance =
+        await controlPlane.infra.registerServiceInstance.execute(
+          {
+            key: parsed.data.key,
+            serviceId:
+              parsed.data.serviceId as ServiceId,
+            nodeId:
+              parsed.data.nodeId as NodeId,
+            environment:
+              parsed.data.environment,
+          },
+        );
+
+      const response: ServiceInstanceResponse = {
+        id: instance.id,
+        key: instance.key,
+        serviceId: instance.serviceId,
+        nodeId: instance.nodeId,
+        environment: instance.environment,
+        createdAt:
+          instance.createdAt.toISOString(),
+      };
+
+      return reply.code(201).send(response);
+    },
+  );
+
+  app.get(
+    '/api/service-instances',
+    async () => {
+      const instances =
+        await controlPlane.infra.listServiceInstances.execute();
+
+      const response: ServiceInstanceResponse[] =
+        instances.map((instance) => ({
+          id: instance.id,
+          key: instance.key,
+          serviceId: instance.serviceId,
+          nodeId: instance.nodeId,
+          environment: instance.environment,
+          createdAt:
+            instance.createdAt.toISOString(),
+        }));
+
+      return response;
+    },
+  );
 
   return app;
 };

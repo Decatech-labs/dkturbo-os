@@ -14,6 +14,7 @@ export interface Database {
   'infra.node_observed_state': InfraNodeObservedStateTable;
   'infra.node_capabilities': InfraNodeCapabilityTable;
   'infra.services': InfraServiceTable;
+  'infra.service_instances': InfraServiceInstanceTable;
 }
 
 export interface CreateDatabaseOptions {
@@ -49,5 +50,14 @@ export interface InfraServiceTable {
   id: string;
   key: string;
   name: string;
+  created_at: ColumnType<Date, Date, never>;
+}
+
+export interface InfraServiceInstanceTable {
+  id: string;
+  key: string;
+  service_id: string;
+  node_id: string;
+  environment: string;
   created_at: ColumnType<Date, Date, never>;
 }
