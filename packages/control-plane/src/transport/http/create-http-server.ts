@@ -3,6 +3,7 @@ import {
   registerNodeRequestSchema,
   type NodeResponse,
   type NodeObservedStateResponse,
+  type NodeStatusResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -198,6 +199,46 @@ export const createHttpServer = ({
           nodeId: parsed.data.id,
           lastSeenAt:
             state?.lastSeenAt.toISOString() ?? null,
+        };
+
+        return response;
+      } catch (error) {
+        if (error instanceof NodeNotFoundError) {
+          return reply.code(404).send({
+            error: 'node_not_found',
+          });
+        }
+
+        throw error;
+      }
+    },
+  );
+
+  app.get(
+    '/api/nodes/:id/status',
+    async (request, reply) => {
+      const parsed = nodeParamsSchema.safeParse(
+        request.params,
+      );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
+
+      try {
+        const status =
+          await controlPlane.infra.getNodeStatus.execute(
+            parsed.data.id as NodeId,
+          );
+
+        const response: NodeStatusResponse = {
+          nodeId: status.nodeId,
+          status: status.status,
+          lastSeenAt:
+            status.lastSeenAt?.toISOString() ?? null,
         };
 
         return response;

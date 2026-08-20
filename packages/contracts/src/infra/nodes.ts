@@ -36,3 +36,17 @@ export const nodeObservedStateResponseSchema = z.object({
 export type NodeObservedStateResponse = z.infer<
   typeof nodeObservedStateResponseSchema
 >;
+
+export const nodeStatusResponseSchema = z.object({
+  nodeId: z.string().uuid(),
+  status: z.enum([
+    'UNKNOWN',
+    'ONLINE',
+    'STALE',
+  ]),
+  lastSeenAt: z.string().datetime().nullable(),
+});
+
+export type NodeStatusResponse = z.infer<
+  typeof nodeStatusResponseSchema
+>;

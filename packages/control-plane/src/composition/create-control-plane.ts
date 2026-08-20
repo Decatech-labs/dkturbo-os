@@ -8,6 +8,8 @@ import { PostgresNodeRepository } from '../modules/infra/adapters/persistence/po
 import { GetNodeObservedState } from '../modules/infra/application/get-node-observed-state.js';
 import { RecordNodeHeartbeat } from '../modules/infra/application/record-node-heartbeat.js';
 import { PostgresNodeObservedStateRepository } from '../modules/infra/adapters/persistence/postgres-node-observed-state.repository.js';
+import { SystemClock } from '../infrastructure/clock/system-clock.js';
+import { GetNodeStatus } from '../modules/infra/application/get-node-status.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -19,6 +21,7 @@ export const createControlPlane = ({
   const nodeRepository = new PostgresNodeRepository(database);
   const nodeObservedStateRepository =
   new PostgresNodeObservedStateRepository(database);
+  const clock = new SystemClock();
 
   return {
     infra: {
@@ -28,11 +31,17 @@ export const createControlPlane = ({
       recordNodeHeartbeat: new RecordNodeHeartbeat(
         nodeRepository,
         nodeObservedStateRepository,
+        clock,
       ),
       getNodeObservedState: new GetNodeObservedState(
         nodeRepository,
         nodeObservedStateRepository,
       ),
+      getNodeStatus: new GetNodeStatus(
+        nodeRepository,
+        nodeObservedStateRepository,
+        clock,
+      )
     },
   };
 };
