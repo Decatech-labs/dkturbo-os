@@ -38,18 +38,12 @@ importers:
 
   apps/api:
     dependencies:
-      '@dkturbo/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
       '@dkturbo/control-plane':
         specifier: workspace:*
         version: link:../../packages/control-plane
       dotenv:
         specifier: 17.4.2
         version: 17.4.2
-      fastify:
-        specifier: 5.12.1
-        version: 5.12.1
     devDependencies:
       tsx:
         specifier: 4.23.12
@@ -98,6 +92,12 @@ importers:
 
   packages/control-plane:
     dependencies:
+      '@dkturbo/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      fastify:
+        specifier: 5.12.1
+        version: 5.12.1
       kysely:
         specifier: 0.29.5
         version: 0.29.5

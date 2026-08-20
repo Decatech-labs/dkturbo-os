@@ -25,3 +25,8 @@ export type {
 export {
   NodeNotFoundError,
 } from './modules/infra/public/index.js';
+
+export {
+  createHttpServer,
+  type CreateHttpServerOptions,
+} from './transport/http/index.js';
