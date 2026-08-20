@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: dkturbo-postgres-dev
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: dkturbo
+      POSTGRES_USER: dkturbo
+      POSTGRES_PASSWORD: dkturbo_dev
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - dkturbo-postgres-dev:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dkturbo -d dkturbo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  dkturbo-postgres-dev:
