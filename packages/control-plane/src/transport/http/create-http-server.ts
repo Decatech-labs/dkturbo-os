@@ -2,6 +2,7 @@ import {
   nodeParamsSchema,
   registerNodeRequestSchema,
   type NodeResponse,
+  type NodeObservedStateResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -134,6 +135,83 @@ export const createHttpServer = ({
       throw error;
     }
   });
+
+  app.post(
+    '/api/nodes/:id/heartbeat',
+    async (request, reply) => {
+      const parsed = nodeParamsSchema.safeParse(
+        request.params,
+      );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
+
+      try {
+        const state =
+          await controlPlane.infra.recordNodeHeartbeat.execute(
+            parsed.data.id as NodeId,
+          );
+
+        const response: NodeObservedStateResponse = {
+          nodeId: state.nodeId,
+          lastSeenAt: state.lastSeenAt.toISOString(),
+        };
+
+        return response;
+      } catch (error) {
+        if (error instanceof NodeNotFoundError) {
+          return reply.code(404).send({
+            error: 'node_not_found',
+          });
+        }
+
+        throw error;
+      }
+    },
+  );
+
+  app.get(
+    '/api/nodes/:id/observed-state',
+    async (request, reply) => {
+      const parsed = nodeParamsSchema.safeParse(
+        request.params,
+      );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
+
+      try {
+        const state =
+          await controlPlane.infra.getNodeObservedState.execute(
+            parsed.data.id as NodeId,
+          );
+
+        const response: NodeObservedStateResponse = {
+          nodeId: parsed.data.id,
+          lastSeenAt:
+            state?.lastSeenAt.toISOString() ?? null,
+        };
+
+        return response;
+      } catch (error) {
+        if (error instanceof NodeNotFoundError) {
+          return reply.code(404).send({
+            error: 'node_not_found',
+          });
+        }
+
+        throw error;
+      }
+    },
+  );
 
   return app;
 };

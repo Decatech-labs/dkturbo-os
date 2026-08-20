@@ -27,3 +27,12 @@ export const nodeParamsSchema = z.object({
 export type NodeParams = z.infer<
   typeof nodeParamsSchema
 >;
+
+export const nodeObservedStateResponseSchema = z.object({
+  nodeId: z.string().uuid(),
+  lastSeenAt: z.string().datetime().nullable(),
+});
+
+export type NodeObservedStateResponse = z.infer<
+  typeof nodeObservedStateResponseSchema
+>;

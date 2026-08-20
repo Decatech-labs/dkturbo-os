@@ -11,6 +11,7 @@ export interface InfraNodeTable {
 
 export interface Database {
   'infra.nodes': InfraNodeTable;
+  'infra.node_observed_state': InfraNodeObservedStateTable;
 }
 
 export interface CreateDatabaseOptions {
@@ -30,3 +31,8 @@ export const createDatabase = ({
     dialect,
   });
 };
+
+export interface InfraNodeObservedStateTable {
+  node_id: string;
+  last_seen_at: ColumnType<Date, Date, Date>;
+}
