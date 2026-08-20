@@ -178,4 +178,71 @@ describe('Nodes HTTP API', () => {
       hostname,
     });
   });
+
+  it('registers and lists node capabilities idempotently', async () => {
+    const hostname =
+      `http-test-${randomUUID()}`;
+
+    const createNodeResponse =
+      await app.inject({
+        method: 'POST',
+        url: '/api/nodes',
+        payload: {
+          name: 'Capability HTTP Test Node',
+          hostname,
+        },
+      });
+
+    expect(
+      createNodeResponse.statusCode,
+    ).toBe(201);
+
+    const node =
+      createNodeResponse.json<{
+        id: string;
+      }>();
+
+    const firstResponse =
+      await app.inject({
+        method: 'PUT',
+        url:
+          `/api/nodes/${node.id}` +
+          '/capabilities/docker',
+      });
+
+    expect(firstResponse.statusCode).toBe(200);
+
+    const secondResponse =
+      await app.inject({
+        method: 'PUT',
+        url:
+          `/api/nodes/${node.id}` +
+          '/capabilities/docker',
+      });
+
+    expect(secondResponse.statusCode).toBe(200);
+
+    const listResponse =
+      await app.inject({
+        method: 'GET',
+        url:
+          `/api/nodes/${node.id}` +
+          '/capabilities',
+      });
+
+    expect(listResponse.statusCode).toBe(200);
+
+    const result = listResponse.json<
+      Array<{
+        key: string;
+      }>
+    >();
+
+    expect(
+      result.filter(
+        (capability) =>
+          capability.key === 'docker',
+      ),
+    ).toHaveLength(1);
+  });
 });

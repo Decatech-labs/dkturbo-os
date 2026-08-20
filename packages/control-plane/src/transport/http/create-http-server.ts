@@ -1,9 +1,11 @@
 import {
   nodeParamsSchema,
   registerNodeRequestSchema,
+  nodeCapabilityParamsSchema,
   type NodeObservedStateResponse,
   type NodeResponse,
   type NodeStatusResponse,
+  type NodeCapabilityResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -225,6 +227,72 @@ export const createHttpServer = ({
         lastSeenAt:
           status.lastSeenAt?.toISOString() ?? null,
       };
+
+      return response;
+    },
+  );
+
+  app.put(
+    '/api/nodes/:id/capabilities/:capabilityKey',
+    async (request, reply) => {
+      const parsed =
+        nodeCapabilityParamsSchema.safeParse(
+          request.params,
+        );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
+
+      const capability =
+        await controlPlane.infra.registerNodeCapability.execute(
+          {
+            nodeId: parsed.data.id as NodeId,
+            capabilityKey:
+              parsed.data.capabilityKey,
+          },
+        );
+
+      const response: NodeCapabilityResponse = {
+        nodeId: capability.nodeId,
+        key: capability.key,
+        registeredAt:
+          capability.registeredAt.toISOString(),
+      };
+
+      return response;
+    },
+  );
+
+  app.get(
+    '/api/nodes/:id/capabilities',
+    async (request, reply) => {
+      const parsed = nodeParamsSchema.safeParse(
+        request.params,
+      );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
+
+      const capabilities =
+        await controlPlane.infra.listNodeCapabilities.execute(
+          parsed.data.id as NodeId,
+        );
+
+      const response: NodeCapabilityResponse[] =
+        capabilities.map((capability) => ({
+          nodeId: capability.nodeId,
+          key: capability.key,
+          registeredAt:
+            capability.registeredAt.toISOString(),
+        }));
 
       return response;
     },
