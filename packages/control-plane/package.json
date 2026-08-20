@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "kysely": "0.29.5",
-    "pg": "8.23.0"
+    "pg": "8.23.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/pg": "8.23.1"
+  },
+  "exports": {
+    ".": "./src/index.ts"
   }
 }

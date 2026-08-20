@@ -1,4 +1,23 @@
+import {
+  checkDatabase,
+  createDatabase,
+  loadConfig,
+} from '@dkturbo/control-plane';
+import { config as loadDotEnv } from 'dotenv';
 import Fastify from 'fastify';
+
+if (process.env.NODE_ENV !== 'production') {
+  loadDotEnv({
+    path: '../../.env.local',
+    quiet: true,
+  });
+}
+
+const config = loadConfig();
+
+const database = createDatabase({
+  connectionString: config.DATABASE_URL,
+});
 
 const app = Fastify({
   logger: true,
@@ -8,18 +27,48 @@ app.get('/health/live', async () => ({
   status: 'ok',
 }));
 
-app.get('/health/ready', async () => ({
-  status: 'ready',
-}));
+app.get('/health/ready', async (_request, reply) => {
+  try {
+    await checkDatabase(database);
+
+    return {
+      status: 'ready',
+      database: 'ok',
+    };
+  } catch {
+    reply.code(503);
+
+    return {
+      status: 'not-ready',
+      database: 'unavailable',
+    };
+  }
+});
+
+const shutdown = async (): Promise<void> => {
+  await app.close();
+  await database.destroy();
+};
+
+process.on('SIGINT', () => {
+  void shutdown();
+});
+
+process.on('SIGTERM', () => {
+  void shutdown();
+});
 
 const start = async (): Promise<void> => {
   try {
+    await checkDatabase(database);
+
     await app.listen({
-      host: '127.0.0.1',
-      port: 3001,
+      host: config.API_HOST,
+      port: config.API_PORT,
     });
   } catch (error) {
     app.log.error(error);
+    await database.destroy();
     process.exit(1);
   }
 };
