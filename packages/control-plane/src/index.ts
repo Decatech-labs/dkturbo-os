@@ -21,3 +21,7 @@ export type {
   Node,
   NodeId,
 } from './modules/infra/public/index.js';
+
+export {
+  NodeNotFoundError,
+} from './modules/infra/public/index.js';

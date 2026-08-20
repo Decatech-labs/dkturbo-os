@@ -9,3 +9,9 @@ export {
 } from '../application/register-node.js';
 
 export { ListNodes } from '../application/list-nodes.js';
+
+export { GetNode } from '../application/get-node.js';
+
+export {
+  NodeNotFoundError,
+} from '../application/errors/node-not-found.error.js';

@@ -1,6 +1,7 @@
 import type { Kysely } from 'kysely';
 
 import type { Database } from '../infrastructure/postgres/database.js';
+import { GetNode } from '../modules/infra/application/get-node.js';
 import { ListNodes } from '../modules/infra/application/list-nodes.js';
 import { RegisterNode } from '../modules/infra/application/register-node.js';
 import { PostgresNodeRepository } from '../modules/infra/adapters/persistence/postgres-node.repository.js';
@@ -18,6 +19,7 @@ export const createControlPlane = ({
     infra: {
       registerNode: new RegisterNode(nodeRepository),
       listNodes: new ListNodes(nodeRepository),
+      getNode: new GetNode(nodeRepository),
     },
   };
 };

@@ -38,4 +38,23 @@ export class PostgresNodeRepository implements NodeRepository {
       createdAt: row.created_at,
     }));
   }
+
+  async findById(id: NodeId): Promise<Node | null> {
+    const row = await this.database
+      .selectFrom('infra.nodes')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst();
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id as NodeId,
+      name: row.name,
+      hostname: row.hostname,
+      createdAt: row.created_at,
+    };
+  }
 }

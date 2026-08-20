@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Node } from '../domain/node.js';
+import type {
+  Node,
+  NodeId,
+} from '../domain/node.js';
 import type { NodeRepository } from '../ports/node-repository.port.js';
 import { RegisterNode } from './register-node.js';
 
@@ -13,6 +16,10 @@ class FakeNodeRepository implements NodeRepository {
 
   async list(): Promise<Node[]> {
     return this.nodes;
+  }
+
+  async findById(id: NodeId): Promise<Node | null> {
+    return this.nodes.find((node) => node.id === id) ?? null;
   }
 }
 

@@ -19,3 +19,11 @@ export const nodeResponseSchema = z.object({
 export type NodeResponse = z.infer<
   typeof nodeResponseSchema
 >;
+
+export const nodeParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export type NodeParams = z.infer<
+  typeof nodeParamsSchema
+>;

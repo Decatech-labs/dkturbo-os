@@ -3,9 +3,12 @@ import {
   checkDatabase,
   createDatabase,
   loadConfig,
+  NodeNotFoundError,
+  type NodeId,
 } from '@dkturbo/control-plane';
 import {
   registerNodeRequestSchema,
+  nodeParamsSchema,
   type NodeResponse,
 } from '@dkturbo/contracts';
 import { config as loadDotEnv } from 'dotenv';
@@ -91,6 +94,42 @@ app.get('/api/nodes', async () => {
       createdAt: node.createdAt.toISOString(),
     }),
   );
+});
+
+app.get('/api/nodes/:id', async (request, reply) => {
+  const parsed = nodeParamsSchema.safeParse(
+    request.params,
+  );
+
+  if (!parsed.success) {
+    return reply.code(400).send({
+      error: 'invalid_request',
+      details: parsed.error.issues,
+    });
+  }
+
+  try {
+    const node = await controlPlane.infra.getNode.execute(
+      parsed.data.id as NodeId,
+    );
+
+    const response: NodeResponse = {
+      id: node.id,
+      name: node.name,
+      hostname: node.hostname,
+      createdAt: node.createdAt.toISOString(),
+    };
+
+    return response;
+  } catch (error) {
+    if (error instanceof NodeNotFoundError) {
+      return reply.code(404).send({
+        error: 'node_not_found',
+      });
+    }
+
+    throw error;
+  }
 });
 
 const shutdown = async (): Promise<void> => {
