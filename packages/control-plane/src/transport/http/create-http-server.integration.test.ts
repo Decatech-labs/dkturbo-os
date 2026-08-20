@@ -147,4 +147,35 @@ describe('Nodes HTTP API', () => {
       error: 'invalid_request',
     });
   });
+
+  it('returns 409 when the hostname is already registered', async () => {
+    const hostname = `http-test-${randomUUID()}`;
+
+    const firstResponse = await app.inject({
+      method: 'POST',
+      url: '/api/nodes',
+      payload: {
+        name: 'First Node',
+        hostname,
+      },
+    });
+
+    expect(firstResponse.statusCode).toBe(201);
+
+    const secondResponse = await app.inject({
+      method: 'POST',
+      url: '/api/nodes',
+      payload: {
+        name: 'Second Node',
+        hostname,
+      },
+    });
+
+    expect(secondResponse.statusCode).toBe(409);
+
+    expect(secondResponse.json()).toEqual({
+      error: 'node_hostname_already_registered',
+      hostname,
+    });
+  });
 });

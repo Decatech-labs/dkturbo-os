@@ -15,3 +15,7 @@ export { GetNode } from '../application/get-node.js';
 export {
   NodeNotFoundError,
 } from '../application/errors/node-not-found.error.js';
+
+export {
+  NodeHostnameAlreadyRegisteredError,
+} from '../application/errors/node-hostname-already-registered.error.js';

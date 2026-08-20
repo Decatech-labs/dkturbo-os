@@ -18,6 +18,7 @@ import type {
   NodeId,
 } from '../../modules/infra/domain/node.js';
 import { NodeNotFoundError } from '../../modules/infra/application/errors/node-not-found.error.js';
+import { NodeHostnameAlreadyRegisteredError } from '../../modules/infra/application/errors/node-hostname-already-registered.error.js';
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
@@ -73,14 +74,28 @@ export const createHttpServer = ({
       });
     }
 
-    const node =
-      await controlPlane.infra.registerNode.execute(
-        parsed.data,
-      );
+    try {
+      const node =
+        await controlPlane.infra.registerNode.execute(
+          parsed.data,
+        );
 
-    return reply
-      .code(201)
-      .send(toNodeResponse(node));
+      return reply
+        .code(201)
+        .send(toNodeResponse(node));
+    } catch (error) {
+      if (
+        error instanceof
+        NodeHostnameAlreadyRegisteredError
+      ) {
+        return reply.code(409).send({
+          error: 'node_hostname_already_registered',
+          hostname: error.hostname,
+        });
+      }
+
+      throw error;
+    }
   });
 
   app.get('/api/nodes', async () => {

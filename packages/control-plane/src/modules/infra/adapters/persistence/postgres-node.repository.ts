@@ -1,6 +1,8 @@
 import type { Kysely } from 'kysely';
+import { DatabaseError } from 'pg';
 
 import type { Database } from '../../../../infrastructure/postgres/database.js';
+import { NodeHostnameAlreadyRegisteredError } from '../../application/errors/node-hostname-already-registered.error.js';
 import type {
   Node,
   NodeId,
@@ -13,15 +15,29 @@ export class PostgresNodeRepository implements NodeRepository {
   ) {}
 
   async save(node: Node): Promise<void> {
-    await this.database
-      .insertInto('infra.nodes')
-      .values({
-        id: node.id,
-        name: node.name,
-        hostname: node.hostname,
-        created_at: node.createdAt,
-      })
-      .execute();
+    try {
+      await this.database
+        .insertInto('infra.nodes')
+        .values({
+          id: node.id,
+          name: node.name,
+          hostname: node.hostname,
+          created_at: node.createdAt,
+        })
+        .execute();
+    } catch (error) {
+      if (
+        error instanceof DatabaseError &&
+        error.code === '23505' &&
+        error.constraint === 'nodes_hostname_unique'
+      ) {
+        throw new NodeHostnameAlreadyRegisteredError(
+          node.hostname,
+        );
+      }
+
+      throw error;
+    }
   }
 
   async list(): Promise<Node[]> {

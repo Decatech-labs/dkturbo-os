@@ -10,6 +10,7 @@ import type {
   NodeId,
 } from '../../domain/node.js';
 import { PostgresNodeRepository } from './postgres-node.repository.js';
+import { NodeHostnameAlreadyRegisteredError } from '../../application/errors/node-hostname-already-registered.error.js';
 
 const TEST_DATABASE_URL =
   'postgresql://dkturbo:dkturbo_test@127.0.0.1:5433/dkturbo_test';
@@ -89,5 +90,21 @@ describe('PostgresNodeRepository', () => {
           storedNode.id === node.id,
       ),
     ).toBe(true);
+  });
+
+  it('translates duplicate hostname violations', async () => {
+    const firstNode = createTestNode();
+
+    const secondNode = createTestNode();
+
+    secondNode.hostname = firstNode.hostname;
+
+    await repository.save(firstNode);
+
+    await expect(
+      repository.save(secondNode),
+    ).rejects.toBeInstanceOf(
+      NodeHostnameAlreadyRegisteredError,
+    );
   });
 });

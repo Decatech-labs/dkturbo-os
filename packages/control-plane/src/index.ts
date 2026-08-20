@@ -30,3 +30,7 @@ export {
   createHttpServer,
   type CreateHttpServerOptions,
 } from './transport/http/index.js';
+
+export {
+  NodeHostnameAlreadyRegisteredError,
+} from './modules/infra/public/index.js';
