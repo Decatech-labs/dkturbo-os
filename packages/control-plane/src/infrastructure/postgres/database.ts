@@ -1,7 +1,17 @@
+import type { ColumnType } from 'kysely';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 
-export type Database = Record<never, never>;
+export interface InfraNodeTable {
+  id: string;
+  name: string;
+  hostname: string;
+  created_at: ColumnType<Date, Date, never>;
+}
+
+export interface Database {
+  'infra.nodes': InfraNodeTable;
+}
 
 export interface CreateDatabaseOptions {
   connectionString: string;

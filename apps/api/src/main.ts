@@ -1,8 +1,13 @@
 import {
+  createControlPlane,
   checkDatabase,
   createDatabase,
   loadConfig,
 } from '@dkturbo/control-plane';
+import {
+  registerNodeRequestSchema,
+  type NodeResponse,
+} from '@dkturbo/contracts';
 import { config as loadDotEnv } from 'dotenv';
 import Fastify from 'fastify';
 
@@ -17,6 +22,10 @@ const config = loadConfig();
 
 const database = createDatabase({
   connectionString: config.DATABASE_URL,
+});
+
+const controlPlane = createControlPlane({
+  database,
 });
 
 const app = Fastify({
@@ -43,6 +52,45 @@ app.get('/health/ready', async (_request, reply) => {
       database: 'unavailable',
     };
   }
+});
+
+app.post('/api/nodes', async (request, reply) => {
+  const parsed = registerNodeRequestSchema.safeParse(
+    request.body,
+  );
+
+  if (!parsed.success) {
+    return reply.code(400).send({
+      error: 'invalid_request',
+      details: parsed.error.issues,
+    });
+  }
+
+  const node = await controlPlane.infra.registerNode.execute(
+    parsed.data,
+  );
+
+  const response: NodeResponse = {
+    id: node.id,
+    name: node.name,
+    hostname: node.hostname,
+    createdAt: node.createdAt.toISOString(),
+  };
+
+  return reply.code(201).send(response);
+});
+
+app.get('/api/nodes', async () => {
+  const nodes = await controlPlane.infra.listNodes.execute();
+
+  return nodes.map(
+    (node): NodeResponse => ({
+      id: node.id,
+      name: node.name,
+      hostname: node.hostname,
+      createdAt: node.createdAt.toISOString(),
+    }),
+  );
 });
 
 const shutdown = async (): Promise<void> => {
