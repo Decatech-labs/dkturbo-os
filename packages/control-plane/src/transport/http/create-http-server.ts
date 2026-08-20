@@ -2,10 +2,12 @@ import {
   nodeParamsSchema,
   registerNodeRequestSchema,
   nodeCapabilityParamsSchema,
+  registerServiceRequestSchema,
   type NodeObservedStateResponse,
   type NodeResponse,
   type NodeStatusResponse,
   type NodeCapabilityResponse,
+  type ServiceResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -23,6 +25,7 @@ import type {
   Node,
   NodeId,
 } from '../../modules/infra/domain/node.js';
+import { ServiceKeyAlreadyRegisteredError } from '../../modules/infra/application/errors/service-key-already-registered.error.js';
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
@@ -61,6 +64,16 @@ export const createHttpServer = ({
         return reply.code(409).send({
           error: 'node_hostname_already_registered',
           hostname: error.hostname,
+        });
+      }
+
+      if (
+        error instanceof
+        ServiceKeyAlreadyRegisteredError
+      ) {
+        return reply.code(409).send({
+          error: 'service_key_already_registered',
+          serviceKey: error.serviceKey,
         });
       }
 
@@ -297,6 +310,54 @@ export const createHttpServer = ({
       return response;
     },
   );
+
+  app.post(
+    '/api/services',
+    async (request, reply) => {
+      const parsed =
+        registerServiceRequestSchema.safeParse(
+          request.body,
+        );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
+
+      const service =
+        await controlPlane.infra.registerService.execute(
+          parsed.data,
+        );
+
+      const response: ServiceResponse = {
+        id: service.id,
+        key: service.key,
+        name: service.name,
+        createdAt:
+          service.createdAt.toISOString(),
+      };
+
+      return reply.code(201).send(response);
+    },
+  );
+
+  app.get('/api/services', async () => {
+    const services =
+      await controlPlane.infra.listServices.execute();
+
+    const response: ServiceResponse[] =
+      services.map((service) => ({
+        id: service.id,
+        key: service.key,
+        name: service.name,
+        createdAt:
+          service.createdAt.toISOString(),
+      }));
+
+    return response;
+  });
 
   return app;
 };

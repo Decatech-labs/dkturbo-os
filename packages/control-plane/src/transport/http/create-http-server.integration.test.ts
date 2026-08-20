@@ -245,4 +245,95 @@ describe('Nodes HTTP API', () => {
       ),
     ).toHaveLength(1);
   });
+
+  it('registers and lists services', async () => {
+    const key = `test-${randomUUID()}`;
+
+    const createResponse =
+      await app.inject({
+        method: 'POST',
+        url: '/api/services',
+        payload: {
+          key,
+          name: 'HTTP Test Service',
+        },
+      });
+
+    expect(
+      createResponse.statusCode,
+    ).toBe(201);
+
+    const service =
+      createResponse.json<{
+        id: string;
+        key: string;
+      }>();
+
+    expect(service.key).toBe(key);
+
+    const listResponse =
+      await app.inject({
+        method: 'GET',
+        url: '/api/services',
+      });
+
+    expect(
+      listResponse.statusCode,
+    ).toBe(200);
+
+    const services =
+      listResponse.json<
+        Array<{
+          id: string;
+          key: string;
+        }>
+      >();
+
+    expect(
+      services.some(
+        (stored) =>
+          stored.id === service.id,
+      ),
+    ).toBe(true);
+  });
+
+  it('returns 409 for a duplicate service key', async () => {
+    const key = `test-${randomUUID()}`;
+
+    const firstResponse =
+      await app.inject({
+        method: 'POST',
+        url: '/api/services',
+        payload: {
+          key,
+          name: 'First Service',
+        },
+      });
+
+    expect(
+      firstResponse.statusCode,
+    ).toBe(201);
+
+    const secondResponse =
+      await app.inject({
+        method: 'POST',
+        url: '/api/services',
+        payload: {
+          key,
+          name: 'Second Service',
+        },
+      });
+
+    expect(
+      secondResponse.statusCode,
+    ).toBe(409);
+
+    expect(
+      secondResponse.json(),
+    ).toEqual({
+      error:
+        'service_key_already_registered',
+      serviceKey: key,
+    });
+  });
 });

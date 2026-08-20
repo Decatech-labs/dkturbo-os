@@ -18,3 +18,11 @@ export {
   type NodeCapabilityParams,
   type NodeCapabilityResponse,
 } from './infra/capabilities.js';
+
+export {
+  registerServiceRequestSchema,
+  serviceKeySchema,
+  serviceResponseSchema,
+  type RegisterServiceRequest,
+  type ServiceResponse,
+} from './infra/services.js';
