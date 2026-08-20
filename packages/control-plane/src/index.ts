@@ -34,3 +34,13 @@ export {
 export {
   NodeHostnameAlreadyRegisteredError,
 } from './modules/infra/public/index.js';
+
+export {
+  createResourceKind,
+  createResourceRef,
+  resourceRefsEqual,
+  serializeResourceRef,
+  type CreateResourceRefInput,
+  type ResourceKind,
+  type ResourceRef,
+} from './core/resources/index.js';
