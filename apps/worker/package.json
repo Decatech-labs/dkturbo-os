@@ -1,0 +1,20 @@
+{
+  "name": "@dkturbo/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dkturbo/control-plane": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "4.23.12"
+  }
+}
