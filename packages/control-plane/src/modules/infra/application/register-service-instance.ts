@@ -6,7 +6,7 @@ import {
 } from '../domain/service-instance.js';
 import type { NodeId } from '../domain/node.js';
 import type { ServiceId } from '../domain/service.js';
-import type { Clock } from '../ports/clock.port.js';
+import type { Clock } from '../../../core/time/index.js';
 import type { NodeRepository } from '../ports/node-repository.port.js';
 import type { ServiceInstanceRepository } from '../ports/service-instance-repository.port.js';
 import type { ServiceRepository } from '../ports/service-repository.port.js';

@@ -19,6 +19,9 @@ import { PostgresServiceRepository } from '../modules/infra/adapters/persistence
 import { ListServiceInstances } from '../modules/infra/application/list-service-instances.js';
 import { RegisterServiceInstance } from '../modules/infra/application/register-service-instance.js';
 import { PostgresServiceInstanceRepository } from '../modules/infra/adapters/persistence/postgres-service-instance.repository.js';
+import { ListActionRequests } from '../core/actions/application/list-action-requests.js';
+import { RequestAction } from '../core/actions/application/request-action.js';
+import { PostgresActionRequestRepository } from '../core/actions/adapters/persistence/postgres-action-request.repository.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -37,8 +40,21 @@ export const createControlPlane = ({
   new PostgresServiceRepository(database);
   const serviceInstanceRepository =
   new PostgresServiceInstanceRepository(database);
+  const actionRequestRepository =
+  new PostgresActionRequestRepository(database);
 
   return {
+    actions: {
+      requestAction: new RequestAction(
+        actionRequestRepository,
+        clock,
+      ),
+      listActionRequests:
+        new ListActionRequests(
+          actionRequestRepository,
+        ),
+    },
+
     infra: {
       registerNode: new RegisterNode(nodeRepository),
       listNodes: new ListNodes(nodeRepository),

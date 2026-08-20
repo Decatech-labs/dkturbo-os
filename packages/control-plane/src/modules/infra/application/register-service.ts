@@ -2,7 +2,7 @@ import {
   createService,
   type Service,
 } from '../domain/service.js';
-import type { Clock } from '../ports/clock.port.js';
+import type { Clock } from '../../../core/time/index.js';
 import type { ServiceRepository } from '../ports/service-repository.port.js';
 
 export interface RegisterServiceInput {

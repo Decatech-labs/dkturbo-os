@@ -4,12 +4,14 @@ import {
   nodeCapabilityParamsSchema,
   registerServiceRequestSchema,
   registerServiceInstanceRequestSchema,
+  requestActionRequestSchema,
   type NodeObservedStateResponse,
   type NodeResponse,
   type NodeStatusResponse,
   type NodeCapabilityResponse,
   type ServiceResponse,
   type ServiceInstanceResponse,
+  type ActionRequestResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -31,6 +33,9 @@ import { ServiceKeyAlreadyRegisteredError } from '../../modules/infra/applicatio
 import { ServiceInstanceKeyAlreadyRegisteredError } from '../../modules/infra/application/errors/service-instance-key-already-registered.error.js';
 import { ServiceNotFoundError } from '../../modules/infra/application/errors/service-not-found.error.js';
 import type { ServiceId } from '../../modules/infra/domain/service.js';
+import {
+  createResourceRef,
+} from '../../core/resources/index.js';
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
@@ -438,6 +443,69 @@ export const createHttpServer = ({
           environment: instance.environment,
           createdAt:
             instance.createdAt.toISOString(),
+        }));
+
+      return response;
+    },
+  );
+
+  app.post(
+    '/api/action-requests',
+    async (request, reply) => {
+      const parsed =
+        requestActionRequestSchema.safeParse(
+          request.body,
+        );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
+
+      const actionRequest =
+        await controlPlane.actions.requestAction.execute(
+          {
+            actionKey: parsed.data.actionKey,
+            target: createResourceRef(
+              parsed.data.target,
+            ),
+            parameters:
+              parsed.data.parameters,
+          },
+        );
+
+      const response: ActionRequestResponse = {
+        id: actionRequest.id,
+        actionKey: actionRequest.actionKey,
+        target: actionRequest.target,
+        parameters:
+          actionRequest.parameters,
+        status: actionRequest.status,
+        requestedAt:
+          actionRequest.requestedAt.toISOString(),
+      };
+
+      return reply.code(201).send(response);
+    },
+  );
+
+  app.get(
+    '/api/action-requests',
+    async () => {
+      const requests =
+        await controlPlane.actions.listActionRequests.execute();
+
+      const response: ActionRequestResponse[] =
+        requests.map((request) => ({
+          id: request.id,
+          actionKey: request.actionKey,
+          target: request.target,
+          parameters: request.parameters,
+          status: request.status,
+          requestedAt:
+            request.requestedAt.toISOString(),
         }));
 
       return response;

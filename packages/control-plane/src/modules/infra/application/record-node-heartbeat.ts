@@ -1,7 +1,7 @@
 import { NodeNotFoundError } from './errors/node-not-found.error.js';
 import { observeNode, type NodeObservedState } from '../domain/node-observed-state.js';
 import type { NodeId } from '../domain/node.js';
-import type { Clock } from '../ports/clock.port.js';
+import type { Clock } from '../../../core/time/index.js';
 import type { NodeObservedStateRepository } from '../ports/node-observed-state-repository.port.js';
 import type { NodeRepository } from '../ports/node-repository.port.js';
 

@@ -15,6 +15,7 @@ export interface Database {
   'infra.node_capabilities': InfraNodeCapabilityTable;
   'infra.services': InfraServiceTable;
   'infra.service_instances': InfraServiceInstanceTable;
+  'actions.action_requests': ActionsActionRequestTable;
 }
 
 export interface CreateDatabaseOptions {
@@ -60,4 +61,14 @@ export interface InfraServiceInstanceTable {
   node_id: string;
   environment: string;
   created_at: ColumnType<Date, Date, never>;
+}
+
+export interface ActionsActionRequestTable {
+  id: string;
+  action_key: string;
+  target_kind: string;
+  target_id: string;
+  parameters: unknown;
+  status: string;
+  requested_at: ColumnType<Date, Date, never>;
 }

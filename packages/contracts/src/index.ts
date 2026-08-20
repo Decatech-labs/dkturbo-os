@@ -35,3 +35,11 @@ export {
   type RegisterServiceInstanceRequest,
   type ServiceInstanceResponse,
 } from './infra/service-instances.js';
+
+export {
+  actionRequestResponseSchema,
+  requestActionRequestSchema,
+  resourceRefSchema,
+  type ActionRequestResponse,
+  type RequestActionRequest,
+} from './actions.js';
