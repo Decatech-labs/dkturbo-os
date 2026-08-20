@@ -13,11 +13,17 @@ import {
 } from '../../packages/control-plane/src/index.js';
 
 const main = async (): Promise<void> => {
+  const existingDatabaseUrl = process.env.DATABASE_URL;
+
   if (
     process.env.NODE_ENV !== 'production' &&
     existsSync('.env.local')
   ) {
     loadEnvFile('.env.local');
+  }
+
+  if (existingDatabaseUrl) {
+    process.env.DATABASE_URL = existingDatabaseUrl;
   }
 
   const config = loadConfig();
