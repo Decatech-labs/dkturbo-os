@@ -5,6 +5,7 @@ import {
   registerServiceRequestSchema,
   registerServiceInstanceRequestSchema,
   requestActionRequestSchema,
+  actionRequestParamsSchema,
   type NodeObservedStateResponse,
   type NodeResponse,
   type NodeStatusResponse,
@@ -12,6 +13,7 @@ import {
   type ServiceResponse,
   type ServiceInstanceResponse,
   type ActionRequestResponse,
+  type AuthorizationDecisionResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -36,6 +38,11 @@ import type { ServiceId } from '../../modules/infra/domain/service.js';
 import {
   createResourceRef,
 } from '../../core/resources/index.js';
+import {
+  createActorRef,
+} from '../../core/actors/index.js';
+import { ActionRequestNotFoundError } from '../../core/actions/application/errors/action-request-not-found.error.js';
+import type { ActionRequestId } from '../../core/actions/domain/action-request.js';
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
@@ -101,6 +108,15 @@ export const createHttpServer = ({
           error:
             'service_instance_key_already_registered',
           instanceKey: error.instanceKey,
+        });
+      }
+
+      if (
+        error instanceof
+        ActionRequestNotFoundError
+      ) {
+        return reply.code(404).send({
+          error: 'action_request_not_found',
         });
       }
 
@@ -471,6 +487,9 @@ export const createHttpServer = ({
             target: createResourceRef(
               parsed.data.target,
             ),
+            requestedBy: createActorRef(
+              parsed.data.requestedBy,
+            ),
             parameters:
               parsed.data.parameters,
           },
@@ -480,6 +499,8 @@ export const createHttpServer = ({
         id: actionRequest.id,
         actionKey: actionRequest.actionKey,
         target: actionRequest.target,
+        requestedBy:
+          actionRequest.requestedBy,
         parameters:
           actionRequest.parameters,
         status: actionRequest.status,
@@ -502,11 +523,41 @@ export const createHttpServer = ({
           id: request.id,
           actionKey: request.actionKey,
           target: request.target,
+          requestedBy: request.requestedBy,
           parameters: request.parameters,
           status: request.status,
           requestedAt:
             request.requestedAt.toISOString(),
         }));
+
+      return response;
+    },
+  );
+
+  app.get(
+    '/api/action-requests/:id/authorization',
+    async (request, reply) => {
+      const parsed =
+        actionRequestParamsSchema.safeParse(
+          request.params,
+        );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'invalid_request',
+          details: parsed.error.issues,
+        });
+      }
+
+      const decision =
+        await controlPlane.authorization.authorizeActionRequest.execute(
+          parsed.data.id as ActionRequestId,
+        );
+
+      const response: AuthorizationDecisionResponse = {
+        outcome: decision.outcome,
+        reason: decision.reason,
+      };
 
       return response;
     },

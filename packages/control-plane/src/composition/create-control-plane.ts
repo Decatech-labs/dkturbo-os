@@ -22,6 +22,8 @@ import { PostgresServiceInstanceRepository } from '../modules/infra/adapters/per
 import { ListActionRequests } from '../core/actions/application/list-action-requests.js';
 import { RequestAction } from '../core/actions/application/request-action.js';
 import { PostgresActionRequestRepository } from '../core/actions/adapters/persistence/postgres-action-request.repository.js';
+import { DenyByDefaultActionAuthorizer } from '../core/authorization/adapters/deny-by-default-action-authorizer.js';
+import { AuthorizeActionRequest } from '../core/authorization/application/authorize-action-request.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -42,6 +44,8 @@ export const createControlPlane = ({
   new PostgresServiceInstanceRepository(database);
   const actionRequestRepository =
   new PostgresActionRequestRepository(database);
+  const actionAuthorizer =
+  new DenyByDefaultActionAuthorizer();
 
   return {
     actions: {
@@ -52,6 +56,14 @@ export const createControlPlane = ({
       listActionRequests:
         new ListActionRequests(
           actionRequestRepository,
+        ),
+    },
+
+    authorization: {
+      authorizeActionRequest:
+        new AuthorizeActionRequest(
+          actionRequestRepository,
+          actionAuthorizer,
         ),
     },
 
@@ -103,3 +115,4 @@ export const createControlPlane = ({
 };
 
 export type ControlPlane = ReturnType<typeof createControlPlane>;
+

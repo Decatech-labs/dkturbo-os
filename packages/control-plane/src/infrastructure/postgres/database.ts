@@ -68,6 +68,8 @@ export interface ActionsActionRequestTable {
   action_key: string;
   target_kind: string;
   target_id: string;
+  requested_by_kind: string;
+  requested_by_id: string;
   parameters: unknown;
   status: string;
   requested_at: ColumnType<Date, Date, never>;

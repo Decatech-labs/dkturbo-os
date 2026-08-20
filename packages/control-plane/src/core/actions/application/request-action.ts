@@ -1,3 +1,4 @@
+import type { ActorRef } from '../../actors/index.js';
 import type { ResourceRef } from '../../resources/index.js';
 import type { Clock } from '../../time/index.js';
 import {
@@ -10,6 +11,7 @@ import type { ActionRequestRepository } from '../ports/action-request-repository
 export interface RequestActionInput {
   actionKey: string;
   target: ResourceRef;
+  requestedBy: ActorRef;
   parameters?: ActionParameters;
 }
 

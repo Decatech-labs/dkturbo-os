@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import type { ActorRef } from '../../actors/index.js';
 import type { ResourceRef } from '../../resources/index.js';
 import {
   createActionKey,
@@ -20,6 +21,7 @@ export interface ActionRequest {
   id: ActionRequestId;
   actionKey: ActionKey;
   target: ResourceRef;
+  requestedBy: ActorRef;
   parameters: ActionParameters;
   status: ActionRequestStatus;
   requestedAt: Date;
@@ -28,6 +30,7 @@ export interface ActionRequest {
 export interface CreateActionRequestInput {
   actionKey: string;
   target: ResourceRef;
+  requestedBy: ActorRef;
   parameters?: ActionParameters;
   requestedAt: Date;
 }
@@ -35,15 +38,15 @@ export interface CreateActionRequestInput {
 export const createActionRequest = ({
   actionKey,
   target,
+  requestedBy,
   parameters = {},
   requestedAt,
-}: CreateActionRequestInput): ActionRequest => {
-  return {
-    id: randomUUID() as ActionRequestId,
-    actionKey: createActionKey(actionKey),
-    target,
-    parameters,
-    status: 'REQUESTED',
-    requestedAt,
-  };
-};
+}: CreateActionRequestInput): ActionRequest => ({
+  id: randomUUID() as ActionRequestId,
+  actionKey: createActionKey(actionKey),
+  target,
+  requestedBy,
+  parameters,
+  status: 'REQUESTED',
+  requestedAt,
+});

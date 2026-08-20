@@ -1,5 +1,6 @@
 import type {
   ActionRequest,
+  ActionRequestId,
 } from '../domain/action-request.js';
 
 export interface ActionRequestRepository {
@@ -8,4 +9,8 @@ export interface ActionRequestRepository {
   ): Promise<void>;
 
   list(): Promise<ActionRequest[]>;
+
+  findById(
+    id: ActionRequestId,
+  ): Promise<ActionRequest | null>;
 }

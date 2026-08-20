@@ -16,6 +16,11 @@ export const requestActionRequestSchema =
       ),
 
     target: resourceRefSchema,
+    
+    requestedBy: z.object({
+      kind: z.string().trim().min(1),
+      id: z.string().trim().min(1),
+    }),
 
     parameters: z
       .record(
@@ -40,9 +45,34 @@ export const actionRequestResponseSchema =
     ),
     status: z.literal('REQUESTED'),
     requestedAt: z.string().datetime(),
+    requestedBy: z.object({
+      kind: z.string(),
+      id: z.string(),
+    }),
   });
 
 export type ActionRequestResponse =
   z.infer<
     typeof actionRequestResponseSchema
+  >;
+
+  export const actionRequestParamsSchema =
+  z.object({
+    id: z.string().uuid(),
+  });
+
+export const authorizationDecisionResponseSchema =
+  z.object({
+    outcome: z.enum([
+      'ALLOW',
+      'DENY',
+      'STEP_UP_REQUIRED',
+      'APPROVAL_REQUIRED',
+    ]),
+    reason: z.string(),
+  });
+
+export type AuthorizationDecisionResponse =
+  z.infer<
+    typeof authorizationDecisionResponseSchema
   >;

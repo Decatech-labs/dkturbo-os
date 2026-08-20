@@ -5,6 +5,9 @@ import {
 } from 'vitest';
 
 import {
+  createActorRef,
+} from '../../actors/index.js';
+import {
   createResourceRef,
 } from '../../resources/index.js';
 import {
@@ -16,6 +19,12 @@ describe('ActionRequest', () => {
     const requestedAt =
       new Date('2026-08-20T22:30:00.000Z');
 
+    const requestedBy =
+      createActorRef({
+        kind: 'user',
+        id: 'test-user',
+      });
+
     const request =
       createActionRequest({
         actionKey: 'service.restart',
@@ -24,6 +33,7 @@ describe('ActionRequest', () => {
             'infra.service-instance',
           id: '123',
         }),
+        requestedBy,
         parameters: {},
         requestedAt,
       });
@@ -37,6 +47,11 @@ describe('ActionRequest', () => {
     expect(request.target).toEqual({
       kind: 'infra.service-instance',
       id: '123',
+    });
+
+    expect(request.requestedBy).toEqual({
+      kind: 'user',
+      id: 'test-user',
     });
 
     expect(request.status).toBe(
@@ -56,6 +71,11 @@ describe('ActionRequest', () => {
           kind: 'infra.node',
           id: '123',
         }),
+        requestedBy:
+          createActorRef({
+            kind: 'user',
+            id: 'test-user',
+          }),
         requestedAt: new Date(),
       }),
     ).toThrow();

@@ -12,6 +12,9 @@ import type {
 } from '../../domain/action-request.js';
 import type { ActionKey } from '../../domain/action-key.js';
 import type { ActionRequestRepository } from '../../ports/action-request-repository.port.js';
+import {
+  createActorRef,
+} from '../../../actors/index.js';
 
 export class PostgresActionRequestRepository
   implements ActionRequestRepository
@@ -30,6 +33,8 @@ export class PostgresActionRequestRepository
         action_key: request.actionKey,
         target_kind: request.target.kind,
         target_id: request.target.id,
+        requested_by_kind: request.requestedBy.kind,
+        requested_by_id: request.requestedBy.id,
         parameters: request.parameters,
         status: request.status,
         requested_at: request.requestedAt,
@@ -56,6 +61,42 @@ export class PostgresActionRequestRepository
       status:
         row.status as ActionRequestStatus,
       requestedAt: row.requested_at,
+      requestedBy: createActorRef({
+        kind: row.requested_by_kind,
+        id: row.requested_by_id,
+      }),
     }));
+  }
+
+  async findById(
+    id: ActionRequestId,
+  ): Promise<ActionRequest | null> {
+    const row = await this.database
+      .selectFrom('actions.action_requests')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst();
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id as ActionRequestId,
+      actionKey: row.action_key as ActionKey,
+      target: createResourceRef({
+        kind: row.target_kind,
+        id: row.target_id,
+      }),
+      requestedBy: createActorRef({
+        kind: row.requested_by_kind,
+        id: row.requested_by_id,
+      }),
+      parameters:
+        row.parameters as ActionParameters,
+      status:
+        row.status as ActionRequestStatus,
+      requestedAt: row.requested_at,
+    };
   }
 }

@@ -40,6 +40,9 @@ export {
   actionRequestResponseSchema,
   requestActionRequestSchema,
   resourceRefSchema,
+  actionRequestParamsSchema,
+  authorizationDecisionResponseSchema,
   type ActionRequestResponse,
   type RequestActionRequest,
+  type AuthorizationDecisionResponse,
 } from './actions.js';

@@ -15,6 +15,9 @@ import {
   createActionRequest,
 } from '../../domain/action-request.js';
 import { PostgresActionRequestRepository } from './postgres-action-request.repository.js';
+import {
+  createActorRef,
+} from '../../../actors/index.js';
 
 const TEST_DATABASE_URL =
   'postgresql://dkturbo:dkturbo_test@127.0.0.1:5433/dkturbo_test';
@@ -54,6 +57,10 @@ describe('PostgresActionRequestRepository', () => {
             'infra.service-instance',
           id: 'test-target',
         }),
+        requestedBy: createActorRef({
+          kind: 'user',
+          id: 'integration-test-user',
+        }),
         parameters: {
           reason: 'integration-test',
         },
@@ -84,6 +91,10 @@ describe('PostgresActionRequestRepository', () => {
 
     expect(stored?.target).toEqual(
       request.target,
+    );
+
+    expect(stored?.requestedBy).toEqual(
+      request.requestedBy,
     );
 
     expect(stored?.parameters).toEqual(
