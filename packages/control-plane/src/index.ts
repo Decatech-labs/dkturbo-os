@@ -44,3 +44,8 @@ export {
   type ResourceKind,
   type ResourceRef,
 } from './core/resources/index.js';
+
+export {
+  createBetterAuth,
+  type BetterAuthInstance,
+} from './infrastructure/auth/better-auth.js';

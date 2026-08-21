@@ -8,11 +8,17 @@ const configSchema = z.object({
 
   DATABASE_URL: z.string().min(1),
 
-  BOOTSTRAP_OWNER_ID:
-  z.string().uuid().optional(),
+  BOOTSTRAP_OWNER_ID: z.string().uuid().optional(),
 
-  BOOTSTRAP_OWNER_NAME:
-  z.string().trim().min(1).optional(),
+  BOOTSTRAP_OWNER_NAME: z.string().trim().min(1).optional(),
+
+  BETTER_AUTH_SECRET: z.string().min(32),
+
+  BETTER_AUTH_BASE_URL: z.string().url().default(
+    'http://127.0.0.1:3001',
+  ),
+
+  BOOTSTRAP_OWNER_EMAIL: z.string().email().optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;

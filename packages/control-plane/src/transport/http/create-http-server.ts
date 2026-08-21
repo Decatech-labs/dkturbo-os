@@ -52,10 +52,20 @@ import type { ActionRequestId } from '../../core/actions/domain/action-request.j
 import {
   RequiredCapabilityMissingError,
 } from '../../core/actions/application/prepare-action-execution.js';
+import { fromNodeHeaders } from 'better-auth/node';
+import type { BetterAuthInstance } from '../../infrastructure/auth/better-auth.js';
+import type {
+  FastifyReply,
+  FastifyRequest,
+} from 'fastify';
+import type {
+  ActorRef,
+} from '../../core/actors/index.js';
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
   controlPlane: ControlPlane;
+  auth: BetterAuthInstance;
 }
 
 const toNodeResponse = (
@@ -70,10 +80,40 @@ const toNodeResponse = (
 export const createHttpServer = ({
   database,
   controlPlane,
+  auth,
 }: CreateHttpServerOptions): FastifyInstance => {
   const app = Fastify({
     logger: true,
   });
+
+  const requireAuthenticatedActor = async (
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<ActorRef | null> => {
+    const session =
+      await auth.api.getSession({
+        headers:
+          fromNodeHeaders(
+            request.headers,
+          ),
+      });
+
+    if (!session) {
+      await reply
+        .code(401)
+        .send({
+          error:
+            'authentication_required',
+        });
+
+      return null;
+    }
+
+    return createActorRef({
+      kind: 'user',
+      id: session.user.id,
+    });
+  };
 
   app.setErrorHandler(
     (error, _request, reply) => {
@@ -488,6 +528,16 @@ export const createHttpServer = ({
   app.post(
     '/api/action-requests',
     async (request, reply) => {
+      const actor =
+        await requireAuthenticatedActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
       const parsed =
         requestActionRequestSchema.safeParse(
           request.body,
@@ -503,13 +553,15 @@ export const createHttpServer = ({
       const actionRequest =
         await controlPlane.actions.requestAction.execute(
           {
-            actionKey: parsed.data.actionKey,
+            actionKey:
+              parsed.data.actionKey,
+
             target: createResourceRef(
               parsed.data.target,
             ),
-            requestedBy: createActorRef(
-              parsed.data.requestedBy,
-            ),
+
+            requestedBy: actor,
+
             parameters:
               parsed.data.parameters,
           },
@@ -517,18 +569,23 @@ export const createHttpServer = ({
 
       const response: ActionRequestResponse = {
         id: actionRequest.id,
-        actionKey: actionRequest.actionKey,
-        target: actionRequest.target,
+        actionKey:
+          actionRequest.actionKey,
+        target:
+          actionRequest.target,
         requestedBy:
           actionRequest.requestedBy,
         parameters:
           actionRequest.parameters,
-        status: actionRequest.status,
+        status:
+          actionRequest.status,
         requestedAt:
           actionRequest.requestedAt.toISOString(),
       };
 
-      return reply.code(201).send(response);
+      return reply
+        .code(201)
+        .send(response);
     },
   );
 
@@ -645,6 +702,16 @@ export const createHttpServer = ({
   app.post(
     '/api/approval-requests/:id/decision',
     async (request, reply) => {
+      const actor =
+        await requireAuthenticatedActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
       const params =
         approvalRequestParamsSchema.safeParse(
           request.params,
@@ -673,10 +740,7 @@ export const createHttpServer = ({
             decision:
               body.data.decision,
 
-            decidedBy:
-              createActorRef(
-                body.data.decidedBy,
-              ),
+            decidedBy: actor,
           },
         );
 
@@ -695,6 +759,64 @@ export const createHttpServer = ({
       };
     },
   );
+
+  app.route({
+    method: ['GET', 'POST'],
+    url: '/api/auth/*',
+
+    async handler(request, reply) {
+      const url = new URL(
+        request.url,
+        `http://${request.headers.host}`,
+      );
+
+      const headers =
+        fromNodeHeaders(
+          request.headers,
+        );
+
+      const authRequest =
+        new Request(
+          url.toString(),
+          {
+            method:
+              request.method,
+            headers,
+            ...(request.body
+              ? {
+                  body:
+                    JSON.stringify(
+                      request.body,
+                    ),
+                }
+              : {}),
+          },
+        );
+
+      const response =
+        await auth.handler(
+          authRequest,
+        );
+
+      reply.status(
+        response.status,
+      );
+
+      response.headers.forEach(
+        (value, key) => {
+          reply.header(
+            key,
+            value,
+          );
+        },
+      );
+
+      const body =
+        await response.text();
+
+      return reply.send(body);
+    },
+  });
 
   return app;
 };

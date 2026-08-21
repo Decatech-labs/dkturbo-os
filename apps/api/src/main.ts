@@ -4,6 +4,7 @@ import {
   createDatabase,
   createHttpServer,
   loadConfig,
+  createBetterAuth,
 } from '@dkturbo/control-plane';
 import { config as loadDotEnv } from 'dotenv';
 
@@ -24,13 +25,32 @@ const controlPlane = createControlPlane({
   database,
 });
 
+const betterAuth = createBetterAuth({
+  databaseUrl:
+    config.DATABASE_URL,
+
+  secret:
+    config.BETTER_AUTH_SECRET,
+
+  baseUrl:
+    config.BETTER_AUTH_BASE_URL,
+
+  bootstrapOwnerId:
+    config.BOOTSTRAP_OWNER_ID!,
+
+  bootstrapOwnerEmail:
+    config.BOOTSTRAP_OWNER_EMAIL!,
+});
+
 const app = createHttpServer({
   database,
   controlPlane,
+  auth: betterAuth.auth,
 });
 
-const shutdown = async (): Promise<void> => {
+const shutdown = async () => {
   await app.close();
+  await betterAuth.close();
   await database.destroy();
 };
 

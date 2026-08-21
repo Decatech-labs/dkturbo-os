@@ -13,6 +13,9 @@ import {
   createDatabase,
 } from '../../infrastructure/postgres/index.js';
 import { createHttpServer } from './create-http-server.js';
+import {
+  createBetterAuth,
+} from '../../infrastructure/auth/better-auth.js';
 
 const TEST_DATABASE_URL =
   'postgresql://dkturbo:dkturbo_test@127.0.0.1:5433/dkturbo_test';
@@ -25,9 +28,27 @@ const controlPlane = createControlPlane({
   database,
 });
 
+const betterAuth = createBetterAuth({
+  databaseUrl:
+    TEST_DATABASE_URL,
+
+  secret:
+    'dkturbo-test-secret-that-is-long-enough-for-better-auth',
+
+  baseUrl:
+    'http://127.0.0.1:3001',
+
+  bootstrapOwnerId:
+    '11111111-1111-4111-8111-111111111111',
+
+  bootstrapOwnerEmail:
+    'owner-test@dkturbo.local',
+});
+
 const app = createHttpServer({
   database,
   controlPlane,
+  auth: betterAuth.auth,
 });
 
 beforeAll(async () => {
@@ -46,6 +67,7 @@ afterAll(async () => {
     .execute();
 
   await app.close();
+  await betterAuth.close();
   await database.destroy();
 });
 

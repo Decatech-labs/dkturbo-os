@@ -16,11 +16,6 @@ export const requestActionRequestSchema = z.object({
 
   target: resourceRefSchema,
   
-  requestedBy: z.object({
-    kind: z.string().trim().min(1),
-    id: z.string().trim().min(1),
-  }),
-
   parameters: z
     .record(
       z.string(),
@@ -36,22 +31,28 @@ export type RequestActionRequest = z.infer<
 export const actionRequestResponseSchema = z.object({
   id: z.string().uuid(),
   actionKey: z.string(),
+
   target: resourceRefSchema,
+
+  requestedBy: z.object({
+    kind: z.string(),
+    id: z.string(),
+  }),
+
   parameters: z.record(
     z.string(),
     z.unknown(),
   ),
+
   status: z.enum([
     'REQUESTED',
     'AWAITING_APPROVAL',
     'READY',
     'DENIED',
   ]),
-  requestedAt: z.string().datetime(),
-  requestedBy: z.object({
-    kind: z.string(),
-    id: z.string(),
-  }),
+
+  requestedAt:
+    z.string().datetime(),
 });
 
 export type ActionRequestResponse = z.infer<
@@ -122,11 +123,6 @@ export const decideApprovalRequestSchema = z.object({
     'APPROVE',
     'REJECT',
   ]),
-
-  decidedBy: z.object({
-    kind: z.string().trim().min(1),
-    id: z.string().trim().min(1),
-  }),
 });
 
 export type DecideApprovalRequestRequest = z.infer<
