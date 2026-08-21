@@ -17,6 +17,14 @@ const definitions: Record<
     requiredCapability:
       'service.management',
   },
+  'node.system.info.read': {
+    key: createActionKey(
+      'node.system.info.read',
+    ),
+    targetKind: 'infra.node',
+    requiredCapability:
+      'system.metrics',
+  },
 };
 
 export class ActionDefinitionNotFoundError

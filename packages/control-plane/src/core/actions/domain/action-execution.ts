@@ -7,7 +7,13 @@ export type ActionExecutionId = string & {
 };
 
 export type ActionExecutionStatus =
-  'PENDING';
+  | 'PENDING'
+  | 'RUNNING'
+  | 'SUCCEEDED'
+  | 'FAILED';
+
+export type ActionExecutionResult =
+  Record<string, unknown>;
 
 export interface ActionExecution {
   id: ActionExecutionId;
@@ -15,16 +21,34 @@ export interface ActionExecution {
   nodeId: string;
   requiredCapability: string;
   status: ActionExecutionStatus;
+
   createdAt: Date;
+  startedAt: Date | null;
+  finishedAt: Date | null;
+
+  result: ActionExecutionResult | null;
+  errorCode: string | null;
+  errorMessage: string | null;
 }
 
 export const createActionExecution = (
-  input: Omit<
-    ActionExecution,
-    'id' | 'status'
-  >,
+  input: {
+    actionRequestId: ActionRequestId;
+    nodeId: string;
+    requiredCapability: string;
+    createdAt: Date;
+  },
 ): ActionExecution => ({
   id: randomUUID() as ActionExecutionId,
+
   ...input,
+
   status: 'PENDING',
+
+  startedAt: null,
+  finishedAt: null,
+
+  result: null,
+  errorCode: null,
+  errorMessage: null,
 });

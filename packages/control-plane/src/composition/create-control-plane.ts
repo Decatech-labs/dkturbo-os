@@ -35,6 +35,13 @@ import { DecideApprovalRequest } from '../core/authorization/application/decide-
 
 import { InfraActionCapabilityChecker } from '../modules/infra/adapters/infra-action-capability-checker.js';
 import { InfraActionTargetResolver } from '../modules/infra/adapters/infra-action-target-resolver.js';
+import {
+  ExecuteActionExecution,
+} from '../core/actions/application/execute-action-execution.js';
+import {
+  SshActionExecutionGateway,
+} from '../infrastructure/execution/ssh-action-execution.gateway.js';
+import { PostgresNodeAccessEndpointRepository, } from '../modules/infra/adapters/persistence/postgres-node-access-endpoint.repository.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -60,7 +67,20 @@ export const createControlPlane = ({
   const actionExecutionRepository = new PostgresActionExecutionRepository(
     database,
   );
+  const nodeAccessEndpointRepository = new PostgresNodeAccessEndpointRepository(
+    database,
+  );
+  const actionExecutionGateway = new SshActionExecutionGateway(
+    nodeAccessEndpointRepository,
+  );
+  const executeActionExecution = new ExecuteActionExecution(
+    actionExecutionRepository,
+    actionRequestRepository,
+    actionExecutionGateway,
+    clock,
+  );
   const actionTargetResolver = new InfraActionTargetResolver(
+    nodeRepository,
     serviceInstanceRepository,
   );
   const actionCapabilityChecker = new InfraActionCapabilityChecker(
@@ -89,6 +109,7 @@ export const createControlPlane = ({
         prepareActionExecution,
         clock,
       ),
+      executeActionExecution,
     },
 
     authorization: {

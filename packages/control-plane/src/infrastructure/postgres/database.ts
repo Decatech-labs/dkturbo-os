@@ -19,6 +19,7 @@ export interface Database {
   'identity.users': IdentityUserTable;
   'authz.approval_requests': AuthorizationApprovalRequestTable;
   'actions.action_executions': ActionsActionExecutionTable;
+  'infra.node_access_endpoints': InfraNodeAccessEndpointTable;
 }
 
 export interface CreateDatabaseOptions {
@@ -105,5 +106,34 @@ export interface ActionsActionExecutionTable {
   node_id: string;
   required_capability: string;
   status: string;
+  created_at: ColumnType<Date, Date, never>;
+
+  started_at: ColumnType<
+    Date | null,
+    Date | null,
+    Date | null
+  >;
+
+  finished_at: ColumnType<
+    Date | null,
+    Date | null,
+    Date | null
+  >;
+
+  result: unknown | null;
+  error_code: string | null;
+  error_message: string | null;
+}
+
+export interface InfraNodeAccessEndpointTable {
+  id: string;
+  node_id: string;
+  transport: string;
+  label: string;
+  host: string;
+  port: number;
+  username: string;
+  priority: number;
+  enabled: boolean;
   created_at: ColumnType<Date, Date, never>;
 }

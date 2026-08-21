@@ -61,6 +61,10 @@ import type {
 import type {
   ActorRef,
 } from '../../core/actors/index.js';
+import { z } from 'zod';
+import type {
+  ActionExecutionId,
+} from '../../core/actions/domain/action-execution.js';
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
@@ -817,6 +821,85 @@ export const createHttpServer = ({
       return reply.send(body);
     },
   });
+
+  app.post(
+    '/api/action-executions/:id/execute',
+    async (request, reply) => {
+      const actor =
+        await requireAuthenticatedActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      const params =
+        z.object({
+          id: z.string().uuid(),
+        }).safeParse(
+          request.params,
+        );
+
+      if (!params.success) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const execution =
+        await controlPlane.actions
+          .executeActionExecution
+          .execute(
+            params.data
+              .id as ActionExecutionId,
+          );
+
+      return reply.send({
+        id:
+          execution.id,
+
+        actionRequestId:
+          execution.actionRequestId,
+
+        nodeId:
+          execution.nodeId,
+
+        requiredCapability:
+          execution.requiredCapability,
+
+        status:
+          execution.status,
+
+        createdAt:
+          execution.createdAt
+            .toISOString(),
+
+        startedAt:
+          execution.startedAt
+            ?.toISOString() ??
+          null,
+
+        finishedAt:
+          execution.finishedAt
+            ?.toISOString() ??
+          null,
+
+        result:
+          execution.result,
+
+        errorCode:
+          execution.errorCode,
+
+        errorMessage:
+          execution.errorMessage,
+      });
+    },
+  );
 
   return app;
 };
