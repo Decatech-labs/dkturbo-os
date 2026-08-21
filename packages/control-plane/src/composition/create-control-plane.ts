@@ -22,8 +22,10 @@ import { PostgresServiceInstanceRepository } from '../modules/infra/adapters/per
 import { ListActionRequests } from '../core/actions/application/list-action-requests.js';
 import { RequestAction } from '../core/actions/application/request-action.js';
 import { PostgresActionRequestRepository } from '../core/actions/adapters/persistence/postgres-action-request.repository.js';
-import { DenyByDefaultActionAuthorizer } from '../core/authorization/adapters/deny-by-default-action-authorizer.js';
 import { AuthorizeActionRequest } from '../core/authorization/application/authorize-action-request.js';
+import { RoleBasedActionAuthorizer } from '../core/authorization/adapters/role-based-action-authorizer.js';
+import { BootstrapOwner } from '../core/identity/application/bootstrap-owner.js';
+import { PostgresUserRepository } from '../core/identity/adapters/persistence/postgres-user.repository.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -44,8 +46,12 @@ export const createControlPlane = ({
   new PostgresServiceInstanceRepository(database);
   const actionRequestRepository =
   new PostgresActionRequestRepository(database);
+  const userRepository =
+  new PostgresUserRepository(database);
   const actionAuthorizer =
-  new DenyByDefaultActionAuthorizer();
+  new RoleBasedActionAuthorizer(
+    userRepository,
+  );
 
   return {
     actions: {
@@ -64,6 +70,14 @@ export const createControlPlane = ({
         new AuthorizeActionRequest(
           actionRequestRepository,
           actionAuthorizer,
+        ),
+    },
+
+    identity: {
+      bootstrapOwner:
+        new BootstrapOwner(
+          userRepository,
+          clock,
         ),
     },
 

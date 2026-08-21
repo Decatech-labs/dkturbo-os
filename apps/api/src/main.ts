@@ -46,6 +46,16 @@ const start = async (): Promise<void> => {
   try {
     await checkDatabase(database);
 
+    if (
+      config.BOOTSTRAP_OWNER_ID &&
+      config.BOOTSTRAP_OWNER_NAME
+    ) {
+      await controlPlane.identity.bootstrapOwner.execute({
+        id: config.BOOTSTRAP_OWNER_ID,
+        name: config.BOOTSTRAP_OWNER_NAME,
+      });
+    }
+
     await app.listen({
       host: config.API_HOST,
       port: config.API_PORT,

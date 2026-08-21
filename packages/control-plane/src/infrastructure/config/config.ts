@@ -7,6 +7,12 @@ const configSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(3001),
 
   DATABASE_URL: z.string().min(1),
+
+  BOOTSTRAP_OWNER_ID:
+  z.string().uuid().optional(),
+
+  BOOTSTRAP_OWNER_NAME:
+  z.string().trim().min(1).optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;

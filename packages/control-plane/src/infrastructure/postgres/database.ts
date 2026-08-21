@@ -16,6 +16,7 @@ export interface Database {
   'infra.services': InfraServiceTable;
   'infra.service_instances': InfraServiceInstanceTable;
   'actions.action_requests': ActionsActionRequestTable;
+  'identity.users': IdentityUserTable;
 }
 
 export interface CreateDatabaseOptions {
@@ -73,4 +74,11 @@ export interface ActionsActionRequestTable {
   parameters: unknown;
   status: string;
   requested_at: ColumnType<Date, Date, never>;
+}
+
+export interface IdentityUserTable {
+  id: string;
+  name: string;
+  role: string;
+  created_at: ColumnType<Date, Date, never>;
 }
