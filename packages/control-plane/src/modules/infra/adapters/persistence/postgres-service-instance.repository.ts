@@ -67,4 +67,32 @@ export class PostgresServiceInstanceRepository
       createdAt: row.created_at,
     }));
   }
+
+  async findById(
+    id: ServiceInstanceId,
+  ): Promise<ServiceInstance | null> {
+    const row = await this.database
+      .selectFrom(
+        'infra.service_instances',
+      )
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst();
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id as ServiceInstanceId,
+      key: row.key as ServiceInstanceKey,
+      serviceId:
+        row.service_id as ServiceId,
+      nodeId:
+        row.node_id as NodeId,
+      environment:
+        row.environment as Environment,
+      createdAt: row.created_at,
+    };
+  }
 }

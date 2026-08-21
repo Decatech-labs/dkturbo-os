@@ -1,6 +1,7 @@
 import type {
   ActionRequest,
   ActionRequestId,
+  ActionRequestStatus,
 } from '../domain/action-request.js';
 
 export interface ActionRequestRepository {
@@ -13,4 +14,9 @@ export interface ActionRequestRepository {
   findById(
     id: ActionRequestId,
   ): Promise<ActionRequest | null>;
+
+  updateStatus(
+    id: ActionRequestId,
+    status: ActionRequestStatus,
+  ): Promise<void>;
 }

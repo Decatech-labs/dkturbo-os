@@ -1,5 +1,6 @@
 import type {
   ServiceInstance,
+  ServiceInstanceId,
 } from '../domain/service-instance.js';
 
 export interface ServiceInstanceRepository {
@@ -8,4 +9,8 @@ export interface ServiceInstanceRepository {
   ): Promise<void>;
 
   list(): Promise<ServiceInstance[]>;
+
+  findById(
+    id: ServiceInstanceId,
+  ): Promise<ServiceInstance | null>;
 }

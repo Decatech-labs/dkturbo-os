@@ -17,6 +17,8 @@ export interface Database {
   'infra.service_instances': InfraServiceInstanceTable;
   'actions.action_requests': ActionsActionRequestTable;
   'identity.users': IdentityUserTable;
+  'authz.approval_requests': AuthorizationApprovalRequestTable;
+  'actions.action_executions': ActionsActionExecutionTable;
 }
 
 export interface CreateDatabaseOptions {
@@ -80,5 +82,28 @@ export interface IdentityUserTable {
   id: string;
   name: string;
   role: string;
+  created_at: ColumnType<Date, Date, never>;
+}
+
+export interface AuthorizationApprovalRequestTable {
+  id: string;
+  action_request_id: string;
+  status: string;
+  requested_at: ColumnType<Date, Date, never>;
+  decided_at: ColumnType<
+    Date | null,
+    Date | null,
+    Date | null
+  >;
+  decided_by_kind: string | null;
+  decided_by_id: string | null;
+}
+
+export interface ActionsActionExecutionTable {
+  id: string;
+  action_request_id: string;
+  node_id: string;
+  required_capability: string;
+  status: string;
   created_at: ColumnType<Date, Date, never>;
 }

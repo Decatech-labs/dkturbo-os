@@ -12,7 +12,10 @@ export type ActionRequestId = string & {
 };
 
 export type ActionRequestStatus =
-  'REQUESTED';
+  | 'REQUESTED'
+  | 'AWAITING_APPROVAL'
+  | 'READY'
+  | 'DENIED';
 
 export type ActionParameters =
   Record<string, unknown>;

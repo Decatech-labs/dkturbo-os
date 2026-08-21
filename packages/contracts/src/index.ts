@@ -37,12 +37,18 @@ export {
 } from './infra/service-instances.js';
 
 export {
+  actionRequestParamsSchema,
   actionRequestResponseSchema,
+  approvalRequestParamsSchema,
+  authorizationDecisionResponseSchema,
+  decideApprovalRequestSchema,
+  decideApprovalResponseSchema,
+  processActionRequestResponseSchema,
   requestActionRequestSchema,
   resourceRefSchema,
-  actionRequestParamsSchema,
-  authorizationDecisionResponseSchema,
   type ActionRequestResponse,
-  type RequestActionRequest,
   type AuthorizationDecisionResponse,
+  type DecideApprovalRequestRequest,
+  type ProcessActionRequestResponse,
+  type RequestActionRequest,
 } from './actions.js';

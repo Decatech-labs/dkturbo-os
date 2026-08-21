@@ -26,6 +26,15 @@ import { AuthorizeActionRequest } from '../core/authorization/application/author
 import { RoleBasedActionAuthorizer } from '../core/authorization/adapters/role-based-action-authorizer.js';
 import { BootstrapOwner } from '../core/identity/application/bootstrap-owner.js';
 import { PostgresUserRepository } from '../core/identity/adapters/persistence/postgres-user.repository.js';
+import { PostgresActionExecutionRepository } from '../core/actions/adapters/persistence/postgres-action-execution.repository.js';
+import { PrepareActionExecution } from '../core/actions/application/prepare-action-execution.js';
+import { ProcessActionRequest } from '../core/actions/application/process-action-request.js';
+
+import { PostgresApprovalRequestRepository } from '../core/authorization/adapters/postgres-approval-request.repository.js';
+import { DecideApprovalRequest } from '../core/authorization/application/decide-approval-request.js';
+
+import { InfraActionCapabilityChecker } from '../modules/infra/adapters/infra-action-capability-checker.js';
+import { InfraActionTargetResolver } from '../modules/infra/adapters/infra-action-target-resolver.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -35,22 +44,33 @@ export const createControlPlane = ({
   database,
 }: CreateControlPlaneOptions) => {
   const nodeRepository = new PostgresNodeRepository(database);
-  const nodeObservedStateRepository =
-  new PostgresNodeObservedStateRepository(database);
+  const nodeObservedStateRepository = new PostgresNodeObservedStateRepository(database);
   const clock = new SystemClock();
-  const nodeCapabilityRepository =
-  new PostgresNodeCapabilityRepository(database);
-  const serviceRepository =
-  new PostgresServiceRepository(database);
-  const serviceInstanceRepository =
-  new PostgresServiceInstanceRepository(database);
-  const actionRequestRepository =
-  new PostgresActionRequestRepository(database);
-  const userRepository =
-  new PostgresUserRepository(database);
-  const actionAuthorizer =
-  new RoleBasedActionAuthorizer(
+  const nodeCapabilityRepository = new PostgresNodeCapabilityRepository(database);
+  const serviceRepository = new PostgresServiceRepository(database);
+  const serviceInstanceRepository = new PostgresServiceInstanceRepository(database);
+  const actionRequestRepository = new PostgresActionRequestRepository(database);
+  const userRepository = new PostgresUserRepository(database);
+  const actionAuthorizer = new RoleBasedActionAuthorizer(
     userRepository,
+  );
+  const approvalRequestRepository = new PostgresApprovalRequestRepository(
+    database,
+  );
+  const actionExecutionRepository = new PostgresActionExecutionRepository(
+    database,
+  );
+  const actionTargetResolver = new InfraActionTargetResolver(
+    serviceInstanceRepository,
+  );
+  const actionCapabilityChecker = new InfraActionCapabilityChecker(
+    nodeCapabilityRepository,
+  );
+  const prepareActionExecution = new PrepareActionExecution(
+    actionTargetResolver,
+    actionCapabilityChecker,
+    actionExecutionRepository,
+    clock,
   );
 
   return {
@@ -59,26 +79,37 @@ export const createControlPlane = ({
         actionRequestRepository,
         clock,
       ),
-      listActionRequests:
-        new ListActionRequests(
-          actionRequestRepository,
-        ),
+      listActionRequests: new ListActionRequests(
+        actionRequestRepository,
+      ),
+      processActionRequest: new ProcessActionRequest(
+        actionRequestRepository,
+        actionAuthorizer,
+        approvalRequestRepository,
+        prepareActionExecution,
+        clock,
+      ),
     },
 
     authorization: {
-      authorizeActionRequest:
-        new AuthorizeActionRequest(
-          actionRequestRepository,
-          actionAuthorizer,
-        ),
+      authorizeActionRequest: new AuthorizeActionRequest(
+        actionRequestRepository,
+        actionAuthorizer,
+      ),
+      decideApprovalRequest: new DecideApprovalRequest(
+        approvalRequestRepository,
+        actionRequestRepository,
+        userRepository,
+        prepareActionExecution,
+        clock,
+      ),
     },
 
     identity: {
-      bootstrapOwner:
-        new BootstrapOwner(
-          userRepository,
-          clock,
-        ),
+      bootstrapOwner: new BootstrapOwner(
+        userRepository,
+        clock,
+      ),
     },
 
     infra: {

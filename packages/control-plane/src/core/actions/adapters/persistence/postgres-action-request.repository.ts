@@ -99,4 +99,17 @@ export class PostgresActionRequestRepository
       requestedAt: row.requested_at,
     };
   }
+
+  async updateStatus(
+    id: ActionRequestId,
+    status: ActionRequestStatus,
+  ): Promise<void> {
+    await this.database
+      .updateTable('actions.action_requests')
+      .set({
+        status,
+      })
+      .where('id', '=', id)
+      .execute();
+  }
 }
