@@ -160,6 +160,53 @@ const getStatusMeta = (
   }
 };
 
+const getServiceRuntimeStatusMeta = (
+  state:
+    ServiceDashboardData[
+      'instances'
+    ][number][
+      'observedState'
+    ]['runtimeSnapshot'],
+): {
+  label: string;
+  tone: StatusPillTone;
+} => {
+  if (!state) {
+    return {
+      label:
+        'Sin información',
+      tone:
+        'neutral',
+    };
+  }
+
+  switch (state.state) {
+    case 'RUNNING':
+      return {
+        label:
+          'Activo',
+        tone:
+          'success',
+      };
+
+    case 'STOPPED':
+      return {
+        label:
+          'Detenido',
+        tone:
+          'warning',
+      };
+
+    case 'MISSING':
+      return {
+        label:
+          'No encontrado',
+        tone:
+          'warning',
+      };
+  }
+};
+
 const Metric = ({
   icon: Icon,
   label,
@@ -391,7 +438,15 @@ const ServiceCard = ({
               ({
                 instance,
                 node,
-              }) => (
+                observedState,
+              }) => {
+                const runtimeStatus =
+                  getServiceRuntimeStatusMeta(
+                    observedState
+                      .runtimeSnapshot,
+                  );
+
+                return (
                 <div
                   key={
                     instance.id
@@ -409,13 +464,24 @@ const ServiceCard = ({
                     </div>
                   </div>
 
-                  <span className="service-environment">
-                    {formatEnvironment(
-                      instance.environment,
-                    )}
-                  </span>
+                  <div className="service-instance-status">
+                    <StatusPill
+                      label={
+                        runtimeStatus.label
+                      }
+                      tone={
+                        runtimeStatus.tone
+                      }
+                    />
+
+                    <span className="service-environment">
+                      {formatEnvironment(
+                        instance.environment,
+                      )}
+                    </span>
+                  </div>
                 </div>
-              ),
+              );}
             )}
           </div>
         )}

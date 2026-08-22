@@ -49,3 +49,9 @@ export {
   createBetterAuth,
   type BetterAuthInstance,
 } from './infrastructure/auth/better-auth.js';
+
+export {
+  createActorRef,
+  type ActorRef,
+  type ActorKind,
+} from './core/actors/index.js';

@@ -210,7 +210,13 @@ describe(
         ).toHaveBeenCalledWith({
           actionKey:
             actionRequest.actionKey,
-          nodeId,
+
+          nodeId:
+            actionRequest.target.id,
+
+          target:
+            actionRequest.target,
+
           parameters: {},
         });
 

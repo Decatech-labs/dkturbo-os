@@ -8,11 +8,16 @@ import type {
 import type {
   NodeAccessEndpointRepository,
 } from '../../modules/infra/ports/node-access-endpoint-repository.port.js';
-
 import {
   SshNodeOperations,
   type SshNodeEndpoint,
 } from '../ssh/ssh-node-operations.js';
+import type {
+  ServiceInstanceId,
+} from '../../modules/infra/domain/service-instance.js';
+import type {
+  ServiceRuntimeBindingRepository,
+} from '../../modules/infra/ports/service-runtime-binding-repository.port.js';
 
 export class SshActionExecutionGateway
   implements ActionExecutionGateway
@@ -20,6 +25,9 @@ export class SshActionExecutionGateway
   constructor(
     private readonly endpoints:
       NodeAccessEndpointRepository,
+
+    private readonly bindings:
+      ServiceRuntimeBindingRepository,
 
     private readonly operations:
       SshNodeOperations,
@@ -76,6 +84,58 @@ export class SshActionExecutionGateway
             sshEndpoint,
           runtime,
         };
+      }
+
+      case 'service.restart': {
+        if (
+          input.target.kind !==
+          'infra.service-instance'
+        ) {
+          throw new Error(
+            `Invalid target for service.restart: ${input.target.kind}`,
+          );
+        }
+
+        const binding =
+          await this.bindings
+            .findByServiceInstanceId(
+              input.target
+                .id as ServiceInstanceId,
+            );
+
+        if (!binding) {
+          throw new Error(
+            `No runtime binding configured for service instance ${input.target.id}`,
+          );
+        }
+
+        switch (binding.runtimeKind) {
+          case 'docker': {
+            await this.operations
+              .restartDockerContainer(
+                sshEndpoint,
+                binding.resourceName,
+              );
+
+            return {
+              transport: 'ssh',
+
+              operation:
+                'service.restart',
+
+              runtimeKind:
+                binding.runtimeKind,
+
+              resourceName:
+                binding.resourceName,
+            };
+          }
+
+          default:
+            throw new Error(
+              `Unsupported service runtime: ${binding.runtimeKind}`,
+            );
+        }
       }
 
       default:

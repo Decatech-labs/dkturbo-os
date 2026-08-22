@@ -250,14 +250,10 @@ export class SshNodeOperations {
       );
     }
 
-    const remoteCommand = [
-      `if docker inspect ${resourceName} >/dev/null 2>&1`,
-      'then',
-      `docker inspect --format '{{if .State.Running}}RUNNING{{else}}STOPPED{{end}}' ${resourceName}`,
-      'else',
-      `printf 'MISSING\\n'`,
-      'fi',
-    ].join('; ');
+    const remoteCommand =
+      `if docker inspect ${resourceName} >/dev/null 2>&1; then ` +
+      `docker inspect --format '{{if .State.Running}}RUNNING{{else}}STOPPED{{end}}' ${resourceName}; ` +
+      `else printf 'MISSING\\n'; fi`;
 
     const {
       stdout,
@@ -282,28 +278,51 @@ export class SshNodeOperations {
     return state;
   }
 
+  async restartDockerContainer(
+    endpoint: SshNodeEndpoint,
+    resourceName: string,
+  ): Promise<void> {
+    const resourcePattern =
+      /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
+
+    if (
+      !resourcePattern.test(
+        resourceName,
+      )
+    ) {
+      throw new Error(
+        `Invalid Docker resource name: ${resourceName}`,
+      );
+    }
+
+    await this.execute(
+      endpoint,
+      `docker restart --timeout 10 ${resourceName}`,
+      30_000,
+    );
+  }
+
   private async execute(
     endpoint: SshNodeEndpoint,
     remoteCommand: string,
+    timeoutMs = 10_000,
   ) {
     return execFileAsync(
       'ssh',
       [
         '-o',
         'BatchMode=yes',
-
         '-o',
         'ConnectTimeout=5',
-
         '-p',
         String(endpoint.port),
-
         `${endpoint.username}@${endpoint.host}`,
-
         remoteCommand,
       ],
       {
-        timeout: 10_000,
+        timeout:
+          timeoutMs,
+
         maxBuffer:
           1024 * 1024,
       },

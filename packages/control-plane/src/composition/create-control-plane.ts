@@ -118,6 +118,7 @@ export const createControlPlane = ({
   );
   const actionExecutionGateway = new SshActionExecutionGateway(
     nodeAccessEndpointRepository,
+    serviceRuntimeBindingRepository,
     sshNodeOperations,
   );
   const executeActionExecution = new ExecuteActionExecution(

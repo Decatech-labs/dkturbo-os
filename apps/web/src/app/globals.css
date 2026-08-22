@@ -919,3 +919,13 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+.service-instance-status {
+  display: flex;
+
+  flex-shrink: 0;
+
+  align-items: center;
+
+  gap: 7px;
+}

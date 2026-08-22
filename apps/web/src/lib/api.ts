@@ -4,6 +4,7 @@ import type {
   NodeStatusResponse,
   ServiceInstanceResponse,
   ServiceResponse,
+  ServiceInstanceObservedStateResponse,
 } from '@dkturbo/contracts';
 
 const API_BASE_URL =
@@ -23,6 +24,9 @@ export interface ServiceInstanceDashboardData {
 
   node:
     NodeResponse | null;
+
+  observedState:
+    ServiceInstanceObservedStateResponse;
 }
 
 export interface ServiceDashboardData {
@@ -101,75 +105,104 @@ export const getNodesDashboard =
     );
   };
 
-export const getServicesDashboard =
-  async (
-    nodes:
-      readonly NodeResponse[],
-  ): Promise<
-    ServiceDashboardData[]
-  > => {
-    const [
-      services,
-      instances,
-    ] = await Promise.all([
-      getJson<ServiceResponse[]>(
-        '/api/services',
+export const getServicesDashboard = async (
+  nodes:
+    readonly NodeResponse[],
+): Promise<
+  ServiceDashboardData[]
+> => {
+  const [
+    services,
+    instances,
+  ] = await Promise.all([
+    getJson<ServiceResponse[]>(
+      '/api/services',
+    ),
+
+    getJson<
+      ServiceInstanceResponse[]
+    >(
+      '/api/service-instances',
+    ),
+  ]);
+
+  const nodesById =
+    new Map(
+      nodes.map(
+        (node) => [
+          node.id,
+          node,
+        ],
       ),
-
-      getJson<
-        ServiceInstanceResponse[]
-      >(
-        '/api/service-instances',
-      ),
-    ]);
-
-    const nodesById =
-      new Map(
-        nodes.map(
-          (node) => [
-            node.id,
-            node,
-          ],
-        ),
-      );
-
-    const instancesByServiceId =
-      new Map<
-        string,
-        ServiceInstanceDashboardData[]
-      >();
-
-    for (
-      const instance of instances
-    ) {
-      const current =
-        instancesByServiceId.get(
-          instance.serviceId,
-        ) ?? [];
-
-      current.push({
-        instance,
-
-        node:
-          nodesById.get(
-            instance.nodeId,
-          ) ?? null,
-      });
-
-      instancesByServiceId.set(
-        instance.serviceId,
-        current,
-      );
-    }
-
-    return services.map(
-      (service) => ({
-        service,
-
-        instances:
-          instancesByServiceId.get(
-            service.id,
-          ) ?? [],
-      }),
     );
-  };
+
+  const instanceDashboardData =
+    await Promise.all(
+      instances.map(
+        async (
+          instance,
+        ): Promise<
+          ServiceInstanceDashboardData
+        > => {
+          const observedState =
+            await getJson<
+              ServiceInstanceObservedStateResponse
+            >(
+              `/api/service-instances/${instance.id}/observed-state`,
+            );
+
+          return {
+            instance,
+
+            node:
+              nodesById.get(
+                instance.nodeId,
+              ) ?? null,
+
+            observedState,
+          };
+        },
+      ),
+    );
+
+  const instancesByServiceId =
+    new Map<
+      string,
+      ServiceInstanceDashboardData[]
+    >();
+
+  for (
+    const instanceData of
+      instanceDashboardData
+  ) {
+    const serviceId =
+      instanceData
+        .instance
+        .serviceId;
+
+    const current =
+      instancesByServiceId.get(
+        serviceId,
+      ) ?? [];
+
+    current.push(
+      instanceData,
+    );
+
+    instancesByServiceId.set(
+      serviceId,
+      current,
+    );
+  }
+
+  return services.map(
+    (service) => ({
+      service,
+
+      instances:
+        instancesByServiceId.get(
+          service.id,
+        ) ?? [],
+    }),
+  );
+};

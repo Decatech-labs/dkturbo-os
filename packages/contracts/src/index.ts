@@ -34,8 +34,18 @@ export {
   registerServiceInstanceRequestSchema,
   serviceInstanceKeySchema,
   serviceInstanceResponseSchema,
+  serviceInstanceParamsSchema,
+  serviceRuntimeStateSchema,
+  serviceRuntimeKindSchema,
+  serviceInstanceRuntimeSnapshotSchema,
+  serviceInstanceObservedStateResponseSchema,
   type RegisterServiceInstanceRequest,
   type ServiceInstanceResponse,
+  type ServiceInstanceParams,
+  type ServiceRuntimeState,
+  type ServiceRuntimeKind,
+  type ServiceInstanceRuntimeSnapshot,
+  type ServiceInstanceObservedStateResponse,
 } from './infra/service-instances.js';
 
 export {

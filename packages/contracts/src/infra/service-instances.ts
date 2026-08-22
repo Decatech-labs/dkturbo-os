@@ -43,3 +43,72 @@ export type ServiceInstanceResponse =
   z.infer<
     typeof serviceInstanceResponseSchema
   >;
+
+export const serviceInstanceParamsSchema =
+  z.object({
+    id: z.string().uuid(),
+  });
+
+export type ServiceInstanceParams =
+  z.infer<
+    typeof serviceInstanceParamsSchema
+  >;
+
+export const serviceRuntimeStateSchema =
+  z.enum([
+    'RUNNING',
+    'STOPPED',
+    'MISSING',
+  ]);
+
+export type ServiceRuntimeState =
+  z.infer<
+    typeof serviceRuntimeStateSchema
+  >;
+
+export const serviceRuntimeKindSchema =
+  z.enum([
+    'docker',
+  ]);
+
+export type ServiceRuntimeKind =
+  z.infer<
+    typeof serviceRuntimeKindSchema
+  >;
+
+export const serviceInstanceRuntimeSnapshotSchema =
+  z.object({
+    runtimeKind:
+      serviceRuntimeKindSchema,
+
+    resourceName:
+      z.string().min(1),
+
+    state:
+      serviceRuntimeStateSchema,
+  });
+
+export type ServiceInstanceRuntimeSnapshot =
+  z.infer<
+    typeof serviceInstanceRuntimeSnapshotSchema
+  >;
+
+export const serviceInstanceObservedStateResponseSchema =
+  z.object({
+    serviceInstanceId:
+      z.string().uuid(),
+
+    collectedAt:
+      z.string()
+        .datetime()
+        .nullable(),
+
+    runtimeSnapshot:
+      serviceInstanceRuntimeSnapshotSchema
+        .nullable(),
+  });
+
+export type ServiceInstanceObservedStateResponse =
+  z.infer<
+    typeof serviceInstanceObservedStateResponseSchema
+  >;

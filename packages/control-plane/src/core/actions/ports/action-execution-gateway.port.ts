@@ -5,11 +5,15 @@ import type {
 import type {
   ActionParameters,
 } from '../domain/action-request.js';
+import type {
+  ResourceRef,
+} from '../../resources/index.js';
 
 export interface ExecuteActionInput {
   actionKey: ActionKey;
   nodeId: string;
   parameters: ActionParameters;
+  target: ResourceRef;
 }
 
 export interface ActionExecutionGateway {

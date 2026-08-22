@@ -8,6 +8,7 @@ import {
   actionRequestParamsSchema,
   approvalRequestParamsSchema,
   decideApprovalRequestSchema,
+  serviceInstanceParamsSchema,
   type NodeObservedStateResponse,
   type NodeResponse,
   type NodeStatusResponse,
@@ -17,6 +18,7 @@ import {
   type ActionRequestResponse,
   type AuthorizationDecisionResponse,
   type ProcessActionRequestResponse,
+  type ServiceInstanceObservedStateResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -41,6 +43,9 @@ import { ServiceKeyAlreadyRegisteredError } from '../../modules/infra/applicatio
 import { ServiceInstanceKeyAlreadyRegisteredError } from '../../modules/infra/application/errors/service-instance-key-already-registered.error.js';
 import { ServiceNotFoundError } from '../../modules/infra/application/errors/service-not-found.error.js';
 import type { ServiceId } from '../../modules/infra/domain/service.js';
+import type {
+  ServiceInstanceId,
+} from '../../modules/infra/domain/service-instance.js';
 import {
   createResourceRef,
 } from '../../core/resources/index.js';
@@ -563,6 +568,58 @@ export const createHttpServer = ({
           createdAt:
             instance.createdAt.toISOString(),
         }));
+
+      return response;
+    },
+  );
+
+  app.get(
+    '/api/service-instances/:id/observed-state',
+
+    async (
+      request,
+      reply,
+    ) => {
+      const parsed =
+        serviceInstanceParamsSchema.safeParse(
+          request.params,
+        );
+
+      if (!parsed.success) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+
+            details:
+              parsed.error.issues,
+          });
+      }
+
+      const state =
+        await controlPlane.infra
+          .getServiceInstanceObservedState
+          .execute(
+            parsed.data
+              .id as ServiceInstanceId,
+          );
+
+      const response:
+        ServiceInstanceObservedStateResponse =
+        {
+          serviceInstanceId:
+            parsed.data.id,
+
+          collectedAt:
+            state?.collectedAt
+              .toISOString() ??
+            null,
+
+          runtimeSnapshot:
+            state?.runtimeSnapshot ??
+            null,
+        };
 
       return response;
     },

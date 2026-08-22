@@ -99,17 +99,19 @@ export class ExecuteActionExecution {
     );
 
     try {
-      const result =
-        await this.gateway.execute({
-          actionKey:
-            actionRequest.actionKey,
+      const result = await this.gateway.execute({
+        actionKey:
+          actionRequest.actionKey,
 
-          nodeId:
-            execution.nodeId,
+        nodeId:
+          execution.nodeId,
 
-          parameters:
-            actionRequest.parameters,
-        });
+        target:
+          actionRequest.target,
+
+        parameters:
+          actionRequest.parameters,
+      });
 
       const finishedAt =
         this.clock.now();
