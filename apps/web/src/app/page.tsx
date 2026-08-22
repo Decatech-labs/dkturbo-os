@@ -1,111 +1,20 @@
-import type { LucideIcon } from 'lucide-react';
-
 import {
-  ArrowUpRight,
   Bell,
-  Bot,
-  Folder,
-  ImageIcon,
   Search,
-  Server,
-  Shield,
-  Users,
 } from 'lucide-react';
 
-interface SpaceItem {
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  tone:
-    | 'blue'
-    | 'yellow'
-    | 'peach'
-    | 'lavender'
-    | 'mint'
-    | 'rose';
-}
+import {
+  getHomeApps,
+} from '../apps/registry';
 
-const spaces: SpaceItem[] = [
-  {
-    title: 'Sistema',
-    description:
-      'Servidor, red y estado de casa.',
-    icon: Server,
-    tone: 'blue',
-  },
-  {
-    title: 'Familia',
-    description:
-      'Personas, permisos y acceso.',
-    icon: Users,
-    tone: 'lavender',
-  },
-  {
-    title: 'Archivos',
-    description:
-      'Documentos, copias y almacenamiento.',
-    icon: Folder,
-    tone: 'yellow',
-  },
-  {
-    title: 'Fotos',
-    description:
-      'Biblioteca familiar y recuerdos.',
-    icon: ImageIcon,
-    tone: 'peach',
-  },
-  {
-    title: 'Automatizaciones',
-    description:
-      'Rutinas, acciones y tareas automáticas.',
-    icon: Bot,
-    tone: 'mint',
-  },
-  {
-    title: 'Seguridad',
-    description:
-      'Protección, accesos y revisiones.',
-    icon: Shield,
-    tone: 'rose',
-  },
-];
-
-const SpaceCard = ({
-  item,
-}: {
-  item: SpaceItem;
-}) => {
-  const Icon = item.icon;
-
-  return (
-    <button
-      type="button"
-      className={`space-card space-card-${item.tone}`}
-    >
-      <div className="space-card-top">
-        <div className="space-card-icon">
-          <Icon />
-        </div>
-
-        <div className="space-card-arrow">
-          <ArrowUpRight />
-        </div>
-      </div>
-
-      <div className="space-card-content">
-        <h2 className="space-card-title">
-          {item.title}
-        </h2>
-
-        <p className="space-card-description">
-          {item.description}
-        </p>
-      </div>
-    </button>
-  );
-};
+import {
+  AppCard,
+} from '../components/app-card';
 
 export default function HomePage() {
+  const apps =
+    getHomeApps();
+
   return (
     <main className="home">
       <header className="home-header">
@@ -147,12 +56,14 @@ export default function HomePage() {
       </header>
 
       <section className="spaces-grid">
-        {spaces.map((item) => (
-          <SpaceCard
-            key={item.title}
-            item={item}
-          />
-        ))}
+        {apps.map(
+          (app) => (
+            <AppCard
+              key={app.id}
+              app={app}
+            />
+          ),
+        )}
       </section>
     </main>
   );
