@@ -42,6 +42,15 @@ import {
   SshActionExecutionGateway,
 } from '../infrastructure/execution/ssh-action-execution.gateway.js';
 import { PostgresNodeAccessEndpointRepository, } from '../modules/infra/adapters/persistence/postgres-node-access-endpoint.repository.js';
+import {
+  RefreshNodeObservedState,
+} from '../modules/infra/application/refresh-node-observed-state.js';
+import {
+  SshNodeRuntimeSnapshotCollector,
+} from '../modules/infra/adapters/ssh-node-runtime-snapshot.collector.js';
+import {
+  SshNodeOperations,
+} from '../infrastructure/ssh/ssh-node-operations.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -70,8 +79,14 @@ export const createControlPlane = ({
   const nodeAccessEndpointRepository = new PostgresNodeAccessEndpointRepository(
     database,
   );
+  const sshNodeOperations = new SshNodeOperations();
+  const runtimeSnapshotCollector = new SshNodeRuntimeSnapshotCollector(
+    nodeAccessEndpointRepository,
+    sshNodeOperations,
+  );
   const actionExecutionGateway = new SshActionExecutionGateway(
     nodeAccessEndpointRepository,
+    sshNodeOperations,
   );
   const executeActionExecution = new ExecuteActionExecution(
     actionExecutionRepository,
@@ -90,6 +105,12 @@ export const createControlPlane = ({
     actionTargetResolver,
     actionCapabilityChecker,
     actionExecutionRepository,
+    clock,
+  );
+  const refreshNodeObservedState = new RefreshNodeObservedState(
+    nodeRepository,
+    nodeObservedStateRepository,
+    runtimeSnapshotCollector,
     clock,
   );
 
@@ -176,6 +197,7 @@ export const createControlPlane = ({
       listServiceInstances: new ListServiceInstances(
         serviceInstanceRepository,
       ),
+      refreshNodeObservedState,
     },
   };
 };

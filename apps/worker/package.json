@@ -12,7 +12,8 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@dkturbo/control-plane": "workspace:*"
+    "@dkturbo/control-plane": "workspace:*",
+    "dotenv": "17.4.2"
   },
   "devDependencies": {
     "tsx": "4.23.12"

@@ -58,6 +58,12 @@ class FakeObservedStateRepository
   ): Promise<NodeObservedState | null> {
     return this.state;
   }
+
+  async saveRuntimeSnapshot(): Promise<void> {
+    throw new Error(
+      'Not implemented in this test',
+    );
+  }
 }
 
 describe('GetNodeStatus', () => {
@@ -80,8 +86,14 @@ describe('GetNodeStatus', () => {
     const observedState =
       new FakeObservedStateRepository({
         nodeId: node.id,
+
         lastSeenAt:
-          new Date('2026-08-20T20:00:30.000Z'),
+          new Date(
+            '2026-08-20T20:00:30.000Z',
+          ),
+
+        runtimeCollectedAt: null,
+        runtimeSnapshot: null,
       });
 
     const getNodeStatus =

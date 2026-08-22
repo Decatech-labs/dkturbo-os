@@ -59,6 +59,8 @@ describe('PostgresNodeObservedStateRepository', () => {
     await observedStateRepository.save({
       nodeId,
       lastSeenAt: firstObservedAt,
+      runtimeCollectedAt: null,
+      runtimeSnapshot: null,
     });
 
     const firstResult =
@@ -74,6 +76,8 @@ describe('PostgresNodeObservedStateRepository', () => {
     await observedStateRepository.save({
       nodeId,
       lastSeenAt: secondObservedAt,
+      runtimeCollectedAt: null,
+      runtimeSnapshot: null,
     });
 
     const secondResult =

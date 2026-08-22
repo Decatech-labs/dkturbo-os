@@ -901,5 +901,60 @@ export const createHttpServer = ({
     },
   );
 
+  app.post(
+    '/api/nodes/:id/refresh-observed-state',
+    async (request, reply) => {
+      const actor =
+        await requireAuthenticatedActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      const params =
+        nodeParamsSchema.safeParse(
+          request.params,
+        );
+
+      if (!params.success) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+            details:
+              params.error.issues,
+          });
+      }
+
+      const state =
+        await controlPlane.infra
+          .refreshNodeObservedState
+          .execute(
+            params.data.id as NodeId,
+          );
+
+      return reply.send({
+        nodeId:
+          state.nodeId,
+
+        lastSeenAt:
+          state.lastSeenAt
+            .toISOString(),
+
+        runtimeCollectedAt:
+          state.runtimeCollectedAt
+            ?.toISOString() ??
+          null,
+
+        runtimeSnapshot:
+          state.runtimeSnapshot,
+      });
+    },
+  );
+
   return app;
 };

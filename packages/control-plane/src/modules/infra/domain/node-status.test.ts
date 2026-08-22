@@ -27,6 +27,8 @@ describe('evaluateNodeStatus', () => {
       observedState: {
         nodeId,
         lastSeenAt,
+        runtimeCollectedAt: null,
+        runtimeSnapshot: null,
       },
       now: new Date('2026-08-20T20:01:00.000Z'),
     });
@@ -42,6 +44,8 @@ describe('evaluateNodeStatus', () => {
         nodeId,
         lastSeenAt:
           new Date('2026-08-20T20:00:00.000Z'),
+        runtimeCollectedAt: null,
+        runtimeSnapshot: null,
       },
       now: new Date('2026-08-20T20:01:00.000Z'),
     });
@@ -56,6 +60,8 @@ describe('evaluateNodeStatus', () => {
         nodeId,
         lastSeenAt:
           new Date('2026-08-20T19:59:59.999Z'),
+          runtimeCollectedAt: null,
+          runtimeSnapshot: null,
       },
       now: new Date('2026-08-20T20:01:00.000Z'),
     });

@@ -43,6 +43,12 @@ export const createDatabase = ({
 export interface InfraNodeObservedStateTable {
   node_id: string;
   last_seen_at: ColumnType<Date, Date, Date>;
+  runtime_collected_at: ColumnType<
+    Date | null,
+    Date | null,
+    Date | null
+  >;
+  runtime_snapshot: unknown | null;
 }
 
 export interface InfraNodeCapabilityTable {
