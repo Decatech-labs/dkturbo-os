@@ -30,6 +30,10 @@ import {
   getServicesDashboard,
 } from '../../lib/api';
 
+import {
+  ServiceRestartControl,
+} from './service-restart-control';
+
 export const dynamic =
   'force-dynamic';
 
@@ -479,6 +483,18 @@ const ServiceCard = ({
                         instance.environment,
                       )}
                     </span>
+
+                    <ServiceRestartControl
+                      serviceInstanceId={
+                        instance.id
+                      }
+                      disabled={
+                        observedState
+                          .runtimeSnapshot
+                          ?.state ===
+                        'MISSING'
+                      }
+                    />
                   </div>
                 </div>
               );}
