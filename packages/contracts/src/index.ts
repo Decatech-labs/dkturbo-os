@@ -4,11 +4,13 @@ export {
   nodeParamsSchema,
   nodeObservedStateResponseSchema,
   nodeStatusResponseSchema,
+  nodeRuntimeSnapshotSchema,
   type NodeResponse,
   type RegisterNodeRequest,
   type NodeParams,
   type NodeObservedStateResponse,
   type NodeStatusResponse,
+  type NodeRuntimeSnapshot,
 } from './infra/nodes.js';
 
 export {

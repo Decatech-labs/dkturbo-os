@@ -80,24 +80,23 @@ describe('GetNodeStatus', () => {
       new Date('2026-08-20T20:01:00.000Z'),
     );
 
-    const nodes =
-      new FakeNodeRepository(node);
+    const nodes = new FakeNodeRepository(node);
 
-    const observedState =
-      new FakeObservedStateRepository({
+    const observedAt = new Date(
+      '2026-08-20T20:00:30.000Z',
+    );
+    
+    const observedState = new FakeObservedStateRepository({
         nodeId: node.id,
 
         lastSeenAt:
-          new Date(
-            '2026-08-20T20:00:30.000Z',
-          ),
+          observedAt,
 
-        runtimeCollectedAt: null,
+        runtimeCollectedAt: observedAt,
         runtimeSnapshot: null,
       });
 
-    const getNodeStatus =
-      new GetNodeStatus(
+    const getNodeStatus = new GetNodeStatus(
         nodes,
         observedState,
         clock,

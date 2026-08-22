@@ -284,9 +284,22 @@ export const createHttpServer = ({
           parsed.data.id as NodeId,
         );
 
-      const response: NodeObservedStateResponse = {
-        nodeId: state.nodeId,
-        lastSeenAt: state.lastSeenAt.toISOString(),
+      const response:
+        NodeObservedStateResponse = {
+        nodeId:
+          state.nodeId,
+
+        lastSeenAt:
+          state.lastSeenAt
+            .toISOString(),
+
+        runtimeCollectedAt:
+          state.runtimeCollectedAt
+            ?.toISOString() ??
+          null,
+
+        runtimeSnapshot:
+          state.runtimeSnapshot,
       };
 
       return response;
@@ -312,10 +325,24 @@ export const createHttpServer = ({
           parsed.data.id as NodeId,
         );
 
-      const response: NodeObservedStateResponse = {
-        nodeId: parsed.data.id,
+      const response:
+        NodeObservedStateResponse = {
+        nodeId:
+          parsed.data.id,
+
         lastSeenAt:
-          state?.lastSeenAt.toISOString() ?? null,
+          state?.lastSeenAt
+            .toISOString() ??
+          null,
+
+        runtimeCollectedAt:
+          state?.runtimeCollectedAt
+            ?.toISOString() ??
+          null,
+
+        runtimeSnapshot:
+          state?.runtimeSnapshot ??
+          null,
       };
 
       return response;
@@ -341,11 +368,23 @@ export const createHttpServer = ({
           parsed.data.id as NodeId,
         );
 
-      const response: NodeStatusResponse = {
-        nodeId: status.nodeId,
-        status: status.status,
+      const response:
+        NodeStatusResponse = {
+        nodeId:
+          status.nodeId,
+
+        status:
+          status.status,
+
         lastSeenAt:
-          status.lastSeenAt?.toISOString() ?? null,
+          status.lastSeenAt
+            ?.toISOString() ??
+          null,
+
+        runtimeCollectedAt:
+          status.runtimeCollectedAt
+            ?.toISOString() ??
+          null,
       };
 
       return response;

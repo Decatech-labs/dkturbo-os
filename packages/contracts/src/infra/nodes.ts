@@ -28,9 +28,65 @@ export type NodeParams = z.infer<
   typeof nodeParamsSchema
 >;
 
+export const nodeRuntimeSnapshotSchema = z.object({
+  uptimeSeconds:
+    z.number().nonnegative(),
+
+  load: z.object({
+    oneMinute: z.number(),
+    fiveMinutes: z.number(),
+    fifteenMinutes: z.number(),
+  }),
+
+  memory: z.object({
+    totalBytes:
+      z.number().nonnegative(),
+
+    availableBytes:
+      z.number().nonnegative(),
+
+    usedBytes:
+      z.number().nonnegative(),
+
+    usedPercent:
+      z.number().nonnegative(),
+  }),
+
+  rootFilesystem: z.object({
+    totalBytes:
+      z.number().nonnegative(),
+
+    usedBytes:
+      z.number().nonnegative(),
+
+    availableBytes:
+      z.number().nonnegative(),
+
+    usedPercent:
+      z.number().nonnegative(),
+  }),
+});
+
+export type NodeRuntimeSnapshot = z.infer<
+  typeof nodeRuntimeSnapshotSchema
+>;
+
 export const nodeObservedStateResponseSchema = z.object({
   nodeId: z.string().uuid(),
-  lastSeenAt: z.string().datetime().nullable(),
+
+  lastSeenAt:
+    z.string()
+      .datetime()
+      .nullable(),
+
+  runtimeCollectedAt:
+    z.string()
+      .datetime()
+      .nullable(),
+
+  runtimeSnapshot:
+    nodeRuntimeSnapshotSchema
+      .nullable(),
 });
 
 export type NodeObservedStateResponse = z.infer<
@@ -39,12 +95,22 @@ export type NodeObservedStateResponse = z.infer<
 
 export const nodeStatusResponseSchema = z.object({
   nodeId: z.string().uuid(),
+
   status: z.enum([
     'UNKNOWN',
     'ONLINE',
     'STALE',
   ]),
-  lastSeenAt: z.string().datetime().nullable(),
+
+  lastSeenAt:
+    z.string()
+      .datetime()
+      .nullable(),
+
+  runtimeCollectedAt:
+    z.string()
+      .datetime()
+      .nullable(),
 });
 
 export type NodeStatusResponse = z.infer<
