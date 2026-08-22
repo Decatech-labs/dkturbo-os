@@ -2,6 +2,8 @@ import type {
   NodeObservedStateResponse,
   NodeResponse,
   NodeStatusResponse,
+  ServiceInstanceResponse,
+  ServiceResponse,
 } from '@dkturbo/contracts';
 
 const API_BASE_URL =
@@ -13,6 +15,22 @@ export interface NodeDashboardData {
   status: NodeStatusResponse;
   observedState:
     NodeObservedStateResponse;
+}
+
+export interface ServiceInstanceDashboardData {
+  instance:
+    ServiceInstanceResponse;
+
+  node:
+    NodeResponse | null;
+}
+
+export interface ServiceDashboardData {
+  service:
+    ServiceResponse;
+
+  instances:
+    ServiceInstanceDashboardData[];
 }
 
 class DkturboApiError extends Error {
@@ -80,5 +98,78 @@ export const getNodesDashboard =
           };
         },
       ),
+    );
+  };
+
+export const getServicesDashboard =
+  async (
+    nodes:
+      readonly NodeResponse[],
+  ): Promise<
+    ServiceDashboardData[]
+  > => {
+    const [
+      services,
+      instances,
+    ] = await Promise.all([
+      getJson<ServiceResponse[]>(
+        '/api/services',
+      ),
+
+      getJson<
+        ServiceInstanceResponse[]
+      >(
+        '/api/service-instances',
+      ),
+    ]);
+
+    const nodesById =
+      new Map(
+        nodes.map(
+          (node) => [
+            node.id,
+            node,
+          ],
+        ),
+      );
+
+    const instancesByServiceId =
+      new Map<
+        string,
+        ServiceInstanceDashboardData[]
+      >();
+
+    for (
+      const instance of instances
+    ) {
+      const current =
+        instancesByServiceId.get(
+          instance.serviceId,
+        ) ?? [];
+
+      current.push({
+        instance,
+
+        node:
+          nodesById.get(
+            instance.nodeId,
+          ) ?? null,
+      });
+
+      instancesByServiceId.set(
+        instance.serviceId,
+        current,
+      );
+    }
+
+    return services.map(
+      (service) => ({
+        service,
+
+        instances:
+          instancesByServiceId.get(
+            service.id,
+          ) ?? [],
+      }),
     );
   };

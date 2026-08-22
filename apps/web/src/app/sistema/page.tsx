@@ -1,5 +1,15 @@
 import {
+  StatusPill,
+  type StatusPillTone,
+} from '@dkturbo/design-system';
+
+import type {
+  LucideIcon,
+} from 'lucide-react';
+
+import {
   ArrowLeft,
+  Boxes,
   Clock3,
   Gauge,
   HardDrive,
@@ -12,16 +22,13 @@ import Link from 'next/link';
 
 import type {
   NodeDashboardData,
+  ServiceDashboardData,
 } from '../../lib/api';
 
 import {
   getNodesDashboard,
+  getServicesDashboard,
 } from '../../lib/api';
-
-import {
-  StatusPill,
-  type StatusPillTone,
-} from '@dkturbo/design-system';
 
 export const dynamic =
   'force-dynamic';
@@ -47,7 +54,9 @@ const formatUptime = (
   seconds: number,
 ): string => {
   const minutes =
-    Math.floor(seconds / 60);
+    Math.floor(
+      seconds / 60,
+    );
 
   const days =
     Math.floor(
@@ -56,7 +65,10 @@ const formatUptime = (
 
   const hours =
     Math.floor(
-      (minutes % 1440) / 60,
+      (
+        minutes %
+        1440
+      ) / 60,
     );
 
   const remainingMinutes =
@@ -86,14 +98,41 @@ const formatTime = (
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      timeZone: 'Europe/Madrid',
+      timeZone:
+        'Europe/Madrid',
     },
-  ).format(new Date(value));
+  ).format(
+    new Date(value),
+  );
+};
+
+const formatEnvironment = (
+  environment: string,
+): string => {
+  switch (
+    environment.toLowerCase()
+  ) {
+    case 'production':
+    case 'prod':
+      return 'Producción';
+
+    case 'development':
+    case 'dev':
+      return 'Desarrollo';
+
+    case 'staging':
+      return 'Preproducción';
+
+    default:
+      return environment;
+  }
 };
 
 const getStatusMeta = (
   status:
-    NodeDashboardData['status']['status'],
+    NodeDashboardData[
+      'status'
+    ]['status'],
 ): {
   label: string;
   tone: StatusPillTone;
@@ -107,13 +146,15 @@ const getStatusMeta = (
 
     case 'STALE':
       return {
-        label: 'Sin actualizar',
+        label:
+          'Sin actualizar',
         tone: 'warning',
       };
 
     case 'UNKNOWN':
       return {
-        label: 'Sin información',
+        label:
+          'Sin información',
         tone: 'neutral',
       };
   }
@@ -126,7 +167,7 @@ const Metric = ({
   detail,
   progress,
 }: {
-  icon: typeof Clock3;
+  icon: LucideIcon;
   label: string;
   value: string;
   detail: string;
@@ -169,7 +210,8 @@ const Metric = ({
 const NodePanel = ({
   data,
 }: {
-  data: NodeDashboardData;
+  data:
+    NodeDashboardData;
 }) => {
   const {
     node,
@@ -205,8 +247,12 @@ const NodePanel = ({
         </div>
 
         <StatusPill
-          label={statusMeta.label}
-          tone={statusMeta.tone}
+          label={
+            statusMeta.label
+          }
+          tone={
+            statusMeta.tone
+          }
         />
       </header>
 
@@ -225,7 +271,8 @@ const NodePanel = ({
             icon={Gauge}
             label="Carga"
             value={
-              runtime.load.oneMinute
+              runtime.load
+                .oneMinute
                 .toFixed(2)
             }
             detail={`${runtime.load.fiveMinutes.toFixed(
@@ -239,15 +286,19 @@ const NodePanel = ({
             icon={MemoryStick}
             label="Memoria"
             value={formatPercent(
-              runtime.memory.usedPercent,
+              runtime.memory
+                .usedPercent,
             )}
             detail={`${formatBytes(
-              runtime.memory.usedBytes,
+              runtime.memory
+                .usedBytes,
             )} de ${formatBytes(
-              runtime.memory.totalBytes,
+              runtime.memory
+                .totalBytes,
             )}`}
             progress={
-              runtime.memory.usedPercent
+              runtime.memory
+                .usedPercent
             }
           />
 
@@ -255,18 +306,22 @@ const NodePanel = ({
             icon={HardDrive}
             label="Almacenamiento"
             value={formatPercent(
-              runtime.rootFilesystem
+              runtime
+                .rootFilesystem
                 .usedPercent,
             )}
             detail={`${formatBytes(
-              runtime.rootFilesystem
+              runtime
+                .rootFilesystem
                 .usedBytes,
             )} de ${formatBytes(
-              runtime.rootFilesystem
+              runtime
+                .rootFilesystem
                 .totalBytes,
             )}`}
             progress={
-              runtime.rootFilesystem
+              runtime
+                .rootFilesystem
                 .usedPercent
             }
           />
@@ -281,8 +336,9 @@ const NodePanel = ({
             </strong>
 
             <span>
-              Todavía no tengo una lectura
-              reciente de este sistema.
+              Todavía no tengo una
+              lectura reciente de este
+              sistema.
             </span>
           </div>
         </div>
@@ -303,13 +359,89 @@ const NodePanel = ({
   );
 };
 
+const ServiceCard = ({
+  data,
+}: {
+  data:
+    ServiceDashboardData;
+}) => {
+  const {
+    service,
+    instances,
+  } = data;
+
+  return (
+    <article className="service-card">
+      <div className="service-card-icon">
+        <Boxes />
+      </div>
+
+      <div className="service-card-content">
+        <h3 className="service-card-title">
+          {service.name}
+        </h3>
+
+        {instances.length === 0 ? (
+          <div className="service-card-empty">
+            Sin instancias
+          </div>
+        ) : (
+          <div className="service-instances">
+            {instances.map(
+              ({
+                instance,
+                node,
+              }) => (
+                <div
+                  key={
+                    instance.id
+                  }
+                  className="service-instance"
+                >
+                  <div>
+                    <div className="service-instance-node">
+                      {node?.name ??
+                        'Nodo desconocido'}
+                    </div>
+
+                    <div className="service-instance-key">
+                      {instance.key}
+                    </div>
+                  </div>
+
+                  <span className="service-environment">
+                    {formatEnvironment(
+                      instance.environment,
+                    )}
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+        )}
+      </div>
+    </article>
+  );
+};
+
 export default async function SystemPage() {
   let nodes:
     NodeDashboardData[];
 
+  let services:
+    ServiceDashboardData[];
+
   try {
     nodes =
       await getNodesDashboard();
+
+    services =
+      await getServicesDashboard(
+        nodes.map(
+          ({ node }) =>
+            node,
+        ),
+      );
   } catch (error) {
     console.error(
       'No se ha podido cargar Sistema',
@@ -327,9 +459,9 @@ export default async function SystemPage() {
             <ArrowLeft />
           </Link>
 
-          <div>
-            <h1>Sistema</h1>
-          </div>
+          <h1>
+            Sistema
+          </h1>
         </header>
 
         <div className="system-error">
@@ -361,15 +493,9 @@ export default async function SystemPage() {
           <ArrowLeft />
         </Link>
 
-        <div>
-          <div className="system-page-eyebrow">
-            DKTURBO OS
-          </div>
-
-          <h1>
-            Sistema
-          </h1>
-        </div>
+        <h1>
+          Sistema
+        </h1>
       </header>
 
       <section className="system-nodes">
@@ -380,6 +506,37 @@ export default async function SystemPage() {
               data={node}
             />
           ),
+        )}
+      </section>
+
+      <section className="system-services-section">
+        <div className="system-section-header">
+          <h2>
+            Servicios
+          </h2>
+
+          <span>
+            {services.length}
+          </span>
+        </div>
+
+        {services.length > 0 ? (
+          <div className="services-grid">
+            {services.map(
+              (service) => (
+                <ServiceCard
+                  key={
+                    service.service.id
+                  }
+                  data={service}
+                />
+              ),
+            )}
+          </div>
+        ) : (
+          <div className="services-empty">
+            No hay servicios registrados.
+          </div>
         )}
       </section>
     </main>
