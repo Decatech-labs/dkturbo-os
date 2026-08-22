@@ -1,8 +1,18 @@
-import type { ReactNode } from 'react';
+import type {
+  Metadata,
+} from 'next';
 
-export const metadata = {
+import type {
+  ReactNode,
+} from 'react';
+
+import './globals.css';
+
+export const metadata:
+  Metadata = {
   title: 'DKTURBO OS',
-  description: 'DKTURBO OS Control Plane',
+  description:
+    'Personal Control Plane',
 };
 
 export default function RootLayout({
