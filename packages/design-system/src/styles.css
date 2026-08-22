@@ -1,0 +1,61 @@
+.dk-status-pill {
+  display: inline-flex;
+
+  align-items: center;
+  gap: 7px;
+
+  padding: 8px 11px;
+
+  border-radius:
+    var(--dk-radius-round);
+
+  font-size: 10px;
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+.dk-status-pill-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: currentColor;
+}
+
+.dk-status-pill-success {
+  background:
+    var(
+      --dk-success-surface
+    );
+
+  color:
+    var(
+      --dk-success-text
+    );
+}
+
+.dk-status-pill-warning {
+  background:
+    var(
+      --dk-warning-surface
+    );
+
+  color:
+    var(
+      --dk-warning-text
+    );
+}
+
+.dk-status-pill-neutral {
+  background:
+    var(
+      --dk-neutral-surface
+    );
+
+  color:
+    var(
+      --dk-neutral-text
+    );
+}

@@ -1,0 +1,107 @@
+:root {
+  /*
+   * DKTURBO OS — warm foundation
+   */
+
+  --dk-background: #fbf3e7;
+
+  --dk-text: #28251f;
+  --dk-text-secondary: #746e64;
+  --dk-text-tertiary: #a1998c;
+
+  --dk-surface:
+    rgba(
+      255,
+      255,
+      255,
+      0.68
+    );
+
+  --dk-surface-strong:
+    rgba(
+      255,
+      255,
+      255,
+      0.82
+    );
+
+  --dk-border:
+    rgba(
+      84,
+      67,
+      44,
+      0.07
+    );
+
+  --dk-shadow:
+    0 2px 5px
+      rgba(
+        58,
+        42,
+        20,
+        0.025
+      ),
+    0 18px 45px
+      rgba(
+        58,
+        42,
+        20,
+        0.06
+      );
+
+  /*
+   * App palette
+   */
+
+  --dk-blue: #dfeaff;
+  --dk-blue-accent: #7895c9;
+
+  --dk-yellow: #fff1c9;
+  --dk-yellow-accent: #a78a45;
+
+  --dk-peach: #ffe4d2;
+  --dk-peach-accent: #aa775b;
+
+  --dk-lavender: #eee7ff;
+  --dk-lavender-accent: #7e6dad;
+
+  --dk-mint: #e0f3e9;
+  --dk-mint-accent: #628f7c;
+
+  --dk-rose: #f8e2e8;
+  --dk-rose-accent: #9b6978;
+
+  /*
+   * Semantic state
+   */
+
+  --dk-success-surface: #eaf6ee;
+  --dk-success-text: #5d9675;
+
+  --dk-warning-surface: #fff3df;
+  --dk-warning-text: #a4773d;
+
+  --dk-neutral-surface: #f0ece6;
+  --dk-neutral-text: #8d877e;
+
+  /*
+   * Shape
+   */
+
+  --dk-radius-small: 14px;
+  --dk-radius-medium: 18px;
+  --dk-radius-large: 28px;
+  --dk-radius-round: 999px;
+
+  /*
+   * Typography
+   */
+
+  --dk-font:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    system-ui,
+    sans-serif;
+}

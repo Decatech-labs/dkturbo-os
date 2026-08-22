@@ -18,6 +18,11 @@ import {
   getNodesDashboard,
 } from '../../lib/api';
 
+import {
+  StatusPill,
+  type StatusPillTone,
+} from '@dkturbo/design-system';
+
 export const dynamic =
   'force-dynamic';
 
@@ -89,27 +94,27 @@ const formatTime = (
 const getStatusMeta = (
   status:
     NodeDashboardData['status']['status'],
-) => {
+): {
+  label: string;
+  tone: StatusPillTone;
+} => {
   switch (status) {
     case 'ONLINE':
       return {
         label: 'Todo bien',
-        className:
-          'system-status system-status-online',
+        tone: 'success',
       };
 
     case 'STALE':
       return {
         label: 'Sin actualizar',
-        className:
-          'system-status system-status-stale',
+        tone: 'warning',
       };
 
     case 'UNKNOWN':
       return {
         label: 'Sin información',
-        className:
-          'system-status system-status-unknown',
+        tone: 'neutral',
       };
   }
 };
@@ -199,10 +204,10 @@ const NodePanel = ({
           </div>
         </div>
 
-        <div className={statusMeta.className}>
-          <span />
-          {statusMeta.label}
-        </div>
+        <StatusPill
+          label={statusMeta.label}
+          tone={statusMeta.tone}
+        />
       </header>
 
       {runtime ? (

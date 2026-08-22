@@ -6,6 +6,9 @@ import type {
   ReactNode,
 } from 'react';
 
+import '@dkturbo/design-system/tokens.css';
+import '@dkturbo/design-system/styles.css';
+
 import './globals.css';
 
 export const metadata:
