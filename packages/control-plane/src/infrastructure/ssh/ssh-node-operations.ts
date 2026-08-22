@@ -229,6 +229,59 @@ export class SshNodeOperations {
     };
   }
 
+  async readDockerContainerState(
+    endpoint: SshNodeEndpoint,
+    resourceName: string,
+  ): Promise<
+    'RUNNING' |
+    'STOPPED' |
+    'MISSING'
+  > {
+    const resourcePattern =
+      /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
+
+    if (
+      !resourcePattern.test(
+        resourceName,
+      )
+    ) {
+      throw new Error(
+        `Invalid Docker resource name: ${resourceName}`,
+      );
+    }
+
+    const remoteCommand = [
+      `if docker inspect ${resourceName} >/dev/null 2>&1`,
+      'then',
+      `docker inspect --format '{{if .State.Running}}RUNNING{{else}}STOPPED{{end}}' ${resourceName}`,
+      'else',
+      `printf 'MISSING\\n'`,
+      'fi',
+    ].join('; ');
+
+    const {
+      stdout,
+    } = await this.execute(
+      endpoint,
+      remoteCommand,
+    );
+
+    const state =
+      stdout.trim();
+
+    if (
+      state !== 'RUNNING' &&
+      state !== 'STOPPED' &&
+      state !== 'MISSING'
+    ) {
+      throw new Error(
+        `Invalid Docker runtime state: ${state}`,
+      );
+    }
+
+    return state;
+  }
+
   private async execute(
     endpoint: SshNodeEndpoint,
     remoteCommand: string,

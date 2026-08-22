@@ -20,6 +20,8 @@ export interface Database {
   'authz.approval_requests': AuthorizationApprovalRequestTable;
   'actions.action_executions': ActionsActionExecutionTable;
   'infra.node_access_endpoints': InfraNodeAccessEndpointTable;
+  'infra.service_runtime_bindings': InfraServiceRuntimeBindingTable;
+  'infra.service_instance_observed_state': InfraServiceInstanceObservedStateTable;
 }
 
 export interface CreateDatabaseOptions {
@@ -71,6 +73,23 @@ export interface InfraServiceInstanceTable {
   node_id: string;
   environment: string;
   created_at: ColumnType<Date, Date, never>;
+}
+
+export interface InfraServiceRuntimeBindingTable {
+  service_instance_id: string;
+  runtime_kind: string;
+  resource_name: string;
+  created_at: ColumnType<Date, Date, never>;
+}
+
+export interface InfraServiceInstanceObservedStateTable {
+  service_instance_id: string;
+  collected_at: ColumnType<
+    Date,
+    Date,
+    Date
+  >;
+  runtime_snapshot: unknown;
 }
 
 export interface ActionsActionRequestTable {

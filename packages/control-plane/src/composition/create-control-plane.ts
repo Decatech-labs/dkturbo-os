@@ -51,6 +51,27 @@ import {
 import {
   SshNodeOperations,
 } from '../infrastructure/ssh/ssh-node-operations.js';
+import {
+  PostgresServiceRuntimeBindingRepository,
+} from '../modules/infra/adapters/persistence/postgres-service-runtime-binding.repository.js';
+import {
+  PostgresServiceInstanceObservedStateRepository,
+} from '../modules/infra/adapters/persistence/postgres-service-instance-observed-state.repository.js';
+import {
+  SshServiceInstanceRuntimeSnapshotCollector,
+} from '../modules/infra/adapters/ssh-service-instance-runtime-snapshot.collector.js';
+import {
+  SetServiceRuntimeBinding,
+} from '../modules/infra/application/set-service-runtime-binding.js';
+import {
+  ListServiceRuntimeBindings,
+} from '../modules/infra/application/list-service-runtime-bindings.js';
+import {
+  GetServiceInstanceObservedState,
+} from '../modules/infra/application/get-service-instance-observed-state.js';
+import {
+  RefreshServiceInstanceObservedState,
+} from '../modules/infra/application/refresh-service-instance-observed-state.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -65,6 +86,12 @@ export const createControlPlane = ({
   const nodeCapabilityRepository = new PostgresNodeCapabilityRepository(database);
   const serviceRepository = new PostgresServiceRepository(database);
   const serviceInstanceRepository = new PostgresServiceInstanceRepository(database);
+  const serviceRuntimeBindingRepository = new PostgresServiceRuntimeBindingRepository(
+    database,
+  );
+  const serviceInstanceObservedStateRepository = new PostgresServiceInstanceObservedStateRepository(
+    database,
+  );
   const actionRequestRepository = new PostgresActionRequestRepository(database);
   const userRepository = new PostgresUserRepository(database);
   const actionAuthorizer = new RoleBasedActionAuthorizer(
@@ -81,6 +108,11 @@ export const createControlPlane = ({
   );
   const sshNodeOperations = new SshNodeOperations();
   const runtimeSnapshotCollector = new SshNodeRuntimeSnapshotCollector(
+    nodeAccessEndpointRepository,
+    sshNodeOperations,
+  );
+  const serviceInstanceRuntimeSnapshotCollector = new SshServiceInstanceRuntimeSnapshotCollector(
+    serviceRuntimeBindingRepository,
     nodeAccessEndpointRepository,
     sshNodeOperations,
   );
@@ -113,6 +145,13 @@ export const createControlPlane = ({
     runtimeSnapshotCollector,
     clock,
   );
+  const refreshServiceInstanceObservedState = new RefreshServiceInstanceObservedState(
+    serviceInstanceRepository,
+    serviceInstanceObservedStateRepository,
+    serviceInstanceRuntimeSnapshotCollector,
+    clock,
+  );
+
 
   return {
     actions: {
@@ -197,6 +236,19 @@ export const createControlPlane = ({
       listServiceInstances: new ListServiceInstances(
         serviceInstanceRepository,
       ),
+      setServiceRuntimeBinding: new SetServiceRuntimeBinding(
+        serviceInstanceRepository,
+        serviceRuntimeBindingRepository,
+        clock,
+      ),
+      listServiceRuntimeBindings: new ListServiceRuntimeBindings(
+        serviceRuntimeBindingRepository,
+      ),
+      getServiceInstanceObservedState: new GetServiceInstanceObservedState(
+        serviceInstanceRepository,
+        serviceInstanceObservedStateRepository,
+      ),
+      refreshServiceInstanceObservedState,
       refreshNodeObservedState,
     },
   };

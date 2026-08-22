@@ -94,142 +94,220 @@ let activeCycle:
   | Promise<void>
   | null = null;
 
-const refreshNodes =
-  async (): Promise<void> => {
-    const nodes =
-      await controlPlane.infra
-        .listNodes
-        .execute();
+const refreshNodes = async (): Promise<void> => {
+  const nodes =
+    await controlPlane.infra
+      .listNodes
+      .execute();
 
-    if (nodes.length === 0) {
-      console.info(
-        '[worker] No nodes registered',
-      );
+  if (nodes.length === 0) {
+    console.info(
+      '[worker] No nodes registered',
+    );
 
-      return;
-    }
+    return;
+  }
 
-    for (const node of nodes) {
-      if (stopping) {
-        return;
-      }
-
-      try {
-        const state =
-          await controlPlane.infra
-            .refreshNodeObservedState
-            .execute(
-              node.id,
-            );
-
-        console.info(
-          '[worker] Node refreshed',
-          {
-            nodeId:
-              node.id,
-            hostname:
-              node.hostname,
-            collectedAt:
-              state
-                .runtimeCollectedAt
-                ?.toISOString() ??
-              null,
-          },
-        );
-      } catch (error) {
-        console.error(
-          '[worker] Node refresh failed',
-          {
-            nodeId:
-              node.id,
-            hostname:
-              node.hostname,
-
-            error:
-              error instanceof Error
-                ? error.message
-                : String(
-                    error,
-                  ),
-          },
-        );
-      }
-    }
-  };
-
-const scheduleNext =
-  (): void => {
+  for (const node of nodes) {
     if (stopping) {
       return;
     }
-
-    timer =
-      setTimeout(
-        () => {
-          void runCycle();
-        },
-        refreshIntervalMs,
-      );
-  };
-
-const runCycle =
-  async (): Promise<void> => {
-    if (stopping) {
-      return;
-    }
-
-    const cycle =
-      refreshNodes();
-
-    activeCycle = cycle;
 
     try {
-      await cycle;
+      const state =
+        await controlPlane.infra
+          .refreshNodeObservedState
+          .execute(
+            node.id,
+          );
+
+      console.info(
+        '[worker] Node refreshed',
+        {
+          nodeId:
+            node.id,
+          hostname:
+            node.hostname,
+          collectedAt:
+            state
+              .runtimeCollectedAt
+              ?.toISOString() ??
+            null,
+        },
+      );
     } catch (error) {
       console.error(
-        '[worker] Refresh cycle failed',
+        '[worker] Node refresh failed',
         {
+          nodeId:
+            node.id,
+          hostname:
+            node.hostname,
+
+          error:
+            error instanceof Error
+              ? error.message
+              : String(
+                  error,
+                ),
+        },
+      );
+    }
+  }
+};
+
+const refreshServiceInstances = async (): Promise<void> => {
+  const bindings =
+    await controlPlane.infra
+      .listServiceRuntimeBindings
+      .execute();
+
+  if (
+    bindings.length === 0
+  ) {
+    console.info(
+      '[worker] No service runtime bindings registered',
+    );
+
+    return;
+  }
+
+  for (
+    const binding of bindings
+  ) {
+    if (stopping) {
+      return;
+    }
+
+    try {
+      const state =
+        await controlPlane.infra
+          .refreshServiceInstanceObservedState
+          .execute(
+            binding.serviceInstanceId,
+          );
+
+      console.info(
+        '[worker] Service instance refreshed',
+        {
+          serviceInstanceId:
+            binding.serviceInstanceId,
+
+          runtimeKind:
+            state
+              .runtimeSnapshot
+              .runtimeKind,
+
+          resourceName:
+            state
+              .runtimeSnapshot
+              .resourceName,
+
+          state:
+            state
+              .runtimeSnapshot
+              .state,
+
+          collectedAt:
+            state
+              .collectedAt
+              .toISOString(),
+        },
+      );
+    } catch (error) {
+      console.error(
+        '[worker] Service instance refresh failed',
+        {
+          serviceInstanceId:
+            binding.serviceInstanceId,
+
           error:
             error instanceof Error
               ? error.message
               : String(error),
         },
       );
-    } finally {
-      activeCycle = null;
-
-      scheduleNext();
     }
-  };
+  }
+};
 
-const shutdown =
-  async (
-    signal: string,
-  ): Promise<void> => {
+const scheduleNext = (): void => {
+  if (stopping) {
+    return;
+  }
+
+  timer =
+    setTimeout(
+      () => {
+        void runCycle();
+      },
+      refreshIntervalMs,
+    );
+};
+
+const runCycle = async (): Promise<void> => {
+  if (stopping) {
+    return;
+  }
+
+  const cycle = (async () => {
+    await refreshNodes();
+
     if (stopping) {
       return;
     }
 
-    stopping = true;
+    await refreshServiceInstances();
+  })();
 
-    console.info(
-      `[worker] Received ${signal}, shutting down`,
+  activeCycle = cycle;
+
+  try {
+    await cycle;
+  } catch (error) {
+    console.error(
+      '[worker] Refresh cycle failed',
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : String(error),
+      },
     );
+  } finally {
+    activeCycle = null;
 
-    if (timer) {
-      clearTimeout(timer);
-    }
+    scheduleNext();
+  }
+};
 
-    if (activeCycle) {
-      await activeCycle;
-    }
+const shutdown = async (
+  signal: string,
+): Promise<void> => {
+  if (stopping) {
+    return;
+  }
 
-    await database.destroy();
+  stopping = true;
 
-    console.info(
-      '[worker] Shutdown complete',
-    );
-  };
+  console.info(
+    `[worker] Received ${signal}, shutting down`,
+  );
+
+  if (timer) {
+    clearTimeout(timer);
+  }
+
+  if (activeCycle) {
+    await activeCycle;
+  }
+
+  await database.destroy();
+
+  console.info(
+    '[worker] Shutdown complete',
+  );
+};
 
 process.once(
   'SIGINT',
