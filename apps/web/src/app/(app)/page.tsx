@@ -5,15 +5,35 @@ import {
 
 import {
   getHomeApps,
-} from '../apps/registry';
+} from '../../apps/registry';
 
 import {
   AppCard,
-} from '../components/app-card';
+} from '../../components/app-card';
 
-export default function HomePage() {
-  const apps =
-    getHomeApps();
+import {
+  requireCurrentSession,
+} from '../../lib/auth-server';
+
+const getFirstName = (
+  name: string,
+): string =>
+  name
+    .trim()
+    .split(/\s+/)[0] ??
+  name;
+
+export default async function HomePage() {
+  const [
+    apps,
+    session,
+  ] = await Promise.all([
+    Promise.resolve(
+      getHomeApps(),
+    ),
+
+    requireCurrentSession(),
+  ]);
 
   return (
     <main className="home">
@@ -24,7 +44,9 @@ export default function HomePage() {
           </div>
 
           <h1 className="home-user">
-            Owner
+            {getFirstName(
+              session.user.name,
+            )}
           </h1>
         </div>
 
@@ -43,14 +65,6 @@ export default function HomePage() {
             aria-label="Notificaciones"
           >
             <Bell />
-          </button>
-
-          <button
-            type="button"
-            className="profile-button"
-            aria-label="Perfil"
-          >
-            DK
           </button>
         </div>
       </header>

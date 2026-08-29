@@ -23,12 +23,12 @@ import Link from 'next/link';
 import type {
   NodeDashboardData,
   ServiceDashboardData,
-} from '../../lib/api';
+} from '../../../lib/api';
 
 import {
   getNodesDashboard,
   getServicesDashboard,
-} from '../../lib/api';
+} from '../../../lib/api';
 
 import {
   ServiceRestartControl,

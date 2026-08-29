@@ -1722,3 +1722,241 @@ a {
   width: 13px;
   height: 13px;
 }
+
+/* APP SHELL */
+
+.app-shell {
+  position: relative;
+
+  min-height: 100vh;
+}
+
+.app-shell-account {
+  position: fixed;
+
+  top: 30px;
+  right: 30px;
+
+  z-index: 50;
+}
+
+.account-menu {
+  position: relative;
+}
+
+.account-menu > summary {
+  list-style: none;
+}
+
+.account-menu >
+summary::-webkit-details-marker {
+  display: none;
+}
+
+.account-menu-panel {
+  position: absolute;
+
+  top: calc(100% + 9px);
+  right: 0;
+
+  width: 245px;
+
+  padding: 8px;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.86
+    );
+
+  border-radius: 18px;
+
+  background:
+    rgba(
+      255,
+      252,
+      248,
+      0.94
+    );
+
+  box-shadow:
+    0 18px 55px
+    rgba(
+      58,
+      42,
+      20,
+      0.12
+    );
+
+  backdrop-filter:
+    blur(24px);
+
+  -webkit-backdrop-filter:
+    blur(24px);
+}
+
+.account-menu-user {
+  display: grid;
+
+  gap: 3px;
+
+  padding:
+    10px 11px
+    12px;
+}
+
+.account-menu-user strong {
+  overflow: hidden;
+
+  color:
+    var(--dk-text);
+
+  font-size: 12px;
+
+  text-overflow:
+    ellipsis;
+
+  white-space: nowrap;
+}
+
+.account-menu-user span {
+  overflow: hidden;
+
+  color:
+    var(
+      --dk-text-tertiary
+    );
+
+  font-size: 9px;
+
+  text-overflow:
+    ellipsis;
+
+  white-space: nowrap;
+}
+
+.account-menu-logout {
+  display: flex;
+
+  width: 100%;
+
+  min-height: 38px;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding:
+    8px 10px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  background:
+    transparent;
+
+  color:
+    var(
+      --dk-text-secondary
+    );
+
+  cursor: pointer;
+
+  font-size: 11px;
+  font-weight: 620;
+
+  text-align: left;
+}
+
+.account-menu-logout:hover {
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.78
+    );
+
+  color:
+    var(--dk-text);
+}
+
+.account-menu-logout:disabled {
+  opacity: 0.5;
+
+  cursor: default;
+}
+
+.account-menu-logout svg {
+  width: 14px;
+  height: 14px;
+
+  stroke-width: 1.9;
+}
+
+
+/* APP SHELL — IPHONE */
+
+@media (
+  max-width: 600px
+) {
+  .app-shell-account {
+    top:
+      max(
+        18px,
+        env(
+          safe-area-inset-top
+        )
+      );
+
+    right:
+      max(
+        18px,
+        env(
+          safe-area-inset-right
+        )
+      );
+  }
+
+  .profile-button {
+    width: 40px;
+    height: 40px;
+
+    min-width: 40px;
+    min-height: 40px;
+
+    touch-action:
+      manipulation;
+  }
+
+  .account-menu-panel {
+    width:
+      min(
+        245px,
+        calc(
+          100vw -
+          36px
+        )
+      );
+  }
+
+  .account-menu-logout {
+    min-height: 44px;
+  }
+}
+
+.home-actions {
+  margin-right: 52px;
+}
+
+@media (
+  max-width: 600px
+) {
+  .home-actions {
+    margin-right: 48px;
+  }
+}
