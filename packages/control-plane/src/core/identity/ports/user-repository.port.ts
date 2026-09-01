@@ -11,4 +11,6 @@ export interface UserRepository {
   findById(
     id: UserId,
   ): Promise<User | null>;
+
+  list(): Promise<User[]>;
 }

@@ -47,7 +47,6 @@ export {
 
 export {
   createBetterAuth,
-  type BetterAuthInstance,
 } from './infrastructure/auth/better-auth.js';
 
 export {

@@ -90,6 +90,16 @@ export class ExecuteActionExecution {
       );
     }
 
+    if (
+      actionRequest.status !==
+      'READY'
+    ) {
+      throw new ActionRequestNotReadyForExecutionError(
+        actionRequest.id,
+        actionRequest.status,
+      );
+    }
+
     const startedAt =
       this.clock.now();
 
@@ -150,5 +160,20 @@ export class ExecuteActionExecution {
     }
 
     return updated;
+  }
+}
+
+export class ActionRequestNotReadyForExecutionError
+  extends Error
+{
+  constructor(
+    readonly actionRequestId:
+      string,
+    readonly status:
+      string,
+  ) {
+    super(
+      `Action request ${actionRequestId} cannot be executed from status ${status}`,
+    );
   }
 }

@@ -19,6 +19,8 @@ import {
   type AuthorizationDecisionResponse,
   type ProcessActionRequestResponse,
   type ServiceInstanceObservedStateResponse,
+  type FamilyUserResponse,
+  type PendingApprovalResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -58,7 +60,6 @@ import {
   RequiredCapabilityMissingError,
 } from '../../core/actions/application/prepare-action-execution.js';
 import { fromNodeHeaders } from 'better-auth/node';
-import type { BetterAuthInstance } from '../../infrastructure/auth/better-auth.js';
 import type {
   FastifyReply,
   FastifyRequest,
@@ -70,11 +71,39 @@ import { z } from 'zod';
 import type {
   ActionExecutionId,
 } from '../../core/actions/domain/action-execution.js';
+import type {
+  UserId,
+} from '../../core/identity/domain/user.js';
+import {
+  ActionExecutionNotFoundError,
+  ActionRequestNotReadyForExecutionError,
+} from '../../core/actions/application/execute-action-execution.js';
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
   controlPlane: ControlPlane;
-  auth: BetterAuthInstance;
+  auth: HttpAuth;
+}
+
+export interface HttpAuth {
+  api: {
+    getSession(
+      input: {
+        headers: Headers;
+      },
+    ): Promise<
+      | {
+          user: {
+            id: string;
+          };
+        }
+      | null
+    >;
+  };
+
+  handler(
+    request: Request,
+  ): Promise<Response>;
 }
 
 const toNodeResponse = (
@@ -122,6 +151,156 @@ export const createHttpServer = ({
       kind: 'user',
       id: session.user.id,
     });
+  };
+
+  const requireOwnerActor = async (
+    request:
+      FastifyRequest,
+    reply:
+      FastifyReply,
+  ): Promise<ActorRef | null> => {
+    const actor =
+      await requireAuthenticatedActor(
+        request,
+        reply,
+      );
+
+    if (!actor) {
+      return null;
+    }
+
+    if (
+      actor.kind !==
+      'user'
+    ) {
+      await reply
+        .code(403)
+        .send({
+          error:
+            'authorization_denied',
+        });
+
+      return null;
+    }
+
+    const user =
+      await controlPlane
+        .identity
+        .getUser
+        .execute(
+          actor.id as UserId,
+        );
+
+    if (
+      !user ||
+      user.role !==
+        'owner'
+    ) {
+      await reply
+        .code(403)
+        .send({
+          error:
+            'owner_required',
+        });
+
+      return null;
+    }
+
+    return actor;
+  };
+
+  const requireActionRequestAccess =
+  async (
+    request:
+      FastifyRequest,
+
+    reply:
+      FastifyReply,
+
+    actionRequestId:
+      ActionRequestId,
+  ): Promise<
+    ActorRef | null
+  > => {
+    const actor =
+      await requireAuthenticatedActor(
+        request,
+        reply,
+      );
+
+    if (!actor) {
+      return null;
+    }
+
+    if (
+      actor.kind !==
+      'user'
+    ) {
+      await reply
+        .code(403)
+        .send({
+          error:
+            'authorization_denied',
+        });
+
+      return null;
+    }
+
+    const user =
+      await controlPlane
+        .identity
+        .getUser
+        .execute(
+          actor.id as UserId,
+        );
+
+    if (!user) {
+      await reply
+        .code(403)
+        .send({
+          error:
+            'authorization_denied',
+        });
+
+      return null;
+    }
+
+    if (
+      user.role ===
+      'owner'
+    ) {
+      return actor;
+    }
+
+    const actionRequest =
+      await controlPlane
+        .actions
+        .getActionRequest
+        .execute(
+          actionRequestId,
+        );
+
+    if (
+      actionRequest
+        .requestedBy
+        .kind ===
+        'user' &&
+      actionRequest
+        .requestedBy
+        .id ===
+        actor.id
+    ) {
+      return actor;
+    }
+
+    await reply
+      .code(403)
+      .send({
+        error:
+          'authorization_denied',
+      });
+
+    return null;
   };
 
   app.setErrorHandler(
@@ -187,6 +366,30 @@ export const createHttpServer = ({
             'required_capability_missing',
           capability: error.capability,
         });
+      }
+
+      if (
+        error instanceof
+        ActionExecutionNotFoundError
+      ) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'action_execution_not_found',
+          });
+      }
+
+      if (
+        error instanceof
+        ActionRequestNotReadyForExecutionError
+      ) {
+        return reply
+          .code(409)
+          .send({
+            error:
+              'action_request_not_ready',
+          });
       }
 
       app.log.error(error);
@@ -691,7 +894,20 @@ export const createHttpServer = ({
 
   app.get(
     '/api/action-requests',
-    async () => {
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireOwnerActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
       const requests =
         await controlPlane.actions.listActionRequests.execute();
 
@@ -726,6 +942,18 @@ export const createHttpServer = ({
         });
       }
 
+      const actor =
+        await requireActionRequestAccess(
+          request,
+          reply,
+          parsed.data
+            .id as ActionRequestId,
+        );
+
+      if (!actor) {
+        return;
+      }
+
       const decision =
         await controlPlane.authorization.authorizeActionRequest.execute(
           parsed.data.id as ActionRequestId,
@@ -753,6 +981,18 @@ export const createHttpServer = ({
           error: 'invalid_request',
           details: parsed.error.issues,
         });
+      }
+
+      const actor =
+        await requireActionRequestAccess(
+          request,
+          reply,
+          parsed.data
+            .id as ActionRequestId,
+        );
+
+      if (!actor) {
+        return;
       }
 
       const result =
@@ -860,6 +1100,143 @@ export const createHttpServer = ({
     },
   );
 
+  app.get(
+    '/api/family/users',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireOwnerActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      const users =
+        await controlPlane
+          .identity
+          .listUsers
+          .execute();
+
+      const response:
+        FamilyUserResponse[] =
+        users.map(
+          (user) => ({
+            id:
+              user.id,
+
+            name:
+              user.name,
+
+            role:
+              user.role,
+
+            createdAt:
+              user.createdAt
+                .toISOString(),
+          }),
+        );
+
+      return response;
+    },
+  );
+
+  app.get(
+    '/api/approval-requests/pending',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireOwnerActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      const [
+        approvals,
+        actionRequests,
+      ] =
+        await Promise.all([
+          controlPlane
+            .authorization
+            .listPendingApprovalRequests
+            .execute(),
+
+          controlPlane
+            .actions
+            .listActionRequests
+            .execute(),
+        ]);
+
+      const requestsById =
+        new Map(
+          actionRequests.map(
+            (
+              actionRequest,
+            ) => [
+              actionRequest.id,
+              actionRequest,
+            ],
+          ),
+        );
+
+      const response:
+        PendingApprovalResponse[] =
+        [];
+
+      for (
+        const approval of
+          approvals
+      ) {
+        const actionRequest =
+          requestsById.get(
+            approval.actionRequestId,
+          );
+
+        if (
+          !actionRequest
+        ) {
+          continue;
+        }
+
+        response.push({
+          id:
+            approval.id,
+
+          actionRequestId:
+            approval.actionRequestId,
+
+          requestedAt:
+            approval.requestedAt
+              .toISOString(),
+
+          requestedBy:
+            actionRequest
+              .requestedBy,
+
+          actionKey:
+            actionRequest
+              .actionKey,
+
+          target:
+            actionRequest
+              .target,
+        });
+      }
+
+      return response;
+    },
+  );
+
   app.route({
     method: ['GET', 'POST'],
     url: '/api/auth/*',
@@ -921,15 +1298,6 @@ export const createHttpServer = ({
   app.post(
     '/api/action-executions/:id/execute',
     async (request, reply) => {
-      const actor =
-        await requireAuthenticatedActor(
-          request,
-          reply,
-        );
-
-      if (!actor) {
-        return;
-      }
 
       const params =
         z.object({
@@ -945,6 +1313,28 @@ export const createHttpServer = ({
             error:
               'invalid_request',
           });
+      }
+
+      const existingExecution =
+        await controlPlane
+          .actions
+          .getActionExecution
+          .execute(
+            params.data
+              .id as
+              ActionExecutionId,
+          );
+
+      const actor =
+        await requireActionRequestAccess(
+          request,
+          reply,
+          existingExecution
+            .actionRequestId,
+        );
+
+      if (!actor) {
+        return;
       }
 
       const execution =

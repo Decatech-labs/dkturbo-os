@@ -14,6 +14,18 @@ import {
 import type { UserRepository } from '../../identity/ports/user-repository.port.js';
 import { createResourceRef } from '../../resources/index.js';
 import { RoleBasedActionAuthorizer } from './role-based-action-authorizer.js';
+import type {
+  ActionKey,
+} from '../../actions/domain/action-key.js';
+import type {
+  ResourceRef,
+} from '../../resources/index.js';
+import type {
+  UserActionPermission,
+} from '../domain/user-action-permission.js';
+import type {
+  UserActionPermissionRepository,
+} from '../ports/user-action-permission-repository.port.js';
 
 class FakeUserRepository
   implements UserRepository
@@ -35,6 +47,10 @@ class FakeUserRepository
       ) ?? null
     );
   }
+
+  async list(): Promise<User[]> {
+    return this.users;
+  }
 }
 
 const target = createResourceRef({
@@ -55,10 +71,12 @@ const authorizeAs = async (
     createdAt: new Date(),
   });
 
-  const authorizer =
-    new RoleBasedActionAuthorizer(
-      new FakeUserRepository([user]),
-    );
+  const authorizer = new RoleBasedActionAuthorizer(
+    new FakeUserRepository([
+      user,
+    ]),
+    new FakePermissionRepository(),
+  )
 
   return authorizer.authorize({
     actor: createActorRef({
@@ -88,4 +106,84 @@ describe('RoleBasedActionAuthorizer', () => {
       (await authorizeAs('guest')).outcome,
     ).toBe('DENY');
   });
+
+  it( 'allows a member with an exact durable permission', async () => {
+      const user =
+        createUser({
+          id:
+            'permitted-member',
+
+          name:
+            'Permitted member',
+
+          role:
+            'member',
+
+          createdAt:
+            new Date(),
+        });
+
+      const authorizer =
+        new RoleBasedActionAuthorizer(
+          new FakeUserRepository([
+            user,
+          ]),
+          new FakePermissionRepository(
+            true,
+          ),
+        );
+
+      const decision =
+        await authorizer.authorize({
+          actor:
+            createActorRef({
+              kind:
+                'user',
+
+              id:
+                user.id,
+            }),
+
+          actionKey,
+
+          target,
+        });
+
+      expect(
+        decision,
+      ).toEqual({
+        outcome:
+          'ALLOW',
+
+        reason:
+          'user_action_permission',
+      });
+    },
+  );
 });
+
+class FakePermissionRepository
+  implements
+    UserActionPermissionRepository
+{
+  constructor(
+    private readonly permitted =
+      false,
+  ) {}
+
+  async save(
+    _permission:
+      UserActionPermission,
+  ): Promise<void> {}
+
+  async exists(
+    _userId:
+      UserId,
+    _actionKey:
+      ActionKey,
+    _target:
+      ResourceRef,
+  ): Promise<boolean> {
+    return this.permitted;
+  }
+}

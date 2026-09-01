@@ -107,8 +107,3 @@ export const createBetterAuth = ({
     },
   };
 };
-
-export type BetterAuthInstance =
-  ReturnType<
-    typeof createBetterAuth
-  >['auth'];

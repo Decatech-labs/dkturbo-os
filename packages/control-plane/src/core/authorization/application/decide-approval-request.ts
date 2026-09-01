@@ -10,10 +10,19 @@ import type {
   ApprovalRequestId,
 } from '../domain/approval-request.js';
 import type { ApprovalRequestRepository } from '../ports/approval-request-repository.port.js';
+import {
+  createUserActionPermission,
+} from '../domain/user-action-permission.js';
+import type {
+  UserActionPermissionRepository,
+} from '../ports/user-action-permission-repository.port.js';
 
 export interface DecideApprovalInput {
   approvalRequestId: ApprovalRequestId;
-  decision: 'APPROVE' | 'REJECT';
+  decision:
+  | 'REJECT'
+  | 'APPROVE_ONCE'
+  | 'APPROVE_AND_GRANT';
   decidedBy: ActorRef;
 }
 
@@ -25,6 +34,8 @@ export class DecideApprovalRequest {
       ActionRequestRepository,
     private readonly users:
       UserRepository,
+    private readonly permissions:
+      UserActionPermissionRepository,
     private readonly prepareExecution:
       PrepareActionExecution,
     private readonly clock: Clock,
@@ -103,6 +114,63 @@ export class DecideApprovalRequest {
       return {
         outcome: 'REJECTED' as const,
       };
+    }
+
+    if (
+      input.decision ===
+      'APPROVE_AND_GRANT'
+    ) {
+      if (
+        request.requestedBy.kind !==
+        'user'
+      ) {
+        throw new Error(
+          'Only user action requests can receive durable permissions',
+        );
+      }
+
+      const requester =
+        await this.users.findById(
+          request.requestedBy.id as
+            UserId,
+        );
+
+      if (!requester) {
+        throw new Error(
+          'Action requester not found',
+        );
+      }
+
+      if (
+        requester.role !==
+        'member'
+      ) {
+        throw new Error(
+          'Durable permissions can only be granted to members',
+        );
+      }
+
+      const permission =
+        createUserActionPermission({
+          userId:
+            requester.id,
+
+          actionKey:
+            request.actionKey,
+
+          target:
+            request.target,
+
+          grantedByUserId:
+            decider.id,
+
+          grantedAt:
+            this.clock.now(),
+        });
+
+      await this.permissions.save(
+        permission,
+      );
     }
 
     const execution =

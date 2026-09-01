@@ -21,7 +21,8 @@ export interface Database {
   'actions.action_executions': ActionsActionExecutionTable;
   'infra.node_access_endpoints': InfraNodeAccessEndpointTable;
   'infra.service_runtime_bindings': InfraServiceRuntimeBindingTable;
-  'infra.service_instance_observed_state': InfraServiceInstanceObservedStateTable;
+  'infra.service_instance_observed_state':  InfraServiceInstanceObservedStateTable;
+  'authz.user_action_permissions': AuthorizationUserActionPermissionTable;
 }
 
 export interface CreateDatabaseOptions {
@@ -161,4 +162,24 @@ export interface InfraNodeAccessEndpointTable {
   priority: number;
   enabled: boolean;
   created_at: ColumnType<Date, Date, never>;
+}
+export interface AuthorizationUserActionPermissionTable {
+  id: string;
+
+  user_id: string;
+
+  action_key: string;
+
+  target_kind: string;
+
+  target_id: string;
+
+  granted_by_user_id: string;
+
+  granted_at:
+    ColumnType<
+      Date,
+      Date,
+      never
+    >;
 }

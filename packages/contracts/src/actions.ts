@@ -120,8 +120,9 @@ export const approvalRequestParamsSchema = z.object({
 
 export const decideApprovalRequestSchema = z.object({
   decision: z.enum([
-    'APPROVE',
     'REJECT',
+    'APPROVE_ONCE',
+    'APPROVE_AND_GRANT',
   ]),
 });
 

@@ -64,3 +64,11 @@ export {
   type ProcessActionRequestResponse,
   type RequestActionRequest,
 } from './actions.js';
+
+export {
+  familyUserRoleSchema,
+  familyUserResponseSchema,
+  pendingApprovalResponseSchema,
+  type FamilyUserResponse,
+  type PendingApprovalResponse,
+} from './family.js';

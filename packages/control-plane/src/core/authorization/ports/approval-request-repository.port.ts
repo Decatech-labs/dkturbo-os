@@ -28,4 +28,8 @@ export interface ApprovalRequestRepository {
     decidedBy: ActorRef,
     decidedAt: Date,
   ): Promise<void>;
+
+  listPending(): Promise<
+    ApprovalRequest[]
+  >;
 }

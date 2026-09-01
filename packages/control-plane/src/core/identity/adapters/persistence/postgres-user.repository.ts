@@ -52,4 +52,36 @@ export class PostgresUserRepository
       createdAt: row.created_at,
     };
   }
+
+  async list(): Promise<User[]> {
+    const rows =
+      await this.database
+        .selectFrom(
+          'identity.users',
+        )
+        .selectAll()
+        .orderBy(
+          'created_at',
+          'asc',
+        )
+        .execute();
+
+    return rows.map(
+      (row) => ({
+        id:
+          row.id as
+            UserId,
+
+        name:
+          row.name,
+
+        role:
+          row.role as
+            UserRole,
+
+        createdAt:
+          row.created_at,
+      }),
+    );
+  }
 }

@@ -126,4 +126,30 @@ export class PostgresApprovalRequestRepository
       .where('id', '=', id)
       .execute();
   }
+
+  async listPending(): Promise<
+    ApprovalRequest[]
+  > {
+    const rows =
+      await this.database
+        .selectFrom(
+          'authz.approval_requests',
+        )
+        .selectAll()
+        .where(
+          'status',
+          '=',
+          'PENDING',
+        )
+        .orderBy(
+          'requested_at',
+          'asc',
+        )
+        .execute();
+
+    return rows.map(
+      (row) =>
+        this.map(row),
+    );
+  }
 }

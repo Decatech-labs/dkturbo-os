@@ -72,6 +72,24 @@ import {
 import {
   RefreshServiceInstanceObservedState,
 } from '../modules/infra/application/refresh-service-instance-observed-state.js';
+import {
+  PostgresUserActionPermissionRepository,
+} from '../core/authorization/adapters/postgres-user-action-permission.repository.js';
+import {
+  ListUsers,
+} from '../core/identity/application/list-users.js';
+import {
+  ListPendingApprovalRequests,
+} from '../core/authorization/application/list-pending-approval-requests.js';
+import {
+  GetUser,
+} from '../core/identity/application/get-user.js';
+import {
+  GetActionRequest,
+} from '../core/actions/application/get-action-request.js';
+import {
+  GetActionExecution,
+} from '../core/actions/application/get-action-execution.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -94,8 +112,12 @@ export const createControlPlane = ({
   );
   const actionRequestRepository = new PostgresActionRequestRepository(database);
   const userRepository = new PostgresUserRepository(database);
+  const userActionPermissionRepository = new PostgresUserActionPermissionRepository(
+    database,
+  );
   const actionAuthorizer = new RoleBasedActionAuthorizer(
     userRepository,
+    userActionPermissionRepository,
   );
   const approvalRequestRepository = new PostgresApprovalRequestRepository(
     database,
@@ -171,27 +193,53 @@ export const createControlPlane = ({
         clock,
       ),
       executeActionExecution,
+      getActionRequest: new GetActionRequest(
+        actionRequestRepository,
+      ),
+      getActionExecution: new GetActionExecution(
+        actionExecutionRepository,
+      ),
     },
 
     authorization: {
-      authorizeActionRequest: new AuthorizeActionRequest(
-        actionRequestRepository,
-        actionAuthorizer,
-      ),
-      decideApprovalRequest: new DecideApprovalRequest(
-        approvalRequestRepository,
-        actionRequestRepository,
-        userRepository,
-        prepareActionExecution,
-        clock,
-      ),
+      authorizeActionRequest:
+        new AuthorizeActionRequest(
+          actionRequestRepository,
+          actionAuthorizer,
+        ),
+
+      decideApprovalRequest:
+        new DecideApprovalRequest(
+          approvalRequestRepository,
+          actionRequestRepository,
+          userRepository,
+          userActionPermissionRepository,
+          prepareActionExecution,
+          clock,
+        ),
+
+      listPendingApprovalRequests:
+        new ListPendingApprovalRequests(
+          approvalRequestRepository,
+        ),
     },
 
     identity: {
-      bootstrapOwner: new BootstrapOwner(
-        userRepository,
-        clock,
-      ),
+      bootstrapOwner:
+        new BootstrapOwner(
+          userRepository,
+          clock,
+        ),
+
+      getUser:
+        new GetUser(
+          userRepository,
+        ),
+
+      listUsers:
+        new ListUsers(
+          userRepository,
+        ),
     },
 
     infra: {
