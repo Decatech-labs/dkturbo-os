@@ -44,8 +44,16 @@ const betterAuth = createBetterAuth({
 
 const app = createHttpServer({
   database,
+
   controlPlane,
-  auth: betterAuth.auth,
+
+  auth:
+    betterAuth.auth,
+
+  familyAuthProvisioner:
+    betterAuth
+      .familyAuthProvisioner,
+      
 });
 
 const shutdown = async () => {

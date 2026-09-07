@@ -1960,3 +1960,854 @@ summary::-webkit-details-marker {
     margin-right: 48px;
   }
 }
+
+/* ==========================================================================
+   Family
+   ========================================================================== */
+
+.family-page {
+  width: min(100% - 48px, 1040px);
+  margin: 0 auto;
+  padding: 54px 0 96px;
+}
+
+.family-page-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 52px;
+  margin-bottom: 44px;
+}
+
+.family-page-header h1 {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 720;
+}
+
+.family-back {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(32, 31, 28, 0.07);
+  transition:
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.family-back:hover {
+  transform: translateX(-2px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.family-back svg {
+  width: 19px;
+  height: 19px;
+}
+
+.family-section + .family-section {
+  margin-top: 58px;
+}
+
+.family-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.family-section-header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.family-section-header svg {
+  width: 20px;
+  height: 20px;
+  opacity: 0.62;
+}
+
+.family-section-header h2 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.family-section-header > span {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.family-add-person {
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 14px;
+  padding: 0 18px;
+  border: 1px dashed
+    rgba(73, 59, 109, 0.18);
+  border-radius: 18px;
+  background:
+    rgba(255, 255, 255, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 670;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.family-add-person:hover {
+  transform:
+    translateY(-1px);
+
+  background:
+    rgba(255, 255, 255, 0.64);
+
+  border-color:
+    rgba(73, 59, 109, 0.28);
+}
+
+.family-add-person svg {
+  width: 16px;
+  height: 16px;
+}
+
+.family-create-person {
+  margin-bottom: 14px;
+  padding: 20px;
+  border-radius: 24px;
+  background:
+    rgba(255, 255, 255, 0.68);
+  border:
+    1px solid
+      rgba(34, 31, 27, 0.07);
+}
+
+.family-create-person-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.family-create-person-header > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.family-create-person-header > div > svg {
+  width: 21px;
+  height: 21px;
+  opacity: 0.62;
+}
+
+.family-create-person-header strong {
+  display: block;
+  font-size: 15px;
+}
+
+.family-create-person-header span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  opacity: 0.52;
+}
+
+.family-create-person-close {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    rgba(246, 243, 239, 0.9);
+  color: inherit;
+  cursor: pointer;
+}
+
+.family-create-person-close:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.family-create-person-close svg {
+  width: 15px;
+  height: 15px;
+}
+
+.family-create-person-form {
+  display: grid;
+  grid-template-columns:
+    1fr
+    1fr;
+  gap: 16px;
+}
+
+.family-field {
+  display: grid;
+  gap: 7px;
+}
+
+.family-field:nth-of-type(3) {
+  grid-column:
+    1 / -1;
+}
+
+.family-field > span,
+.family-role-picker legend {
+  font-size: 11px;
+  font-weight: 680;
+  opacity: 0.58;
+}
+
+.family-password-field {
+  position: relative;
+}
+
+.family-password-field input {
+  padding-right: 46px;
+}
+
+.family-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 34px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.family-password-toggle:hover:not(:disabled) {
+  background:
+    rgba(255, 255, 255, 0.72);
+
+  opacity: 0.78;
+}
+
+.family-password-toggle:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.family-password-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.family-field input {
+  width: 100%;
+  min-height: 44px;
+  padding:
+    0
+    13px;
+  border:
+    1px solid
+      rgba(35, 31, 28, 0.1);
+  border-radius: 14px;
+  background:
+    rgba(248, 246, 243, 0.88);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.family-field input:focus {
+  border-color:
+    rgba(83, 70, 122, 0.34);
+
+  background:
+    rgba(255, 255, 255, 0.96);
+}
+
+.family-field input:disabled {
+  opacity: 0.58;
+}
+
+.family-role-picker {
+  grid-column:
+    1 / -1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.family-role-picker legend {
+  margin-bottom: 8px;
+}
+
+.family-role-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 14px;
+  border:
+    1px solid
+      rgba(35, 31, 28, 0.08);
+  border-radius: 15px;
+  background:
+    rgba(248, 246, 243, 0.72);
+  cursor: pointer;
+}
+
+.family-role-option +
+.family-role-option {
+  margin-top: 8px;
+}
+
+.family-role-option-selected {
+  border-color:
+    rgba(83, 70, 122, 0.25);
+
+  background:
+    rgba(232, 227, 245, 0.62);
+}
+
+.family-role-option input {
+  margin-top: 3px;
+}
+
+.family-role-option strong {
+  display: block;
+  font-size: 13px;
+}
+
+.family-role-option span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  opacity: 0.54;
+}
+
+.family-create-person-error {
+  grid-column:
+    1 / -1;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background:
+    rgba(244, 216, 216, 0.64);
+  color:
+    #8f3f3f;
+  font-size: 12px;
+}
+
+.family-create-person-actions {
+  grid-column:
+    1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.family-create-person-cancel,
+.family-create-person-submit {
+  min-height: 42px;
+  padding:
+    0
+    16px;
+  border: 0;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.family-create-person-cancel {
+  background:
+    rgba(242, 239, 235, 0.88);
+}
+
+.family-create-person-submit {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background:
+    rgba(215, 235, 219, 0.92);
+}
+
+.family-create-person-submit svg {
+  width: 15px;
+  height: 15px;
+}
+
+.family-create-person-cancel:disabled,
+.family-create-person-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.family-people,
+.family-approvals {
+  display: grid;
+  gap: 12px;
+}
+
+.family-person {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 24px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(231, 224, 249, 0.78),
+      rgba(244, 240, 251, 0.82)
+    );
+  border: 1px solid rgba(73, 59, 109, 0.07);
+}
+
+.family-person-avatar {
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
+  border-radius: 17px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.family-person-avatar svg {
+  width: 21px;
+  height: 21px;
+}
+
+.family-person-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.family-person-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.family-person-main h3 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.family-person-main p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.58;
+}
+
+.family-person-meta {
+  margin-top: 11px;
+  font-size: 11.5px;
+  opacity: 0.46;
+}
+
+.family-role {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.family-role-owner {
+  background: rgba(184, 223, 193, 0.62);
+}
+
+.family-role-member {
+  background: rgba(208, 205, 240, 0.68);
+}
+
+.family-role-guest {
+  background: rgba(236, 220, 190, 0.64);
+}
+
+.family-approval {
+  padding: 22px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.67);
+  border: 1px solid rgba(34, 31, 27, 0.07);
+}
+
+.family-approval-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.family-approval-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: rgba(229, 221, 247, 0.72);
+}
+
+.family-approval-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.family-approval-heading {
+  min-width: 0;
+}
+
+.family-approval-requester {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 12px;
+  opacity: 0.54;
+}
+
+.family-approval-heading h3 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.family-approval-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 11.5px;
+  opacity: 0.46;
+}
+
+.family-approval-time svg {
+  width: 14px;
+  height: 14px;
+}
+
+.family-approval-target {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin: 18px 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(246, 243, 239, 0.88);
+  overflow: hidden;
+}
+
+.family-approval-target span {
+  flex: 0 0 auto;
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+.family-approval-target strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  font-weight: 620;
+  opacity: 0.78;
+}
+
+.family-approval-actions {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 0.85fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+  gap: 9px;
+}
+
+.family-action {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 680;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    opacity 140ms ease;
+}
+
+.family-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.family-action:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.family-action svg {
+  width: 15px;
+  height: 15px;
+}
+
+.family-action-reject {
+  background: rgba(244, 216, 216, 0.76);
+}
+
+.family-action-once {
+  background: rgba(221, 231, 246, 0.84);
+}
+
+.family-action-always {
+  background: rgba(215, 235, 219, 0.84);
+}
+
+.family-action-error {
+  grid-column: 1 / -1;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #9a4545;
+}
+
+.family-empty,
+.family-page-error {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.61);
+  border: 1px solid rgba(34, 31, 27, 0.06);
+}
+
+.family-empty > svg,
+.family-page-error > svg {
+  width: 23px;
+  height: 23px;
+  opacity: 0.55;
+}
+
+.family-empty > div,
+.family-page-error > div {
+  display: grid;
+  gap: 3px;
+}
+
+.family-empty strong,
+.family-page-error strong {
+  font-size: 14px;
+}
+
+.family-empty span,
+.family-page-error span {
+  font-size: 12.5px;
+  opacity: 0.55;
+}
+
+@media (max-width: 700px) {
+  .family-page {
+    width: min(100% - 28px, 1040px);
+    padding:
+      26px
+      0
+      64px;
+  }
+
+  .family-page-header {
+    min-height: 42px;
+    margin-bottom: 32px;
+    gap: 13px;
+  }
+
+  .family-page-header h1 {
+    font-size: 30px;
+  }
+
+  .family-back {
+    width: 40px;
+    height: 40px;
+  }
+
+  .family-section + .family-section {
+    margin-top: 42px;
+  }
+
+  .family-person {
+    padding: 16px;
+    border-radius: 21px;
+  }
+
+  .family-person-avatar {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+    border-radius: 15px;
+  }
+
+  .family-person-main {
+    align-items: center;
+  }
+
+  .family-person-main p {
+    font-size: 12px;
+  }
+
+  .family-person-meta {
+    display: none;
+  }
+
+  .family-role {
+    padding: 5px 8px;
+    font-size: 9px;
+  }
+
+  .family-approval {
+    padding: 17px;
+    border-radius: 22px;
+  }
+
+  .family-approval-top {
+    grid-template-columns:
+      auto
+      minmax(0, 1fr);
+  }
+
+  .family-approval-time {
+    grid-column: 2;
+    margin-top: -5px;
+  }
+
+  .family-approval-target {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    margin:
+      15px
+      0;
+  }
+
+  .family-approval-target strong {
+    width: 100%;
+  }
+
+  .family-approval-actions {
+    grid-template-columns:
+      1fr
+      1fr;
+  }
+
+  .family-action-reject {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+
+  .family-action-once {
+    order: 1;
+  }
+
+  .family-action-always {
+    order: 2;
+  }
+
+  .family-action {
+    min-height: 44px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+    .family-create-person {
+    padding: 17px;
+    border-radius: 21px;
+  }
+
+  .family-create-person-form {
+    grid-template-columns:
+      1fr;
+  }
+
+  .family-field:nth-of-type(3),
+  .family-role-picker,
+  .family-create-person-error,
+  .family-create-person-actions {
+    grid-column:
+      auto;
+  }
+
+  .family-create-person-actions {
+    display: grid;
+    grid-template-columns:
+      1fr
+      1fr;
+  }
+
+  .family-create-person-cancel,
+  .family-create-person-submit {
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 430px) {
+  .family-approval-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .family-action-reject,
+  .family-action-once,
+  .family-action-always {
+    grid-column: auto;
+  }
+
+  .family-action-always {
+    order: 1;
+  }
+
+  .family-action-once {
+    order: 2;
+  }
+
+  .family-action-reject {
+    order: 3;
+  }
+}

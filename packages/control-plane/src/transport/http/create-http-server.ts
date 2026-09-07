@@ -9,6 +9,7 @@ import {
   approvalRequestParamsSchema,
   decideApprovalRequestSchema,
   serviceInstanceParamsSchema,
+  createFamilyUserRequestSchema,
   type NodeObservedStateResponse,
   type NodeResponse,
   type NodeStatusResponse,
@@ -83,6 +84,7 @@ export interface CreateHttpServerOptions {
   database: Kysely<Database>;
   controlPlane: ControlPlane;
   auth: HttpAuth;
+  familyAuthProvisioner?: FamilyAuthProvisioner;
 }
 
 export interface HttpAuth {
@@ -106,6 +108,27 @@ export interface HttpAuth {
   ): Promise<Response>;
 }
 
+export interface FamilyAuthProvisioner {
+  createUser(
+    input: {
+      email: string;
+      password: string;
+      name: string;
+    },
+  ): Promise<{
+    id: string;
+    name: string;
+    email: string;
+  }>;
+
+  removeUser(
+    input: {
+      userId: string;
+      headers: Headers;
+    },
+  ): Promise<void>;
+}
+
 const toNodeResponse = (
   node: Node,
 ): NodeResponse => ({
@@ -119,6 +142,7 @@ export const createHttpServer = ({
   database,
   controlPlane,
   auth,
+  familyAuthProvisioner,
 }: CreateHttpServerOptions): FastifyInstance => {
   const app = Fastify({
     logger: true,
@@ -1145,6 +1169,205 @@ export const createHttpServer = ({
     },
   );
 
+  app.post(
+    '/api/family/users',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireOwnerActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      if (!familyAuthProvisioner) {
+        return reply
+          .code(503)
+          .send({
+            error:
+              'family_user_provisioning_unavailable',
+          });
+      }
+
+      const body =
+        createFamilyUserRequestSchema
+          .safeParse(
+            request.body,
+          );
+
+      if (!body.success) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const email =
+        body.data.email
+          .trim()
+          .toLowerCase();
+
+      let authUser:
+        {
+          user: {
+            id:
+              string;
+
+            name:
+              string;
+
+            email:
+              string;
+          };
+        };
+
+      try {
+        const createdAuthUser =
+          await familyAuthProvisioner
+            .createUser({
+              email,
+
+              password:
+                body.data
+                  .password,
+
+              name:
+                body.data
+                  .name,
+            });
+
+        authUser = {
+          user: {
+            id:
+              createdAuthUser.id,
+
+            name:
+              createdAuthUser.name,
+
+            email:
+              createdAuthUser.email,
+          },
+        };
+
+      } catch (error) {
+        request.log.warn(
+          {
+            error,
+            email,
+          },
+          'Failed to create family authentication user',
+        );
+
+        return reply
+          .code(409)
+          .send({
+            error:
+              'family_user_auth_creation_failed',
+          });
+      }
+
+      try {
+        const user =
+          await controlPlane
+            .identity
+            .createFamilyUser
+            .execute({
+              id:
+                authUser
+                  .user
+                  .id,
+
+              name:
+                body.data
+                  .name,
+
+              role:
+                body.data
+                  .role,
+            });
+
+        const response:
+          FamilyUserResponse =
+          {
+            id:
+              user.id,
+
+            name:
+              user.name,
+
+            role:
+              user.role,
+
+            createdAt:
+              user.createdAt
+                .toISOString(),
+          };
+
+        return reply
+          .code(201)
+          .send(
+            response,
+          );
+      } catch (error) {
+        request.log.error(
+          {
+            error,
+
+            authUserId:
+              authUser
+                .user
+                .id,
+          },
+          'Failed to create family identity user',
+        );
+
+        try {
+          await familyAuthProvisioner
+          .removeUser({
+            userId:
+              authUser
+                .user
+                .id,
+
+            headers:
+              fromNodeHeaders(
+                request.headers,
+              ),
+          });
+
+        } catch (
+          rollbackError
+        ) {
+          request.log.error(
+            {
+              rollbackError,
+
+              authUserId:
+                authUser
+                  .user
+                  .id,
+            },
+            'Failed to rollback family authentication user',
+          );
+        }
+
+        return reply
+          .code(500)
+          .send({
+            error:
+              'family_user_creation_failed',
+          });
+      }
+    },
+  );
+
   app.get(
     '/api/approval-requests/pending',
     async (
@@ -1242,6 +1465,19 @@ export const createHttpServer = ({
     url: '/api/auth/*',
 
     async handler(request, reply) {
+      if (
+        request.url.startsWith(
+          '/api/auth/admin/',
+        )
+      ) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'not_found',
+          });
+      }
+
       const url = new URL(
         request.url,
         `http://${request.headers.host}`,

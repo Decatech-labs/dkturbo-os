@@ -90,6 +90,9 @@ import {
 import {
   GetActionExecution,
 } from '../core/actions/application/get-action-execution.js';
+import {
+  CreateFamilyUser,
+} from '../core/identity/application/create-family-user.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -239,6 +242,12 @@ export const createControlPlane = ({
       listUsers:
         new ListUsers(
           userRepository,
+        ),
+
+      createFamilyUser:
+        new CreateFamilyUser(
+          userRepository,
+          clock,
         ),
     },
 

@@ -1,6 +1,14 @@
-import { betterAuth } from 'better-auth';
-import { APIError } from 'better-auth/api';
-import { Pool } from 'pg';
+import {
+  betterAuth,
+} from 'better-auth';
+
+import {
+  admin,
+} from 'better-auth/plugins';
+
+import {
+  Pool,
+} from 'pg';
 
 export interface CreateBetterAuthInput {
   databaseUrl: string;
@@ -13,7 +21,10 @@ export interface CreateBetterAuthInput {
 const withAuthSearchPath = (
   databaseUrl: string,
 ): string => {
-  const url = new URL(databaseUrl);
+  const url =
+    new URL(
+      databaseUrl,
+    );
 
   url.searchParams.set(
     'options',
@@ -35,75 +46,151 @@ export const createBetterAuth = ({
       .trim()
       .toLowerCase();
 
-  const pool = new Pool({
-    connectionString:
-      withAuthSearchPath(databaseUrl),
-  });
+  const pool =
+    new Pool({
+      connectionString:
+        withAuthSearchPath(
+          databaseUrl,
+        ),
+    });
 
-  const auth = betterAuth({
-    database: pool,
+  const auth =
+    betterAuth({
+      database:
+        pool,
 
-    secret,
+      secret,
 
-    baseURL: baseUrl,
+      baseURL:
+        baseUrl,
 
-    emailAndPassword: {
-      enabled: true,
-      autoSignIn: true,
-    },
+      emailAndPassword: {
+        enabled:
+          true,
 
-    databaseHooks: {
-      user: {
-        create: {
-          before: async (user) => {
-            if (
-              user.email
-                .trim()
-                .toLowerCase() !==
-              ownerEmail
-            ) {
-              throw new APIError(
-                'FORBIDDEN',
-                {
-                  message:
-                    'Signup is not enabled for this user',
-                },
-              );
-            }
+        disableSignUp:
+          true,
 
-            return {
-              data: user,
-            };
+        autoSignIn:
+          true,
+      },
+
+      databaseHooks: {
+        user: {
+          create: {
+            before:
+              async (
+                user,
+              ) => {
+                if (
+                  user.email
+                    .trim()
+                    .toLowerCase() ===
+                  ownerEmail
+                ) {
+                  return {
+                    data: {
+                      ...user,
+
+                      id:
+                        bootstrapOwnerId,
+                    },
+                  };
+                }
+
+                return {
+                  data:
+                    user,
+                };
+              },
           },
         },
       },
-    },
 
-    advanced: {
-      database: {
-        generateId: ({
-          model,
-        }) => {
-          if (model === 'user') {
-            return bootstrapOwnerId;
-          }
-
-          return crypto.randomUUID();
+      advanced: {
+        database: {
+          generateId: () =>
+            crypto.randomUUID(),
         },
       },
-    },
 
-    trustedOrigins: [
-      'http://127.0.0.1:3000',
-      'http://localhost:3000',
-    ],
-  });
+      plugins: [
+        admin({
+          adminUserIds: [
+            bootstrapOwnerId,
+          ],
+
+          defaultRole:
+            'user',
+        }),
+      ],
+
+      trustedOrigins: [
+        'http://127.0.0.1:3000',
+        'http://localhost:3000',
+      ],
+    });
 
   return {
     auth,
 
-    close: async () => {
-      await pool.end();
+    familyAuthProvisioner: {
+      createUser:
+        async ({
+          email,
+          password,
+          name,
+        }: {
+          email: string;
+          password: string;
+          name: string;
+        }) => {
+          const result =
+            await auth.api
+              .createUser({
+                body: {
+                  email,
+                  password,
+                  name,
+                  role:
+                    'user',
+                },
+              });
+
+          return {
+            id:
+              result.user.id,
+
+            name:
+              result.user.name,
+
+            email:
+              result.user.email,
+          };
+        },
+
+      removeUser:
+        async ({
+          userId,
+          headers,
+        }: {
+          userId: string;
+          headers: Headers;
+        }) => {
+          await auth.api
+            .removeUser({
+              body: {
+                userId,
+              },
+
+              headers,
+            });
+        },
     },
+
+    close:
+      async () => {
+        await pool.end();
+      },
   };
 };

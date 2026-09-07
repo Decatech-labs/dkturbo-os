@@ -9,6 +9,41 @@ export const familyUserRoleSchema =
     'guest',
   ]);
 
+export const creatableFamilyUserRoleSchema =
+  z.enum([
+    'member',
+    'guest',
+  ]);
+
+export const createFamilyUserRequestSchema =
+  z.object({
+    name:
+      z.string()
+        .trim()
+        .min(1)
+        .max(120),
+
+    email:
+      z.string()
+        .trim()
+        .toLowerCase()
+        .email()
+        .max(254),
+
+    password:
+      z.string()
+        .min(8)
+        .max(128),
+
+    role:
+      creatableFamilyUserRoleSchema,
+  });
+
+export type CreateFamilyUserRequest =
+  z.infer<
+    typeof createFamilyUserRequestSchema
+  >;
+
 export const familyUserResponseSchema =
   z.object({
     id:

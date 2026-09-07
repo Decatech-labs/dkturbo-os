@@ -67,8 +67,11 @@ export {
 
 export {
   familyUserRoleSchema,
+  creatableFamilyUserRoleSchema,
+  createFamilyUserRequestSchema,
   familyUserResponseSchema,
   pendingApprovalResponseSchema,
+  type CreateFamilyUserRequest,
   type FamilyUserResponse,
   type PendingApprovalResponse,
 } from './family.js';
