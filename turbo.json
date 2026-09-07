@@ -10,6 +10,9 @@
       "outputs": [
         ".next/**",
         "dist/**"
+      ],
+      "env": [
+        "DKTURBO_API_URL"
       ]
     },
     "lint": {
