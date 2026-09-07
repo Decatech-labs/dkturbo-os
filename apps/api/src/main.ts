@@ -25,22 +25,38 @@ const controlPlane = createControlPlane({
   database,
 });
 
-const betterAuth = createBetterAuth({
-  databaseUrl:
-    config.DATABASE_URL,
+const trustedOrigins =
+  config.BETTER_AUTH_TRUSTED_ORIGINS
+    ?.split(',')
+    .map(
+      (origin) =>
+        origin.trim(),
+    )
+    .filter(Boolean);
 
-  secret:
-    config.BETTER_AUTH_SECRET,
+const betterAuth =
+  createBetterAuth({
+    databaseUrl:
+      config.DATABASE_URL,
 
-  baseUrl:
-    config.BETTER_AUTH_BASE_URL,
+    secret:
+      config.BETTER_AUTH_SECRET,
 
-  bootstrapOwnerId:
-    config.BOOTSTRAP_OWNER_ID!,
+    baseUrl:
+      config.BETTER_AUTH_BASE_URL,
 
-  bootstrapOwnerEmail:
-    config.BOOTSTRAP_OWNER_EMAIL!,
-});
+    bootstrapOwnerId:
+      config.BOOTSTRAP_OWNER_ID!,
+
+    bootstrapOwnerEmail:
+      config.BOOTSTRAP_OWNER_EMAIL!,
+
+    ...(trustedOrigins
+      ? {
+          trustedOrigins,
+        }
+      : {}),
+  });
 
 const app = createHttpServer({
   database,

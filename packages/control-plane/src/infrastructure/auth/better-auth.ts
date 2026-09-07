@@ -16,6 +16,7 @@ export interface CreateBetterAuthInput {
   baseUrl: string;
   bootstrapOwnerId: string;
   bootstrapOwnerEmail: string;
+  trustedOrigins?: string[];
 }
 
 const withAuthSearchPath = (
@@ -40,6 +41,10 @@ export const createBetterAuth = ({
   baseUrl,
   bootstrapOwnerId,
   bootstrapOwnerEmail,
+  trustedOrigins = [
+    'http://127.0.0.1:3000',
+    'http://localhost:3000',
+  ]
 }: CreateBetterAuthInput) => {
   const ownerEmail =
     bootstrapOwnerEmail
@@ -125,10 +130,7 @@ export const createBetterAuth = ({
         }),
       ],
 
-      trustedOrigins: [
-        'http://127.0.0.1:3000',
-        'http://localhost:3000',
-      ],
+      trustedOrigins,
     });
 
   return {

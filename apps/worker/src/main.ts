@@ -11,16 +11,22 @@ import {
   createDatabase,
 } from '@dkturbo/control-plane';
 
-const envFile = fileURLToPath(
-  new URL(
-    '../../../.env.local',
-    import.meta.url,
-  ),
-);
+if (
+  process.env.NODE_ENV !==
+  'production'
+) {
+  const envFile =
+    fileURLToPath(
+      new URL(
+        '../../../.env.local',
+        import.meta.url,
+      ),
+    );
 
-loadDotenv({
-  path: envFile,
-});
+  loadDotenv({
+    path: envFile,
+  });
+}
 
 const requireEnv = (
   name: string,

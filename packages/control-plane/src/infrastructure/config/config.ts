@@ -18,6 +18,8 @@ const configSchema = z.object({
     'http://127.0.0.1:3001',
   ),
 
+  BETTER_AUTH_TRUSTED_ORIGINS: z.string().optional(),
+
   BOOTSTRAP_OWNER_EMAIL: z.string().email().optional(),
 });
 

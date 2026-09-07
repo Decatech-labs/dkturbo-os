@@ -1,0 +1,160 @@
+name: dkturbo
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: dkturbo-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - postgres-data:/var/lib/postgresql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+    networks:
+      - backend
+
+
+  migrate:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+
+    image: dkturbo-os:local
+
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+
+    command:
+      [
+        "pnpm",
+        "db:migrate",
+      ]
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - backend
+
+    restart: "no"
+
+
+  api:
+    image: dkturbo-os:local
+    container_name: dkturbo-api
+    restart: unless-stopped
+
+    command:
+      [
+        "pnpm",
+        "--filter",
+        "@dkturbo/api",
+        "start",
+      ]
+
+    environment:
+      NODE_ENV: production
+
+      DATABASE_URL: ${DATABASE_URL}
+
+      API_HOST: 0.0.0.0
+      API_PORT: 3001
+
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_BASE_URL: ${BETTER_AUTH_BASE_URL}
+      BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS}
+
+      BOOTSTRAP_OWNER_ID: ${BOOTSTRAP_OWNER_ID}
+      BOOTSTRAP_OWNER_NAME: ${BOOTSTRAP_OWNER_NAME}
+      BOOTSTRAP_OWNER_EMAIL: ${BOOTSTRAP_OWNER_EMAIL}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - backend
+
+
+  worker:
+    image: dkturbo-os:local
+    container_name: dkturbo-worker
+    restart: unless-stopped
+
+    command:
+      [
+        "pnpm",
+        "--filter",
+        "@dkturbo/worker",
+        "start",
+      ]
+
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_OBSERVED_STATE_REFRESH_INTERVAL_MS: 30000
+
+    volumes:
+      - /srv/dkturbo-os/config/ssh:/root/.ssh:ro
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - backend
+
+
+  web:
+    image: dkturbo-os:local
+    container_name: dkturbo-web
+    restart: unless-stopped
+
+    command:
+      [
+        "pnpm",
+        "--filter",
+        "@dkturbo/web",
+        "start",
+      ]
+
+    environment:
+      NODE_ENV: production
+      DKTURBO_API_URL: http://api:3001
+
+    depends_on:
+      - api
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    networks:
+      - backend
+
+
+networks:
+  backend:
+    name: dkturbo-backend
+
+
+volumes:
+  postgres-data:
+    external: true
+    name: dkturbo-postgres-prod
