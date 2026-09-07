@@ -24,6 +24,9 @@ RUN pnpm install --frozen-lockfile
 
 FROM dependencies AS builder
 
+ARG DKTURBO_API_URL=http://127.0.0.1:3001
+ENV DKTURBO_API_URL=${DKTURBO_API_URL}
+
 COPY . .
 
 RUN pnpm build
