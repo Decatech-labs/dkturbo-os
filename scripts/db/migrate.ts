@@ -9,7 +9,6 @@ import {
 
 import {
   createDatabase,
-  loadConfig,
 } from '../../packages/control-plane/src/index.js';
 
 const main = async (): Promise<void> => {
@@ -26,11 +25,20 @@ const main = async (): Promise<void> => {
     process.env.DATABASE_URL = existingDatabaseUrl;
   }
 
-  const config = loadConfig();
+  const databaseUrl =
+    process.env.DATABASE_URL;
 
-  const database = createDatabase({
-    connectionString: config.DATABASE_URL,
-  });
+  if (!databaseUrl) {
+    throw new Error(
+      'DATABASE_URL is required',
+    );
+  }
+
+  const database =
+    createDatabase({
+      connectionString:
+        databaseUrl,
+    });
 
   try {
     const migrator = new Migrator({
