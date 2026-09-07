@@ -34,7 +34,7 @@ services:
       context: ../..
       dockerfile: Dockerfile
       args:
-        DKTURBO_API_URL: http://api:3000
+        DKTURBO_API_URL: http://api:3001
 
     image: dkturbo-os:local
 
