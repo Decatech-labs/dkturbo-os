@@ -121,6 +121,33 @@ services:
     networks:
       - backend
 
+  caddy:
+    build:
+      context: ../..
+      dockerfile: infra/caddy/Dockerfile
+
+    image: dkturbo-caddy:local
+
+    container_name: dkturbo-caddy
+
+    restart: unless-stopped
+
+    environment:
+      CF_API_TOKEN: ${CF_API_TOKEN}
+
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+    depends_on:
+      - web
+
+    ports:
+      - "100.81.4.32:443:443"
+
+    networks:
+      - backend
 
   web:
     image: dkturbo-os:local
@@ -142,9 +169,6 @@ services:
     depends_on:
       - api
 
-    ports:
-      - "127.0.0.1:3000:3000"
-
     networks:
       - backend
 
@@ -158,3 +182,9 @@ volumes:
   postgres-data:
     external: true
     name: dkturbo-postgres-prod
+
+  caddy-data:
+    name: dkturbo-caddy-data
+
+  caddy-config:
+    name: dkturbo-caddy-config
