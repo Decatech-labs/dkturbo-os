@@ -94,6 +94,12 @@ services:
     networks:
       - backend
 
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      - /srv/dkturbo-os/config/ssh:/root/.ssh:ro
+
 
   worker:
     image: dkturbo-os:local
@@ -115,6 +121,9 @@ services:
 
     volumes:
       - /srv/dkturbo-os/config/ssh:/root/.ssh:ro
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     depends_on:
       postgres:
