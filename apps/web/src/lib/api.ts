@@ -7,6 +7,10 @@ import type {
   ServiceInstanceObservedStateResponse,
 } from '@dkturbo/contracts';
 
+import {
+  cookies,
+} from 'next/headers';
+
 const API_BASE_URL =
   process.env.DKTURBO_API_URL ??
   'http://127.0.0.1:3001';
@@ -51,12 +55,33 @@ class DkturboApiError extends Error {
 const getJson = async <T>(
   path: string,
 ): Promise<T> => {
-  const response = await fetch(
-    `${API_BASE_URL}${path}`,
-    {
-      cache: 'no-store',
-    },
-  );
+  const cookieStore =
+    await cookies();
+
+  const cookie =
+    cookieStore
+      .getAll()
+      .map(
+        ({
+          name,
+          value,
+        }) =>
+          `${name}=${value}`,
+      )
+      .join('; ');
+
+  const response =
+    await fetch(
+      `${API_BASE_URL}${path}`,
+      {
+        headers: {
+          cookie,
+        },
+
+        cache:
+          'no-store',
+      },
+    );
 
   if (!response.ok) {
     throw new DkturboApiError(
@@ -65,7 +90,8 @@ const getJson = async <T>(
     );
   }
 
-  return response.json() as Promise<T>;
+  return response.json() as
+    Promise<T>;
 };
 
 export const getNodesDashboard =

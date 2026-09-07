@@ -3,10 +3,6 @@ import {
   type StatusPillTone,
 } from '@dkturbo/design-system';
 
-import type {
-  LucideIcon,
-} from 'lucide-react';
-
 import {
   ArrowLeft,
   Boxes,
@@ -16,6 +12,10 @@ import {
   MemoryStick,
   Server,
   Wifi,
+  LucideIcon,
+  CircleCheck,
+  CircleX,
+  Info,
 } from 'lucide-react';
 
 import Link from 'next/link';
@@ -518,7 +518,108 @@ const ServiceCard = ({
   );
 };
 
-export default async function SystemPage() {
+type RestartResult =
+  | 'success'
+  | 'failed'
+  | 'denied'
+  | 'invalid';
+
+const getRestartFeedback = (
+  result:
+    RestartResult | null,
+): {
+  tone:
+    | 'success'
+    | 'error'
+    | 'info';
+
+  title: string;
+  description: string;
+} | null => {
+  switch (result) {
+    case 'success':
+      return {
+        tone:
+          'success',
+
+        title:
+          'Servicio reiniciado',
+
+        description:
+          'La operación ha terminado correctamente.',
+      };
+
+    case 'failed':
+      return {
+        tone:
+          'error',
+
+        title:
+          'No se ha podido reiniciar',
+
+        description:
+          'La operación ha fallado. El servicio puede requerir revisión.',
+      };
+
+    case 'denied':
+      return {
+        tone:
+          'error',
+
+        title:
+          'Acción no permitida',
+
+        description:
+          'Tu cuenta no tiene permiso para reiniciar este servicio.',
+      };
+
+    case 'invalid':
+      return {
+        tone:
+          'info',
+
+        title:
+          'Solicitud no válida',
+
+        description:
+          'No se ha podido identificar correctamente el servicio.',
+      };
+
+    default:
+      return null;
+  }
+};
+
+export default async function SystemPage({
+    searchParams,
+  }: {
+    searchParams:
+      Promise<{
+        restart?:
+          string;
+      }>;
+  }) {
+
+  const params =
+    await searchParams;
+
+  const restartResult =
+    params.restart ===
+      'success' ||
+    params.restart ===
+      'failed' ||
+    params.restart ===
+      'denied' ||
+    params.restart ===
+      'invalid'
+      ? params.restart
+      : null;
+
+  const restartFeedback =
+    getRestartFeedback(
+      restartResult,
+    );
+
   await requireAccessPermission(
     'app.system.access',
   );
@@ -606,6 +707,40 @@ export default async function SystemPage() {
           Sistema
         </h1>
       </header>
+
+      {restartFeedback && (
+        <div
+          className={
+            `system-feedback system-feedback-${restartFeedback.tone}`
+          }
+        >
+          <div className="system-feedback-icon">
+            {restartFeedback.tone ===
+            'success' ? (
+              <CircleCheck />
+            ) : restartFeedback.tone ===
+              'error' ? (
+              <CircleX />
+            ) : (
+              <Info />
+            )}
+          </div>
+
+          <div>
+            <strong>
+              {
+                restartFeedback.title
+              }
+            </strong>
+
+            <span>
+              {
+                restartFeedback.description
+              }
+            </span>
+          </div>
+        </div>
+      )}
 
       <section className="system-nodes">
         {nodes.map(

@@ -649,7 +649,22 @@ export const createHttpServer = ({
       .send(toNodeResponse(node));
   });
 
-  app.get('/api/nodes', async () => {
+  app.get(
+    '/api/nodes',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'app.system.access',
+        );
+
+    if (!actor) {
+      return;
+    }
     const nodes =
       await controlPlane.infra.listNodes.execute();
 
@@ -723,6 +738,17 @@ export const createHttpServer = ({
   app.get(
     '/api/nodes/:id/observed-state',
     async (request, reply) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'app.system.access',
+        );
+
+      if (!actor) {
+        return;
+      }
+
       const parsed = nodeParamsSchema.safeParse(
         request.params,
       );
@@ -766,6 +792,17 @@ export const createHttpServer = ({
   app.get(
     '/api/nodes/:id/status',
     async (request, reply) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'app.system.access',
+        );
+
+      if (!actor) {
+        return;
+      }
+
       const parsed = nodeParamsSchema.safeParse(
         request.params,
       );
@@ -903,7 +940,23 @@ export const createHttpServer = ({
     },
   );
 
-  app.get('/api/services', async () => {
+  app.get(
+    '/api/services',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'app.system.access',
+        );
+
+      if (!actor) {
+        return;
+      }
+
     const services =
       await controlPlane.infra.listServices.execute();
 
@@ -922,6 +975,17 @@ export const createHttpServer = ({
   app.post(
     '/api/service-instances',
     async (request, reply) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'app.system.access',
+        );
+
+      if (!actor) {
+        return;
+      }
+
       const parsed =
         registerServiceInstanceRequestSchema.safeParse(
           request.body,
@@ -989,6 +1053,17 @@ export const createHttpServer = ({
       request,
       reply,
     ) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'app.system.access',
+        );
+
+      if (!actor) {
+        return;
+      }
+
       const parsed =
         serviceInstanceParamsSchema.safeParse(
           request.params,

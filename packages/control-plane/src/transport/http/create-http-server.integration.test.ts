@@ -577,11 +577,13 @@ describe(
 
         const listResponse =
           await app.inject({
-            method:
-              'GET',
+            method: 'GET',
+            url: '/api/nodes',
 
-            url:
-              '/api/nodes',
+            headers: {
+              cookie:
+                owner.cookie,
+            },
           });
 
         expect(
@@ -840,11 +842,13 @@ describe(
 
         const listResponse =
           await app.inject({
-            method:
-              'GET',
+            method: 'GET',
+            url: '/api/services',
 
-            url:
-              '/api/services',
+            headers: {
+              cookie:
+                owner.cookie,
+            },
           });
 
         expect(

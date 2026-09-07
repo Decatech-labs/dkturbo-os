@@ -3642,3 +3642,155 @@ summary::-webkit-details-marker {
       0 10px;
   }
 }
+
+/* =========================================================
+   SYSTEM — ACTION FEEDBACK
+   ========================================================= */
+
+.system-feedback {
+  margin-bottom: 18px;
+
+  padding:
+    13px 15px;
+
+  border-radius:
+    15px;
+
+  display: flex;
+  align-items:
+    center;
+
+  gap: 11px;
+
+  border:
+    1px solid
+      rgba(
+        30,
+        30,
+        30,
+        0.06
+      );
+}
+
+.system-feedback-icon {
+  width: 34px;
+  height: 34px;
+
+  flex:
+    0 0 34px;
+
+  border-radius:
+    11px;
+
+  display: grid;
+  place-items:
+    center;
+}
+
+.system-feedback-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.system-feedback strong,
+.system-feedback span {
+  display: block;
+}
+
+.system-feedback strong {
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.system-feedback span {
+  margin-top: 2px;
+
+  font-size: 10.5px;
+  line-height: 1.4;
+
+  opacity: 0.58;
+}
+
+.system-feedback-success {
+  background:
+    rgba(
+      226,
+      243,
+      232,
+      0.78
+    );
+}
+
+.system-feedback-success
+  .system-feedback-icon {
+  background:
+    rgba(
+      205,
+      234,
+      216,
+      0.96
+    );
+
+  color:
+    rgb(
+      42,
+      127,
+      79
+    );
+}
+
+.system-feedback-error {
+  background:
+    rgba(
+      247,
+      226,
+      226,
+      0.78
+    );
+}
+
+.system-feedback-error
+  .system-feedback-icon {
+  background:
+    rgba(
+      241,
+      207,
+      207,
+      0.96
+    );
+
+  color:
+    rgb(
+      158,
+      61,
+      61
+    );
+}
+
+.system-feedback-info {
+  background:
+    rgba(
+      228,
+      235,
+      246,
+      0.8
+    );
+}
+
+.system-feedback-info
+  .system-feedback-icon {
+  background:
+    rgba(
+      210,
+      222,
+      241,
+      0.96
+    );
+
+  color:
+    rgb(
+      57,
+      103,
+      171
+    );
+}
