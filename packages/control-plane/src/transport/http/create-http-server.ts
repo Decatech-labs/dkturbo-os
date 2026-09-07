@@ -10,6 +10,14 @@ import {
   decideApprovalRequestSchema,
   serviceInstanceParamsSchema,
   createFamilyUserRequestSchema,
+  familyUserParamsSchema,
+  updateFamilyUserRoleRequestSchema,
+  resetFamilyUserPasswordRequestSchema,
+  grantFamilyPermissionRequestSchema,
+  familyPermissionParamsSchema,
+  accessPermissionKeys,
+  accessPermissionKeySchema,
+  setAccessPermissionRequestSchema,
   type NodeObservedStateResponse,
   type NodeResponse,
   type NodeStatusResponse,
@@ -22,6 +30,9 @@ import {
   type ServiceInstanceObservedStateResponse,
   type FamilyUserResponse,
   type PendingApprovalResponse,
+  type FamilyPermissionResponse,
+  type AccessPermissionKey,
+  type AccessProfileResponse,
 } from '@dkturbo/contracts';
 import Fastify, {
   type FastifyInstance,
@@ -79,6 +90,60 @@ import {
   ActionExecutionNotFoundError,
   ActionRequestNotReadyForExecutionError,
 } from '../../core/actions/application/execute-action-execution.js';
+import type {
+  UserActionPermissionId,
+} from '../../core/authorization/domain/user-action-permission.js';
+import {
+  createActionKey,
+} from '../../core/actions/domain/action-key.js';
+
+const accessPermissionApp:
+  Record<
+    AccessPermissionKey,
+    string
+  > = {
+    'app.system.access':
+      'system',
+
+    'system.services.restart':
+      'system',
+
+    'app.family.access':
+      'family',
+
+    'family.users.create':
+      'family',
+
+    'family.users.manage':
+      'family',
+
+    'app.files.access':
+      'files',
+
+    'app.photos.access':
+      'photos',
+
+    'app.automations.access':
+      'automations',
+
+    'app.security.access':
+      'security',
+  };
+
+const createAccessPermissionTarget =
+  (
+    permission:
+      AccessPermissionKey,
+  ) =>
+    createResourceRef({
+      kind:
+        'app',
+
+      id:
+        accessPermissionApp[
+          permission
+        ],
+    });
 
 export interface CreateHttpServerOptions {
   database: Kysely<Database>;
@@ -122,6 +187,21 @@ export interface FamilyAuthProvisioner {
   }>;
 
   removeUser(
+    input: {
+      userId: string;
+      headers: Headers;
+    },
+  ): Promise<void>;
+
+  setPassword(
+    input: {
+      userId: string;
+      newPassword: string;
+      headers: Headers;
+    },
+  ): Promise<void>;
+
+  revokeSessions(
     input: {
       userId: string;
       headers: Headers;
@@ -225,6 +305,108 @@ export const createHttpServer = ({
         .send({
           error:
             'owner_required',
+        });
+
+      return null;
+    }
+
+    return actor;
+  };
+
+  const requireAccessPermission =
+  async (
+    request:
+      FastifyRequest,
+
+    reply:
+      FastifyReply,
+
+    permission:
+      AccessPermissionKey,
+  ): Promise<
+    ActorRef | null
+  > => {
+    const actor =
+      await requireAuthenticatedActor(
+        request,
+        reply,
+      );
+
+    if (!actor) {
+      return null;
+    }
+
+    if (
+      actor.kind !==
+      'user'
+    ) {
+      await reply
+        .code(403)
+        .send({
+          error:
+            'authorization_denied',
+        });
+
+      return null;
+    }
+
+    const user =
+      await controlPlane
+        .identity
+        .getUser
+        .execute(
+          actor.id as
+            UserId,
+        );
+
+    if (!user) {
+      await reply
+        .code(403)
+        .send({
+          error:
+            'authorization_denied',
+        });
+
+      return null;
+    }
+
+    /*
+     * Owner bypass:
+     * no almacenamos cientos de permisos
+     * redundantes para el owner.
+     */
+    if (
+      user.role ===
+      'owner'
+    ) {
+      return actor;
+    }
+
+    const allowed =
+      await controlPlane
+        .authorization
+        .hasUserActionPermission
+        .execute({
+          userId:
+            user.id,
+
+          actionKey:
+            createActionKey(
+              permission,
+            ),
+
+          target:
+            createAccessPermissionTarget(
+              permission,
+            ),
+        });
+
+    if (!allowed) {
+      await reply
+        .code(403)
+        .send({
+          error:
+            'authorization_denied',
         });
 
       return null;
@@ -1125,15 +1307,146 @@ export const createHttpServer = ({
   );
 
   app.get(
+    '/api/access/me',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireAuthenticatedActor(
+          request,
+          reply,
+        );
+
+      if (
+        !actor ||
+        actor.kind !==
+          'user'
+      ) {
+        return;
+      }
+
+      const user =
+        await controlPlane
+          .identity
+          .getUser
+          .execute(
+            actor.id as
+              UserId,
+          );
+
+      if (!user) {
+        return reply
+          .code(403)
+          .send({
+            error:
+              'authorization_denied',
+          });
+      }
+
+      if (
+        user.role ===
+        'owner'
+      ) {
+        const response:
+          AccessProfileResponse =
+          {
+            userId:
+              user.id,
+
+            role:
+              user.role,
+
+            permissions: [
+              ...accessPermissionKeys,
+            ],
+          };
+
+        return response;
+      }
+
+      const stored =
+        await controlPlane
+          .authorization
+          .listUserActionPermissions
+          .execute(
+            user.id,
+          );
+
+      const allowedKeys =
+        new Set<
+          AccessPermissionKey
+        >();
+
+      for (
+        const permission of
+          stored
+      ) {
+        const parsed =
+          accessPermissionKeySchema
+            .safeParse(
+              permission.actionKey,
+            );
+
+        if (
+          !parsed.success
+        ) {
+          continue;
+        }
+
+        const expectedTarget =
+          createAccessPermissionTarget(
+            parsed.data,
+          );
+
+        if (
+          permission.target.kind ===
+            expectedTarget.kind &&
+          permission.target.id ===
+            expectedTarget.id
+        ) {
+          allowedKeys.add(
+            parsed.data,
+          );
+        }
+      }
+
+      const response:
+        AccessProfileResponse =
+        {
+          userId:
+            user.id,
+
+          role:
+            user.role,
+
+          permissions:
+            accessPermissionKeys
+              .filter(
+                (
+                  permission,
+                ) =>
+                  allowedKeys.has(
+                    permission,
+                  ),
+              ),
+        };
+
+      return response;
+    },
+  );
+
+  app.get(
     '/api/family/users',
     async (
       request,
       reply,
     ) => {
       const actor =
-        await requireOwnerActor(
+        await requireAccessPermission(
           request,
           reply,
+          'app.family.access',
         );
 
       if (!actor) {
@@ -1176,9 +1489,10 @@ export const createHttpServer = ({
       reply,
     ) => {
       const actor =
-        await requireOwnerActor(
+        await requireAccessPermission(
           request,
           reply,
+          'family.users.create',
         );
 
       if (!actor) {
@@ -1365,6 +1679,718 @@ export const createHttpServer = ({
               'family_user_creation_failed',
           });
       }
+    },
+  );
+
+  app.get(
+    '/api/family/users/:id/access',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireOwnerActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      const params =
+        familyUserParamsSchema
+          .safeParse(
+            request.params,
+          );
+
+      if (!params.success) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const user =
+        await controlPlane
+          .identity
+          .getUser
+          .execute(
+            params.data.id as
+              UserId,
+          );
+
+      if (!user) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_user_not_found',
+          });
+      }
+
+      if (
+        user.role ===
+        'owner'
+      ) {
+        const response:
+          AccessProfileResponse =
+          {
+            userId:
+              user.id,
+
+            role:
+              user.role,
+
+            permissions: [
+              ...accessPermissionKeys,
+            ],
+          };
+
+        return response;
+      }
+
+      const stored =
+        await controlPlane
+          .authorization
+          .listUserActionPermissions
+          .execute(
+            user.id,
+          );
+
+      const allowedKeys =
+        new Set<
+          AccessPermissionKey
+        >();
+
+      for (
+        const permission of
+          stored
+      ) {
+        const parsed =
+          accessPermissionKeySchema
+            .safeParse(
+              permission.actionKey,
+            );
+
+        if (
+          !parsed.success
+        ) {
+          continue;
+        }
+
+        const target =
+          createAccessPermissionTarget(
+            parsed.data,
+          );
+
+        if (
+          permission.target.kind ===
+            target.kind &&
+          permission.target.id ===
+            target.id
+        ) {
+          allowedKeys.add(
+            parsed.data,
+          );
+        }
+      }
+
+      const response:
+        AccessProfileResponse =
+        {
+          userId:
+            user.id,
+
+          role:
+            user.role,
+
+          permissions:
+            accessPermissionKeys
+              .filter(
+                (
+                  permission,
+                ) =>
+                  allowedKeys.has(
+                    permission,
+                  ),
+              ),
+        };
+
+      return response;
+    },
+  );
+
+  app.patch(
+    '/api/family/users/:id/access',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireOwnerActor(
+          request,
+          reply,
+        );
+
+      if (
+        !actor ||
+        actor.kind !==
+          'user'
+      ) {
+        return;
+      }
+
+      const params =
+        familyUserParamsSchema
+          .safeParse(
+            request.params,
+          );
+
+      const body =
+        setAccessPermissionRequestSchema
+          .safeParse(
+            request.body,
+          );
+
+      if (
+        !params.success ||
+        !body.success
+      ) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const user =
+        await controlPlane
+          .identity
+          .getUser
+          .execute(
+            params.data.id as
+              UserId,
+          );
+
+      if (!user) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_user_not_found',
+          });
+      }
+
+      if (
+        user.role ===
+        'owner'
+      ) {
+        return reply
+          .code(409)
+          .send({
+            error:
+              'owner_permissions_are_implicit',
+          });
+      }
+
+      const permissionKey =
+        body.data.permission;
+
+      const target =
+        createAccessPermissionTarget(
+          permissionKey,
+        );
+
+      if (
+        body.data.enabled
+      ) {
+        await controlPlane
+          .authorization
+          .grantUserActionPermission
+          .execute({
+            userId:
+              user.id,
+
+            actionKey:
+              permissionKey,
+
+            target,
+
+            grantedByUserId:
+              actor.id as
+                UserId,
+          });
+      } else {
+        const current =
+          await controlPlane
+            .authorization
+            .listUserActionPermissions
+            .execute(
+              user.id,
+            );
+
+        const matching =
+          current.find(
+            (
+              permission,
+            ) =>
+              permission
+                .actionKey ===
+                permissionKey &&
+              permission
+                .target
+                .kind ===
+                target.kind &&
+              permission
+                .target
+                .id ===
+                target.id,
+          );
+
+        if (matching) {
+          await controlPlane
+            .authorization
+            .revokeUserActionPermission
+            .execute({
+              permissionId:
+                matching.id,
+
+              userId:
+                user.id,
+            });
+        }
+      }
+
+      return {
+        success:
+          true,
+      };
+    },
+  );
+
+  app.patch(
+    '/api/family/users/:id/role',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'family.users.manage',
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      const params =
+        familyUserParamsSchema
+          .safeParse(
+            request.params,
+          );
+
+      const body =
+        updateFamilyUserRoleRequestSchema
+          .safeParse(
+            request.body,
+          );
+
+      if (
+        !params.success ||
+        !body.success
+      ) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      try {
+        const user =
+          await controlPlane
+            .identity
+            .changeFamilyUserRole
+            .execute({
+              userId:
+                params.data.id as UserId,
+
+              role:
+                body.data.role,
+            });
+
+        const response:
+          FamilyUserResponse =
+          {
+            id:
+              user.id,
+
+            name:
+              user.name,
+
+            role:
+              user.role,
+
+            createdAt:
+              user.createdAt
+                .toISOString(),
+          };
+
+        return response;
+      } catch (
+        error
+      ) {
+        if (
+          error instanceof Error &&
+          error.message ===
+            'owner_cannot_be_modified'
+        ) {
+          return reply
+            .code(409)
+            .send({
+              error:
+                'owner_cannot_be_modified',
+            });
+        }
+
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_user_not_found',
+          });
+      }
+    },
+  );
+
+  app.post(
+    '/api/family/users/:id/password',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'family.users.manage',
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      if (!familyAuthProvisioner) {
+        return reply
+          .code(503)
+          .send({
+            error:
+              'family_user_provisioning_unavailable',
+          });
+      }
+
+      const params =
+        familyUserParamsSchema
+          .safeParse(
+            request.params,
+          );
+
+      const body =
+        resetFamilyUserPasswordRequestSchema
+          .safeParse(
+            request.body,
+          );
+
+      if (
+        !params.success ||
+        !body.success
+      ) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const user =
+        await controlPlane
+          .identity
+          .getUser
+          .execute(
+            params.data.id as UserId,
+          );
+
+      if (!user) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_user_not_found',
+          });
+      }
+
+      if (
+        user.role ===
+        'owner'
+      ) {
+        return reply
+          .code(409)
+          .send({
+            error:
+              'owner_password_managed_separately',
+          });
+      }
+
+      await familyAuthProvisioner
+        .setPassword({
+          userId:
+            user.id,
+
+          newPassword:
+            body.data.password,
+
+          headers:
+            fromNodeHeaders(
+              request.headers,
+            ),
+        });
+
+      /*
+      * A password reset invalidates existing
+      * access as a defensive default.
+      */
+      await familyAuthProvisioner
+        .revokeSessions({
+          userId:
+            user.id,
+
+          headers:
+            fromNodeHeaders(
+              request.headers,
+            ),
+        });
+
+      return {
+        success:
+          true,
+      };
+    },
+  );
+
+  app.post(
+    '/api/family/users/:id/revoke-sessions',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'family.users.manage',
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      if (!familyAuthProvisioner) {
+        return reply
+          .code(503)
+          .send({
+            error:
+              'family_user_provisioning_unavailable',
+          });
+      }
+
+      const params =
+        familyUserParamsSchema
+          .safeParse(
+            request.params,
+          );
+
+      if (!params.success) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const user =
+        await controlPlane
+          .identity
+          .getUser
+          .execute(
+            params.data.id as UserId,
+          );
+
+      if (!user) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_user_not_found',
+          });
+      }
+
+      if (
+        user.role ===
+        'owner'
+      ) {
+        return reply
+          .code(409)
+          .send({
+            error:
+              'owner_sessions_managed_separately',
+          });
+      }
+
+      await familyAuthProvisioner
+        .revokeSessions({
+          userId:
+            user.id,
+
+          headers:
+            fromNodeHeaders(
+              request.headers,
+            ),
+        });
+
+      return {
+        success:
+          true,
+      };
+    },
+  );
+
+  app.delete(
+    '/api/family/users/:id',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireAccessPermission(
+          request,
+          reply,
+          'family.users.manage',
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      if (!familyAuthProvisioner) {
+        return reply
+          .code(503)
+          .send({
+            error:
+              'family_user_provisioning_unavailable',
+          });
+      }
+
+      const params =
+        familyUserParamsSchema
+          .safeParse(
+            request.params,
+          );
+
+      if (!params.success) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const user =
+        await controlPlane
+          .identity
+          .getUser
+          .execute(
+            params.data.id as UserId,
+          );
+
+      if (!user) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_user_not_found',
+          });
+      }
+
+      if (
+        user.role ===
+        'owner'
+      ) {
+        return reply
+          .code(409)
+          .send({
+            error:
+              'owner_cannot_be_deleted',
+          });
+      }
+
+      /*
+      * Primero quitamos la identidad DKTURBO.
+      *
+      * Incluso si el cleanup posterior de
+      * Better Auth fallase, el usuario ya no
+      * tendría autorización en Control Plane.
+      */
+      await controlPlane
+        .identity
+        .deleteFamilyUser
+        .execute(
+          user.id,
+        );
+
+      try {
+        await familyAuthProvisioner
+          .removeUser({
+            userId:
+              user.id,
+
+            headers:
+              fromNodeHeaders(
+                request.headers,
+              ),
+          });
+      } catch (
+        error
+      ) {
+        request.log.error(
+          {
+            error,
+            userId:
+              user.id,
+          },
+          'Family auth cleanup failed after identity removal',
+        );
+
+        return reply
+          .code(500)
+          .send({
+            error:
+              'family_user_auth_cleanup_failed',
+          });
+      }
+
+      return reply
+        .code(204)
+        .send();
     },
   );
 
@@ -1675,6 +2701,308 @@ export const createHttpServer = ({
         runtimeSnapshot:
           state.runtimeSnapshot,
       });
+    },
+  );
+
+  app.get(
+    '/api/family/users/:id/permissions',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireOwnerActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      const params =
+        familyUserParamsSchema
+          .safeParse(
+            request.params,
+          );
+
+      if (!params.success) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const user =
+        await controlPlane
+          .identity
+          .getUser
+          .execute(
+            params.data.id as UserId,
+          );
+
+      if (!user) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_user_not_found',
+          });
+      }
+
+      const permissions =
+        await controlPlane
+          .authorization
+          .listUserActionPermissions
+          .execute(
+            user.id,
+          );
+
+      const response:
+        FamilyPermissionResponse[] =
+        permissions.map(
+          (permission) => ({
+            id:
+              permission.id,
+
+            userId:
+              permission.userId,
+
+            actionKey:
+              permission.actionKey,
+
+            target: {
+              kind:
+                permission.target.kind,
+
+              id:
+                permission.target.id,
+            },
+
+            grantedByUserId:
+              permission.grantedByUserId,
+
+            grantedAt:
+              permission.grantedAt
+                .toISOString(),
+          }),
+        );
+
+      return response;
+    },
+  );
+
+  app.post(
+    '/api/family/users/:id/permissions',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireOwnerActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      const params =
+        familyUserParamsSchema
+          .safeParse(
+            request.params,
+          );
+
+      const body =
+        grantFamilyPermissionRequestSchema
+          .safeParse(
+            request.body,
+          );
+
+      if (
+        !params.success ||
+        !body.success
+      ) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const user =
+        await controlPlane
+          .identity
+          .getUser
+          .execute(
+            params.data.id as UserId,
+          );
+
+      if (!user) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_user_not_found',
+          });
+      }
+
+      if (
+        user.role ===
+        'owner'
+      ) {
+        return reply
+          .code(409)
+          .send({
+            error:
+              'owner_permissions_not_managed_here',
+          });
+      }
+
+      const permission =
+        await controlPlane
+          .authorization
+          .grantUserActionPermission
+          .execute({
+            userId:
+              user.id,
+
+            actionKey:
+              body.data.actionKey,
+
+            target:
+              body.data.target,
+
+            grantedByUserId:
+              actor.id as UserId,
+          });
+
+      const response:
+        FamilyPermissionResponse =
+        {
+          id:
+            permission.id,
+
+          userId:
+            permission.userId,
+
+          actionKey:
+            permission.actionKey,
+
+          target: {
+            kind:
+              permission.target.kind,
+
+            id:
+              permission.target.id,
+          },
+
+          grantedByUserId:
+            permission.grantedByUserId,
+
+          grantedAt:
+            permission.grantedAt
+              .toISOString(),
+        };
+
+      return reply
+        .code(201)
+        .send(
+          response,
+        );
+    },
+  );
+
+  app.delete(
+    '/api/family/users/:id/permissions/:permissionId',
+    async (
+      request,
+      reply,
+    ) => {
+      const actor =
+        await requireOwnerActor(
+          request,
+          reply,
+        );
+
+      if (!actor) {
+        return;
+      }
+
+      const params =
+        familyPermissionParamsSchema
+          .safeParse(
+            request.params,
+          );
+
+      if (!params.success) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              'invalid_request',
+          });
+      }
+
+      const user =
+        await controlPlane
+          .identity
+          .getUser
+          .execute(
+            params.data.id as UserId,
+          );
+
+      if (!user) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_user_not_found',
+          });
+      }
+
+      if (
+        user.role ===
+        'owner'
+      ) {
+        return reply
+          .code(409)
+          .send({
+            error:
+              'owner_permissions_not_managed_here',
+          });
+      }
+
+      const deleted =
+        await controlPlane
+          .authorization
+          .revokeUserActionPermission
+          .execute({
+            permissionId:
+              params.data
+                .permissionId as
+                UserActionPermissionId,
+
+            userId:
+              user.id,
+          });
+
+      if (!deleted) {
+        return reply
+          .code(404)
+          .send({
+            error:
+              'family_permission_not_found',
+          });
+      }
+
+      return reply
+        .code(204)
+        .send();
     },
   );
 

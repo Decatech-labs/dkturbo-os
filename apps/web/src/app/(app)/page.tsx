@@ -15,6 +15,16 @@ import {
   requireCurrentSession,
 } from '../../lib/auth-server';
 
+import type {
+  AccessPermissionKey,
+  DkturboAppId,
+} from '@dkturbo/contracts';
+
+import {
+  getCurrentAccessProfile,
+  hasAccessPermission,
+} from '../../lib/access-server';
+
 const getFirstName = (
   name: string,
 ): string =>
@@ -23,17 +33,71 @@ const getFirstName = (
     .split(/\s+/)[0] ??
   name;
 
+const appAccessPermission:
+  Partial<
+    Record<
+      DkturboAppId,
+      AccessPermissionKey
+    >
+  > = {
+    system:
+      'app.system.access',
+
+    family:
+      'app.family.access',
+
+    files:
+      'app.files.access',
+
+    photos:
+      'app.photos.access',
+
+    automations:
+      'app.automations.access',
+
+    security:
+      'app.security.access',
+  };
+
 export default async function HomePage() {
   const [
-    apps,
+    allApps,
     session,
-  ] = await Promise.all([
-    Promise.resolve(
-      getHomeApps(),
-    ),
+    access,
+  ] =
+    await Promise.all([
+      Promise.resolve(
+        getHomeApps(),
+      ),
 
-    requireCurrentSession(),
-  ]);
+      requireCurrentSession(),
+
+      getCurrentAccessProfile(),
+    ]);
+
+  const apps =
+    access
+      ? allApps.filter(
+          (
+            app,
+          ) => {
+            const permission =
+              appAccessPermission[
+                app.id as
+                  DkturboAppId
+              ];
+
+            if (!permission) {
+              return false;
+            }
+
+            return hasAccessPermission(
+              access,
+              permission,
+            );
+          },
+        )
+      : [];
 
   return (
     <main className="home">

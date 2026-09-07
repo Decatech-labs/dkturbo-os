@@ -93,6 +93,24 @@ import {
 import {
   CreateFamilyUser,
 } from '../core/identity/application/create-family-user.js';
+import {
+  ChangeFamilyUserRole,
+} from '../core/identity/application/change-family-user-role.js';
+import {
+  DeleteFamilyUser,
+} from '../core/identity/application/delete-family-user.js';
+import {
+  ListUserActionPermissions,
+} from '../core/authorization/application/list-user-action-permissions.js';
+import {
+  GrantUserActionPermission,
+} from '../core/authorization/application/grant-user-action-permission.js';
+import {
+  RevokeUserActionPermission,
+} from '../core/authorization/application/revoke-user-action-permission.js';
+import {
+  HasUserActionPermission,
+} from '../core/authorization/application/has-user-action-permission.js';
 
 export interface CreateControlPlaneOptions {
   database: Kysely<Database>;
@@ -225,6 +243,27 @@ export const createControlPlane = ({
         new ListPendingApprovalRequests(
           approvalRequestRepository,
         ),
+
+      listUserActionPermissions:
+        new ListUserActionPermissions(
+          userActionPermissionRepository,
+        ),
+
+      grantUserActionPermission:
+        new GrantUserActionPermission(
+          userActionPermissionRepository,
+          clock,
+        ),
+
+      revokeUserActionPermission:
+        new RevokeUserActionPermission(
+          userActionPermissionRepository,
+        ),
+
+      hasUserActionPermission:
+        new HasUserActionPermission(
+          userActionPermissionRepository,
+        ),
     },
 
     identity: {
@@ -248,6 +287,16 @@ export const createControlPlane = ({
         new CreateFamilyUser(
           userRepository,
           clock,
+        ),
+
+      changeFamilyUserRole:
+        new ChangeFamilyUserRole(
+          userRepository,
+        ),
+
+      deleteFamilyUser:
+        new DeleteFamilyUser(
+          userRepository,
         ),
     },
 

@@ -20,6 +20,7 @@ import type {
 
 import type {
   UserActionPermission,
+  UserActionPermissionId,
 } from '../domain/user-action-permission.js';
 
 import type {
@@ -118,5 +119,93 @@ export class PostgresUserActionPermissionRepository
         .executeTakeFirst();
 
     return row !== undefined;
+  }
+
+  async listByUser(
+    userId:
+      UserId,
+  ): Promise<
+    UserActionPermission[]
+  > {
+    const rows =
+      await this.database
+        .selectFrom(
+          'authz.user_action_permissions',
+        )
+        .selectAll()
+        .where(
+          'user_id',
+          '=',
+          userId,
+        )
+        .orderBy(
+          'granted_at',
+          'asc',
+        )
+        .execute();
+
+    return rows.map(
+      (row) => ({
+        id:
+          row.id as
+            UserActionPermissionId,
+
+        userId:
+          row.user_id as
+            UserId,
+
+        actionKey:
+          row.action_key as
+            ActionKey,
+
+        target: {
+          kind:
+            row.target_kind as
+              ResourceRef['kind'],
+
+          id:
+            row.target_id,
+        },
+
+        grantedByUserId:
+          row.granted_by_user_id as
+            UserId,
+
+        grantedAt:
+          row.granted_at,
+      }),
+    );
+  }
+
+  async deleteForUser(
+    id:
+      UserActionPermissionId,
+
+    userId:
+      UserId,
+  ): Promise<boolean> {
+    const result =
+      await this.database
+        .deleteFrom(
+          'authz.user_action_permissions',
+        )
+        .where(
+          'id',
+          '=',
+          id,
+        )
+        .where(
+          'user_id',
+          '=',
+          userId,
+        )
+        .executeTakeFirst();
+
+    return (
+      Number(
+        result.numDeletedRows,
+      ) >
+      0
+    );
   }
 }

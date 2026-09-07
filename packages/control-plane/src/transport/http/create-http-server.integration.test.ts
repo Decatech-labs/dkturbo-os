@@ -1295,7 +1295,7 @@ describe(
     );
 
     it(
-      'allows the requester to process their own action request',
+      'denies the requester when they lack an explicit permission',
       async () => {
         const actionRequestId =
           await createActionRequestAs(
@@ -1324,7 +1324,7 @@ describe(
           response.json(),
         ).toMatchObject({
           outcome:
-            'APPROVAL_REQUIRED',
+            'DENIED',
         });
       },
     );

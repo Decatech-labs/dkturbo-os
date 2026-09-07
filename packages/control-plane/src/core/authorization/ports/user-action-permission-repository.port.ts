@@ -12,6 +12,7 @@ import type {
 
 import type {
   UserActionPermission,
+  UserActionPermissionId,
 } from '../domain/user-action-permission.js';
 
 export interface UserActionPermissionRepository {
@@ -29,5 +30,20 @@ export interface UserActionPermissionRepository {
 
     target:
       ResourceRef,
+  ): Promise<boolean>;
+
+  listByUser(
+    userId:
+      UserId,
+  ): Promise<
+    UserActionPermission[]
+  >;
+
+  deleteForUser(
+    id:
+      UserActionPermissionId,
+
+    userId:
+      UserId,
   ): Promise<boolean>;
 }

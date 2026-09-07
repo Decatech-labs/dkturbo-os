@@ -26,6 +26,16 @@ import {
   CreatePersonForm,
 } from './create-person-form';
 
+import {
+  PersonManagement,
+} from './person-management';
+
+import {
+  getCurrentAccessProfile,
+  hasAccessPermission,
+  requireAccessPermission,
+} from '../../../lib/access-server';
+
 export const dynamic =
   'force-dynamic';
 
@@ -162,9 +172,17 @@ const formatTargetKind =
 
 const PersonCard = ({
   user,
+  canManageUsers,
+  canManagePermissions,
 }: {
   user:
     FamilyUserResponse;
+
+  canManageUsers:
+    boolean;
+
+  canManagePermissions:
+    boolean;
 }) => {
   const role =
     roleMeta[
@@ -204,6 +222,21 @@ const PersonCard = ({
             user.createdAt,
           )}
         </div>
+
+        {(
+          canManageUsers ||
+          canManagePermissions
+        ) && (
+          <PersonManagement
+            user={user}
+            canManageUsers={
+              canManageUsers
+            }
+            canManagePermissions={
+              canManagePermissions
+            }
+          />
+        )}
       </div>
     </article>
   );
@@ -268,6 +301,33 @@ const ApprovalCard = ({
 );
 
 export default async function FamilyPage() {
+  await requireAccessPermission(
+    'app.family.access',
+  );
+
+  const access =
+    await getCurrentAccessProfile();
+
+  if (!access) {
+    return null;
+  }
+
+  const isOwner =
+    access.role ===
+    'owner';
+
+  const canCreateUsers =
+    hasAccessPermission(
+      access,
+      'family.users.create',
+    );
+
+  const canManageUsers =
+    hasAccessPermission(
+      access,
+      'family.users.manage',
+    );
+
   let data:
     Awaited<
       ReturnType<
@@ -277,7 +337,9 @@ export default async function FamilyPage() {
 
   try {
     data =
-      await getFamilyDashboard();
+      await getFamilyDashboard(
+        isOwner,
+      );
   } catch (
     error
   ) {
@@ -352,40 +414,46 @@ export default async function FamilyPage() {
         </h1>
       </header>
 
-      <section className="family-section">
-        <div className="family-section-header">
-          <div>
-            <Users />
+      {isOwner && (
+        <section className="family-section">
+          <div className="family-section-header">
+            <div>
+              <Users />
 
-            <h2>
-              Personas
-            </h2>
+              <h2>
+                Personas
+              </h2>
+            </div>
+
+            <span>
+              {data.users.length}
+            </span>
           </div>
 
-          <span>
-            {data.users.length}
-          </span>
-        </div>
-
-        <CreatePersonForm />
-
-        <div className="family-people">
-          {data.users.map(
-            (
-              user,
-            ) => (
-              <PersonCard
-                key={
-                  user.id
-                }
-                user={
-                  user
-                }
-              />
-            ),
+          {canCreateUsers && (
+            <CreatePersonForm />
           )}
-        </div>
-      </section>
+
+          <div className="family-people">
+            {data.users.map(
+              (
+                user,
+              ) => (
+                <PersonCard
+                  key={user.id}
+                  user={user}
+                  canManageUsers={
+                    canManageUsers
+                  }
+                  canManagePermissions={
+                    isOwner
+                  }
+                />
+              ),
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="family-section">
         <div className="family-section-header">

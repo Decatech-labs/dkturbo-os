@@ -8,6 +8,7 @@ import { createActorRef } from '../../actors/index.js';
 import { createActionKey } from '../../actions/domain/action-key.js';
 import {
   createUser,
+  UserRole,
   type User,
   type UserId,
 } from '../../identity/domain/user.js';
@@ -22,6 +23,7 @@ import type {
 } from '../../resources/index.js';
 import type {
   UserActionPermission,
+  UserActionPermissionId,
 } from '../domain/user-action-permission.js';
 import type {
   UserActionPermissionRepository,
@@ -50,6 +52,19 @@ class FakeUserRepository
 
   async list(): Promise<User[]> {
     return this.users;
+  }
+
+  async updateRole(
+    _id: UserId,
+    _role: UserRole,
+  ): Promise<boolean> {
+    return false;
+  }
+
+  async deleteById(
+    _id: UserId,
+  ): Promise<boolean> {
+    return false;
   }
 }
 
@@ -95,11 +110,20 @@ describe('RoleBasedActionAuthorizer', () => {
     ).toBe('ALLOW');
   });
 
-  it('requires approval for members', async () => {
-    expect(
-      (await authorizeAs('member')).outcome,
-    ).toBe('APPROVAL_REQUIRED');
-  });
+  it(
+    'denies members without an explicit permission',
+    async () => {
+      expect(
+        (
+          await authorizeAs(
+            'member',
+          )
+        ).outcome,
+      ).toBe(
+        'DENY',
+      );
+    },
+  );
 
   it('denies guests', async () => {
     expect(
@@ -185,5 +209,18 @@ class FakePermissionRepository
       ResourceRef,
   ): Promise<boolean> {
     return this.permitted;
+  }
+
+  async listByUser(
+    _userId: UserId,
+  ): Promise<UserActionPermission[]> {
+    return [];
+  }
+
+  async deleteForUser(
+    _id: UserActionPermissionId,
+    _userId: UserId,
+  ): Promise<boolean> {
+    return false;
   }
 }

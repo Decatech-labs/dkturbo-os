@@ -86,24 +86,25 @@ export interface FamilyDashboardData {
 }
 
 export const getFamilyDashboard =
-  async (): Promise<FamilyDashboardData> => {
-    const [
-      users,
-      pendingApprovals,
-    ] =
-      await Promise.all([
-        getJson<
-          FamilyUserResponse[]
-        >(
-          '/api/family/users',
-        ),
+  async (
+    includePendingApprovals:
+      boolean,
+  ): Promise<FamilyDashboardData> => {
+    const users =
+      await getJson<
+        FamilyUserResponse[]
+      >(
+        '/api/family/users',
+      );
 
-        getJson<
-          PendingApprovalResponse[]
-        >(
-          '/api/approval-requests/pending',
-        ),
-      ]);
+    const pendingApprovals =
+      includePendingApprovals
+        ? await getJson<
+            PendingApprovalResponse[]
+          >(
+            '/api/approval-requests/pending',
+          )
+        : [];
 
     return {
       users,

@@ -2645,6 +2645,172 @@ summary::-webkit-details-marker {
   opacity: 0.55;
 }
 
+.family-manage-person {
+  margin-top: 12px;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background:
+    rgba(255, 255, 255, 0.58);
+  color: inherit;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.family-manage-person svg {
+  width: 14px;
+  height: 14px;
+}
+
+.family-management {
+  margin-top: 14px;
+  padding: 17px;
+  border-radius: 18px;
+  background:
+    rgba(255, 255, 255, 0.66);
+  border:
+    1px solid
+      rgba(34, 31, 27, 0.07);
+}
+
+.family-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.family-management-header > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.family-management-header svg {
+  width: 18px;
+  height: 18px;
+}
+
+.family-management-header strong,
+.family-management-header span {
+  display: block;
+}
+
+.family-management-header span {
+  margin-top: 2px;
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+.family-management-close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    rgba(246, 243, 239, 0.9);
+  cursor: pointer;
+}
+
+.family-management-block + .family-management-block {
+  margin-top: 18px;
+}
+
+.family-management-block h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.48;
+}
+
+.family-management-role,
+.family-management-password {
+  display: flex;
+  gap: 8px;
+}
+
+.family-management-role select,
+.family-management-password input {
+  flex: 1;
+  min-height: 42px;
+  border:
+    1px solid
+      rgba(35, 31, 28, 0.1);
+  border-radius: 13px;
+  padding: 0 12px;
+  background:
+    rgba(248, 246, 243, 0.88);
+  color: inherit;
+  font: inherit;
+}
+
+.family-management-role button,
+.family-management-password > button,
+.family-management-secondary,
+.family-management-danger button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 13px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.family-management-password > button,
+.family-management-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background:
+    rgba(221, 231, 246, 0.84);
+}
+
+.family-management-password svg,
+.family-management-secondary svg,
+.family-management-danger svg {
+  width: 15px;
+  height: 15px;
+}
+
+.family-management-danger {
+  padding-top: 16px;
+  border-top:
+    1px solid
+      rgba(120, 60, 60, 0.1);
+}
+
+.family-management-danger button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background:
+    rgba(244, 216, 216, 0.76);
+  color:
+    #8f3f3f;
+}
+
+.family-management-owner {
+  padding: 13px;
+  border-radius: 13px;
+  background:
+    rgba(246, 243, 239, 0.88);
+  font-size: 12px;
+  opacity: 0.65;
+}
+
 @media (max-width: 700px) {
   .family-page {
     width: min(100% - 28px, 1040px);
@@ -2786,6 +2952,19 @@ summary::-webkit-details-marker {
     justify-content: center;
     min-height: 44px;
   }
+
+  .family-management-role,
+  .family-management-password {
+    flex-direction: column;
+  }
+
+  .family-management-role button,
+  .family-management-password > button,
+  .family-management-secondary,
+  .family-management-danger button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 430px) {
@@ -2809,5 +2988,657 @@ summary::-webkit-details-marker {
 
   .family-action-reject {
     order: 3;
+  }
+}
+
+.access-denied-page {
+  width:
+    min(
+      calc(100% - 48px),
+      760px
+    );
+  min-height: 80vh;
+  margin: 0 auto;
+  padding: 54px 0 96px;
+}
+
+.access-denied-card {
+  max-width: 480px;
+  margin: 90px auto 0;
+  text-align: center;
+}
+
+.access-denied-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background:
+    rgba(232, 228, 243, 0.88);
+}
+
+.access-denied-icon svg {
+  width: 27px;
+  height: 27px;
+}
+
+.access-denied-card h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.access-denied-card p {
+  margin: 9px 0 24px;
+  opacity: 0.56;
+}
+
+.access-denied-home {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 13px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  background:
+    rgba(232, 228, 243, 0.88);
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.family-access-loading {
+  padding: 14px;
+  border-radius: 13px;
+  background:
+    rgba(246, 243, 239, 0.75);
+  font-size: 11.5px;
+  opacity: 0.55;
+}
+
+/* =========================================================
+  FAMILY — APP ACCESS
+   ========================================================= */
+
+.family-access-section {
+  display: block;
+}
+
+.family-access-heading {
+  margin-bottom: 14px;
+}
+
+.family-access-heading h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color:
+    rgba(35, 31, 28, 0.55);
+}
+
+.family-access-heading p {
+  max-width: 560px;
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color:
+    rgba(35, 31, 28, 0.48);
+}
+
+.family-access-apps {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+}
+
+.family-access-app {
+  width: 100%;
+  overflow: hidden;
+
+  border:
+    1px solid
+      rgba(30, 30, 30, 0.07);
+
+  border-radius: 17px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.54
+    );
+
+  box-shadow:
+    0 1px 2px
+      rgba(
+        30,
+        30,
+        30,
+        0.015
+      );
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.family-access-app-enabled {
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.72
+    );
+
+  border-color:
+    rgba(
+      30,
+      30,
+      30,
+      0.085
+    );
+}
+
+.family-access-app-header {
+  width: 100%;
+  min-height: 70px;
+
+  padding:
+    10px 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.family-access-app-info {
+  min-width: 0;
+  flex: 1;
+
+  padding: 0;
+
+  border: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  background:
+    transparent;
+
+  color: inherit;
+  font: inherit;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.family-access-app-icon {
+  width: 44px;
+  height: 44px;
+
+  flex:
+    0 0 44px;
+
+  border-radius: 13px;
+
+  display: grid;
+  place-items: center;
+}
+
+.family-access-app-icon svg {
+  width: 21px;
+  height: 21px;
+
+  stroke-width: 1.9;
+}
+
+.family-access-app-icon-blue {
+  background:
+    rgba(
+      221,
+      234,
+      250,
+      0.9
+    );
+
+  color:
+    rgb(
+      50,
+      112,
+      194
+    );
+}
+
+.family-access-app-icon-purple {
+  background:
+    rgba(
+      232,
+      226,
+      249,
+      0.92
+    );
+
+  color:
+    rgb(
+      102,
+      74,
+      178
+    );
+}
+
+.family-access-app-icon-pink {
+  background:
+    rgba(
+      248,
+      225,
+      234,
+      0.92
+    );
+
+  color:
+    rgb(
+      185,
+      70,
+      108
+    );
+}
+
+.family-access-app-icon-green {
+  background:
+    rgba(
+      222,
+      242,
+      232,
+      0.92
+    );
+
+  color:
+    rgb(
+      45,
+      132,
+      95
+    );
+}
+
+.family-access-app-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.family-access-app-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-width: 0;
+}
+
+.family-access-app-title-row strong {
+  font-size: 14px;
+  line-height: 1.2;
+
+  font-weight: 720;
+
+  color:
+    rgba(
+      27,
+      25,
+      24,
+      0.96
+    );
+}
+
+.family-access-status {
+  min-height: 25px;
+
+  padding:
+    0 10px;
+
+  border-radius:
+    999px;
+
+  display: inline-flex;
+  align-items: center;
+
+  white-space: nowrap;
+
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+.family-access-status-full {
+  color:
+    rgb(
+      37,
+      117,
+      77
+    );
+
+  background:
+    rgba(
+      217,
+      241,
+      227,
+      0.88
+    );
+}
+
+.family-access-status-limited {
+  color:
+    rgb(
+      135,
+      96,
+      30
+    );
+
+  background:
+    rgba(
+      246,
+      233,
+      203,
+      0.9
+    );
+}
+
+.family-access-status-none {
+  color:
+    rgba(
+      40,
+      40,
+      44,
+      0.62
+    );
+
+  background:
+    rgba(
+      231,
+      233,
+      238,
+      0.72
+    );
+}
+
+.family-access-chevron {
+  width: 17px;
+  height: 17px;
+
+  flex:
+    0 0 auto;
+
+  margin-left: auto;
+
+  opacity: 0.35;
+
+  transition:
+    transform 160ms ease;
+}
+
+.family-access-chevron-open {
+  transform:
+    rotate(180deg);
+}
+
+.family-access-toggle {
+  position: relative;
+
+  width: 46px;
+  height: 28px;
+
+  flex:
+    0 0 46px;
+
+  padding: 0;
+
+  border: 0;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(
+      42,
+      46,
+      54,
+      0.14
+    );
+
+  cursor: pointer;
+
+  transition:
+    background 150ms ease,
+    opacity 150ms ease;
+}
+
+.family-access-toggle > span {
+  position: absolute;
+
+  top: 3px;
+  left: 3px;
+
+  width: 22px;
+  height: 22px;
+
+  border-radius:
+    999px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 1px 4px
+      rgba(
+        0,
+        0,
+        0,
+        0.16
+      );
+
+  transition:
+    transform 150ms ease;
+}
+
+.family-access-toggle-on {
+  background:
+    rgb(
+      63,
+      123,
+      231
+    );
+}
+
+.family-access-toggle-on > span {
+  transform:
+    translateX(
+      18px
+    );
+}
+
+.family-access-toggle:disabled {
+  cursor: default;
+  opacity: 0.38;
+}
+
+.family-access-capabilities {
+  margin:
+    0 12px 12px;
+
+  padding:
+    0 12px;
+
+  border-radius: 14px;
+
+  background:
+    rgba(
+      245,
+      246,
+      249,
+      0.74
+    );
+}
+
+.family-access-capability {
+  min-height: 62px;
+
+  padding:
+    10px 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content:
+    space-between;
+
+  gap: 18px;
+}
+
+.family-access-capability
+  + .family-access-capability {
+  border-top:
+    1px solid
+      rgba(
+        30,
+        30,
+        30,
+        0.06
+      );
+}
+
+.family-access-capability-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.family-access-capability-copy strong {
+  display: block;
+
+  font-size: 12px;
+  line-height: 1.3;
+
+  font-weight: 680;
+
+  color:
+    rgba(
+      30,
+      28,
+      27,
+      0.94
+    );
+}
+
+.family-access-capability-copy span {
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 10.5px;
+  line-height: 1.4;
+
+  color:
+    rgba(
+      35,
+      31,
+      28,
+      0.48
+    );
+}
+
+.family-access-loading {
+  min-height: 64px;
+
+  padding: 16px;
+
+  border-radius: 15px;
+
+  display: flex;
+  align-items: center;
+
+  background:
+    rgba(
+      247,
+      246,
+      244,
+      0.74
+    );
+
+  font-size: 11px;
+
+  color:
+    rgba(
+      35,
+      31,
+      28,
+      0.5
+    );
+}
+
+@media
+  (max-width: 700px) {
+
+  .family-access-app-header {
+    min-height: 64px;
+
+    padding:
+      9px 11px;
+  }
+
+  .family-access-app-icon {
+    width: 40px;
+    height: 40px;
+
+    flex-basis:
+      40px;
+  }
+
+  .family-access-app-title-row {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+
+    gap: 4px;
+  }
+
+  .family-access-status {
+    min-height: 21px;
+
+    padding:
+      0 8px;
+
+    font-size: 9.5px;
+  }
+
+  .family-access-toggle {
+    width: 42px;
+    height: 25px;
+
+    flex-basis:
+      42px;
+  }
+
+  .family-access-toggle > span {
+    width: 19px;
+    height: 19px;
+  }
+
+  .family-access-toggle-on > span {
+    transform:
+      translateX(
+        17px
+      );
+  }
+
+  .family-access-capabilities {
+    margin:
+      0 9px 9px;
+
+    padding:
+      0 10px;
   }
 }

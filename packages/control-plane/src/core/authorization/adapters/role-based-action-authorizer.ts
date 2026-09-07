@@ -1,3 +1,7 @@
+import {
+  createActionKey,
+} from '../../actions/domain/action-key.js';
+
 import type {
   UserId,
 } from '../../identity/domain/user.js';
@@ -5,6 +9,10 @@ import type {
 import type {
   UserRepository,
 } from '../../identity/ports/user-repository.port.js';
+
+import {
+  createResourceRef,
+} from '../../resources/index.js';
 
 import type {
   AuthorizationDecision,
@@ -50,10 +58,11 @@ export class RoleBasedActionAuthorizer
     }
 
     const user =
-      await this.users.findById(
-        input.actor.id as
-          UserId,
-      );
+      await this.users
+        .findById(
+          input.actor.id as
+            UserId,
+        );
 
     if (!user) {
       return {
@@ -65,54 +74,89 @@ export class RoleBasedActionAuthorizer
       };
     }
 
-    switch (
-      user.role
+    if (
+      user.role ===
+      'owner'
     ) {
-      case 'owner':
+      return {
+        outcome:
+          'ALLOW',
+
+        reason:
+          'owner_role',
+      };
+    }
+
+    const exactPermission =
+      await this.permissions
+        .exists(
+          user.id,
+          input.actionKey,
+          input.target,
+        );
+
+    if (
+      exactPermission
+    ) {
+      return {
+        outcome:
+          'ALLOW',
+
+        reason:
+          'user_action_permission',
+      };
+    }
+
+    /*
+     * Capability global de Sistema:
+     *
+     * si el owner permite "Reiniciar servicios",
+     * no obligamos a conceder cada UUID de
+     * service-instance individualmente.
+     */
+    if (
+      input.actionKey ===
+      createActionKey(
+        'service.restart',
+      )
+    ) {
+      const globalRestartPermission =
+        await this.permissions
+          .exists(
+            user.id,
+
+            createActionKey(
+              'system.services.restart',
+            ),
+
+            createResourceRef({
+              kind:
+                'app',
+
+              id:
+                'system',
+            }),
+          );
+
+      if (
+        globalRestartPermission
+      ) {
         return {
           outcome:
             'ALLOW',
 
           reason:
-            'owner_role',
-        };
-
-      case 'member': {
-        const permitted =
-          await this.permissions
-            .exists(
-              user.id,
-              input.actionKey,
-              input.target,
-            );
-
-        if (permitted) {
-          return {
-            outcome:
-              'ALLOW',
-
-            reason:
-              'user_action_permission',
-          };
-        }
-
-        return {
-          outcome:
-            'APPROVAL_REQUIRED',
-
-          reason:
-            'member_requires_owner_approval',
+            'user_action_permission',
         };
       }
-
-      case 'guest':
-        return {
-          outcome:
-            'DENY',
-
-          reason:
-            'guest_role',
-        };
     }
+
+    return {
+      outcome:
+        'DENY',
+
+      reason:
+        'explicit_permission_required',
+    };
   }
 }

@@ -186,6 +186,45 @@ export const createBetterAuth = ({
               headers,
             });
         },
+
+        setPassword:
+          async ({
+            userId,
+            newPassword,
+            headers,
+          }: {
+            userId: string;
+            newPassword: string;
+            headers: Headers;
+          }) => {
+            await auth.api
+              .setUserPassword({
+                body: {
+                  userId,
+                  newPassword,
+                },
+
+                headers,
+              });
+          },
+
+        revokeSessions:
+          async ({
+            userId,
+            headers,
+          }: {
+            userId: string;
+            headers: Headers;
+          }) => {
+            await auth.api
+              .revokeUserSessions({
+                body: {
+                  userId,
+                },
+
+                headers,
+              });
+          },
     },
 
     close:

@@ -84,4 +84,54 @@ export class PostgresUserRepository
       }),
     );
   }
+
+  async updateRole(
+    id: UserId,
+    role: UserRole,
+  ): Promise<boolean> {
+    const result =
+      await this.database
+        .updateTable(
+          'identity.users',
+        )
+        .set({
+          role,
+        })
+        .where(
+          'id',
+          '=',
+          id,
+        )
+        .executeTakeFirst();
+
+    return (
+      Number(
+        result.numUpdatedRows,
+      ) >
+      0
+    );
+  }
+
+  async deleteById(
+    id: UserId,
+  ): Promise<boolean> {
+    const result =
+      await this.database
+        .deleteFrom(
+          'identity.users',
+        )
+        .where(
+          'id',
+          '=',
+          id,
+        )
+        .executeTakeFirst();
+
+    return (
+      Number(
+        result.numDeletedRows,
+      ) >
+      0
+    );
+  }
 }

@@ -34,6 +34,12 @@ import {
   ServiceRestartControl,
 } from './service-restart-control';
 
+import {
+  getCurrentAccessProfile,
+  hasAccessPermission,
+  requireAccessPermission,
+} from '../../../lib/access-server';
+
 export const dynamic =
   'force-dynamic';
 
@@ -412,9 +418,13 @@ const NodePanel = ({
 
 const ServiceCard = ({
   data,
+  canRestartServices,
 }: {
   data:
     ServiceDashboardData;
+
+  canRestartServices:
+    boolean;
 }) => {
   const {
     service,
@@ -484,17 +494,19 @@ const ServiceCard = ({
                       )}
                     </span>
 
-                    <ServiceRestartControl
-                      serviceInstanceId={
-                        instance.id
-                      }
-                      disabled={
-                        observedState
-                          .runtimeSnapshot
-                          ?.state ===
-                        'MISSING'
-                      }
-                    />
+                    {canRestartServices && (
+                      <ServiceRestartControl
+                        serviceInstanceId={
+                          instance.id
+                        }
+                        disabled={
+                          observedState
+                            .runtimeSnapshot
+                            ?.state ===
+                          'MISSING'
+                        }
+                      />
+                    )}
                   </div>
                 </div>
               );}
@@ -507,6 +519,21 @@ const ServiceCard = ({
 };
 
 export default async function SystemPage() {
+  await requireAccessPermission(
+    'app.system.access',
+  );
+
+  const access =
+    await getCurrentAccessProfile();
+
+  const canRestartServices =
+    access
+      ? hasAccessPermission(
+          access,
+          'system.services.restart',
+        )
+      : false;
+
   let nodes:
     NodeDashboardData[];
 
@@ -611,6 +638,9 @@ export default async function SystemPage() {
                     service.service.id
                   }
                   data={service}
+                  canRestartServices={
+                    canRestartServices
+                  }
                 />
               ),
             )}
