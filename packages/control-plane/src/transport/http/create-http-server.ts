@@ -117,6 +117,9 @@ const accessPermissionApp:
     'family.users.manage':
       'family',
 
+    'app.training.access':
+      'training',
+
     'app.files.access':
       'files',
 

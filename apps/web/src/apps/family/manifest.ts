@@ -24,6 +24,9 @@ export const familyApp =
 
     tone: 'lavender',
 
+    accessPermission:
+      'app.family.access',
+
     enabled: true,
 
     showOnHome: true,

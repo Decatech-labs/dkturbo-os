@@ -1,6 +1,9 @@
 import type {
   LucideIcon,
 } from 'lucide-react';
+import type {
+  AccessPermissionKey,
+} from '@dkturbo/contracts';
 
 export type AppTone =
   | 'blue'
@@ -31,6 +34,8 @@ export interface DkturboAppManifest {
   icon: LucideIcon;
 
   tone: AppTone;
+
+  accessPermission: AccessPermissionKey;
 
   enabled: boolean;
 

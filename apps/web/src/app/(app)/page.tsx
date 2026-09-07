@@ -15,11 +15,6 @@ import {
   requireCurrentSession,
 } from '../../lib/auth-server';
 
-import type {
-  AccessPermissionKey,
-  DkturboAppId,
-} from '@dkturbo/contracts';
-
 import {
   getCurrentAccessProfile,
   hasAccessPermission,
@@ -32,32 +27,6 @@ const getFirstName = (
     .trim()
     .split(/\s+/)[0] ??
   name;
-
-const appAccessPermission:
-  Partial<
-    Record<
-      DkturboAppId,
-      AccessPermissionKey
-    >
-  > = {
-    system:
-      'app.system.access',
-
-    family:
-      'app.family.access',
-
-    files:
-      'app.files.access',
-
-    photos:
-      'app.photos.access',
-
-    automations:
-      'app.automations.access',
-
-    security:
-      'app.security.access',
-  };
 
 export default async function HomePage() {
   const [
@@ -78,24 +47,11 @@ export default async function HomePage() {
   const apps =
     access
       ? allApps.filter(
-          (
-            app,
-          ) => {
-            const permission =
-              appAccessPermission[
-                app.id as
-                  DkturboAppId
-              ];
-
-            if (!permission) {
-              return false;
-            }
-
-            return hasAccessPermission(
+          (app) =>
+            hasAccessPermission(
               access,
-              permission,
-            );
-          },
+              app.accessPermission,
+            ),
         )
       : [];
 

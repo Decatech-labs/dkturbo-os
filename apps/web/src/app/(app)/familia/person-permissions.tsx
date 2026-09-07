@@ -13,6 +13,7 @@ import {
   Server,
   Shield,
   Users,
+  Dumbbell,
 } from 'lucide-react';
 
 import type {
@@ -71,6 +72,15 @@ const apps: AppDefinition[] = [
     accessPermission: 'app.family.access',
     icon: Users,
     tone: 'purple',
+    capabilities: [],
+  },
+
+  {
+    id: 'training',
+    name: 'Entrenamientos',
+    accessPermission: 'app.training.access',
+    icon: Dumbbell,
+    tone: 'blue',
     capabilities: [],
   },
 

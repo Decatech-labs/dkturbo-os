@@ -27,10 +27,15 @@ import {
   systemApp,
 } from './system/manifest';
 
+import {
+  trainingApp,
+} from './training/manifest';
+
 const registeredApps =
   [
     systemApp,
     familyApp,
+    trainingApp,
     filesApp,
     photosApp,
     automationsApp,

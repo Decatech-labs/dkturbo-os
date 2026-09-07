@@ -24,9 +24,12 @@ export const photosApp =
 
     tone: 'peach',
 
+    accessPermission:
+      'app.photos.access',
+
     enabled: true,
 
     showOnHome: true,
 
-    order: 40,
+    order: 50,
   });

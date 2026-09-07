@@ -24,9 +24,12 @@ export const automationsApp =
 
     tone: 'mint',
 
+    accessPermission:
+      'app.automations.access',
+
     enabled: true,
 
     showOnHome: true,
 
-    order: 50,
+    order: 60,
   });

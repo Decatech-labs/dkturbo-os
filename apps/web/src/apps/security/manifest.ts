@@ -24,9 +24,12 @@ export const securityApp =
 
     tone: 'rose',
 
+    accessPermission:
+      'app.security.access',
+
     enabled: true,
 
     showOnHome: true,
 
-    order: 60,
+    order: 70,
   });

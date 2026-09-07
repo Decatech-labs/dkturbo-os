@@ -207,6 +207,7 @@ export const dkturboAppIdSchema =
   z.enum([
     'system',
     'family',
+    'training',
     'files',
     'photos',
     'automations',
@@ -227,6 +228,8 @@ export const accessPermissionKeys =
     'family.users.create',
     'family.users.manage',
 
+    'app.training.access',
+    
     'app.files.access',
     'app.photos.access',
     'app.automations.access',

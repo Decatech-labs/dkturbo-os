@@ -24,9 +24,12 @@ export const filesApp =
 
     tone: 'yellow',
 
+    accessPermission:
+      'app.files.access',
+
     enabled: true,
 
     showOnHome: true,
 
-    order: 30,
+    order: 40,
   });

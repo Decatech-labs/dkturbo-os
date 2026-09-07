@@ -24,6 +24,9 @@ export const systemApp =
 
     tone: 'blue',
 
+    accessPermission:
+      'app.system.access',
+
     enabled: true,
 
     showOnHome: true,
