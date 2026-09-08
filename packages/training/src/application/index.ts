@@ -6,3 +6,4 @@ export * from './create-week.js';
 export * from './list-accessible-athletes.js';
 export * from './require-athlete-write-access.js';
 export * from './add-performance-entry.js';
+export * from './record-performance-entry-actual.js';

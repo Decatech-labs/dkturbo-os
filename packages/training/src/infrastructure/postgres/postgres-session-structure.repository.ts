@@ -24,6 +24,7 @@ import type {
   CreateSessionBlockData,
   SessionStructureRepository,
   CreatePerformanceEntryData,
+  UpdatePerformanceEntryActualData,
 } from '../../ports/index.js';
 
 import type {
@@ -741,6 +742,116 @@ implements SessionStructureRepository {
 
     return rows.map(
       mapPerformanceEntry,
+    );
+  }
+
+  public async findPerformanceEntryById(
+    performanceEntryId:
+      PerformanceEntryId,
+  ): Promise<PerformanceEntry | null> {
+
+    const row =
+      await this.db
+        .selectFrom(
+          'training.performance_entries',
+        )
+        .selectAll()
+        .where(
+          'id',
+          '=',
+          performanceEntryId,
+        )
+        .executeTakeFirst();
+
+    return row
+      ? mapPerformanceEntry(
+          row,
+        )
+      : null;
+  }
+
+  public async updatePerformanceEntryActual(
+    data:
+      UpdatePerformanceEntryActualData,
+  ): Promise<PerformanceEntry> {
+
+    const row =
+      await this.db
+        .updateTable(
+          'training.performance_entries',
+        )
+        .set({
+          actual_reps:
+            data.actualReps,
+
+          actual_load_kg:
+            toNumeric(
+              data.actualLoadKg,
+            ),
+
+          actual_distance_m:
+            toNumeric(
+              data.actualDistanceM,
+            ),
+
+          actual_duration_ms:
+            data.actualDurationMs,
+
+          actual_result_m:
+            toNumeric(
+              data.actualResultM,
+            ),
+
+          actual_height_m:
+            toNumeric(
+              data.actualHeightM,
+            ),
+
+          actual_rpe:
+            toNumeric(
+              data.actualRpe,
+            ),
+
+          actual_rir:
+            toNumeric(
+              data.actualRir,
+            ),
+
+          actual_rest_seconds:
+            data.actualRestSeconds,
+
+          actual_success:
+            data.actualSuccess,
+
+          actual_is_foul:
+            data.actualIsFoul,
+
+          actual_metrics:
+            {
+              ...data.actualMetrics,
+            },
+
+          actual_notes:
+            data.actualNotes,
+
+          updated_at:
+            new Date(),
+        })
+        .where(
+          'id',
+          '=',
+          data.performanceEntryId,
+        )
+        .where(
+          'athlete_id',
+          '=',
+          data.athleteId,
+        )
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+    return mapPerformanceEntry(
+      row,
     );
   }
 }

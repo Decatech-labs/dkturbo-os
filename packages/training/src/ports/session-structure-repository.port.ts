@@ -162,6 +162,58 @@ export interface CreatePerformanceEntryData {
     string | null;
 }
 
+export interface UpdatePerformanceEntryActualData {
+  performanceEntryId:
+    PerformanceEntry['id'];
+
+  athleteId:
+    AthleteId;
+
+  actualReps:
+    number | null;
+
+  actualLoadKg:
+    number | null;
+
+  actualDistanceM:
+    number | null;
+
+  actualDurationMs:
+    number | null;
+
+  actualResultM:
+    number | null;
+
+  actualHeightM:
+    number | null;
+
+  actualRpe:
+    number | null;
+
+  actualRir:
+    number | null;
+
+  actualRestSeconds:
+    number | null;
+
+  actualSuccess:
+    boolean | null;
+
+  actualIsFoul:
+    boolean | null;
+
+  actualMetrics:
+    Readonly<
+      Record<
+        string,
+        unknown
+      >
+    >;
+
+  actualNotes:
+    string | null;
+}
+
 export interface SessionStructureRepository {
   createBlock(
     data:
@@ -215,4 +267,14 @@ export interface SessionStructureRepository {
     sessionExerciseId:
       SessionExerciseId,
   ): Promise<PerformanceEntry[]>;
+
+  findPerformanceEntryById(
+    performanceEntryId:
+      PerformanceEntry['id'],
+  ): Promise<PerformanceEntry | null>;
+
+  updatePerformanceEntryActual(
+    data:
+      UpdatePerformanceEntryActualData,
+  ): Promise<PerformanceEntry>;
 }

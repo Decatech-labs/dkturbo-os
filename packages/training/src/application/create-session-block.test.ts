@@ -215,6 +215,12 @@ const createStructure =
 
     listExercisesForBlock:
       vi.fn(),
+
+    findPerformanceEntryById:
+      vi.fn(),
+
+    updatePerformanceEntryActual:
+      vi.fn(),
   });
 
 const weeks =

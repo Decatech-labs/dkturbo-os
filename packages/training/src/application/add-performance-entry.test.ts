@@ -244,6 +244,12 @@ const createStructure =
 
     listPerformanceEntries:
       vi.fn(),
+
+    findPerformanceEntryById:
+      vi.fn(),
+
+    updatePerformanceEntryActual:
+      vi.fn(),
   });
 
 const weeks =
