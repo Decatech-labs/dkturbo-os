@@ -16,6 +16,10 @@ import {
 } from './postgres-athlete.repository.js';
 
 import {
+  PostgresSessionRepository,
+} from './postgres-session.repository.js';
+
+import {
   PostgresWeekRepository,
 } from './postgres-week.repository.js';
 
@@ -48,6 +52,11 @@ implements TrainingUnitOfWork {
 
             weeks:
               new PostgresWeekRepository(
+                transaction,
+              ),
+
+            sessions:
+              new PostgresSessionRepository(
                 transaction,
               ),
           }),

@@ -2,6 +2,7 @@ import type {
   AthleteId,
   DkturboUserId,
   TrainingDay,
+  TrainingDayId,
   TrainingWeek,
   TrainingWeekId,
 } from '../domain/index.js';
@@ -54,6 +55,10 @@ export interface WeekRepository {
     athleteId: AthleteId,
     weekStart: string,
   ): Promise<TrainingWeek | null>;
+
+  findDayById(
+    dayId: TrainingDayId,
+  ): Promise<TrainingDay | null>;
 
   listDaysForWeek(
     weekId: TrainingWeekId,

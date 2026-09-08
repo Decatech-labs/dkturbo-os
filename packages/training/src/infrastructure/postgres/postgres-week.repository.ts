@@ -212,6 +212,28 @@ implements WeekRepository {
       : null;
   }
 
+  public async findDayById(
+    dayId: TrainingDayId,
+  ): Promise<TrainingDay | null> {
+
+    const row =
+      await this.db
+        .selectFrom(
+          'training.days',
+        )
+        .selectAll()
+        .where(
+          'id',
+          '=',
+          dayId,
+        )
+        .executeTakeFirst();
+
+    return row
+      ? mapDay(row)
+      : null;
+  }
+
   public async listDaysForWeek(
     weekId: TrainingWeekId,
   ): Promise<TrainingDay[]> {

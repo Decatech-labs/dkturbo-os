@@ -14,15 +14,16 @@ import type {
   TrainingWeekId,
 } from '../domain/index.js';
 
-import type {
-  AthleteRepository,
-  TrainingUnitOfWork,
-  WeekRepository,
-} from '../ports/index.js';
-
 import {
   createWeek,
 } from './create-week.js';
+
+import type {
+  AthleteRepository,
+  SessionRepository,
+  TrainingUnitOfWork,
+  WeekRepository,
+} from '../ports/index.js';
 
 const athleteId =
   '20000000-0000-4000-8000-000000000001' as AthleteId;
@@ -65,6 +66,9 @@ const week:
         '2026-09-08T17:00:00Z',
       ),
   };
+
+const sessionRepository =
+  {} as SessionRepository;
 
 const athleteRepository:
   AthleteRepository = {
@@ -173,6 +177,12 @@ const createWeekRepository =
           .mockResolvedValue(
             [],
           ),
+
+      findDayById:
+        vi.fn()
+          .mockResolvedValue(
+            null,
+          ),
     };
   };
 
@@ -188,6 +198,9 @@ const createUnitOfWork =
             athleteRepository,
 
           weeks,
+
+          sessions:
+            sessionRepository,
         }),
   });
 

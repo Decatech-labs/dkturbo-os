@@ -12,15 +12,16 @@ import type {
   DkturboUserId,
 } from '../domain/index.js';
 
-import type {
-  AthleteRepository,
-  TrainingUnitOfWork,
-  WeekRepository,
-} from '../ports/index.js';
-
 import {
   createAthleteProfile,
 } from './create-athlete-profile.js';
+
+import type {
+  AthleteRepository,
+  SessionRepository,
+  TrainingUnitOfWork,
+  WeekRepository,
+} from '../ports/index.js';
 
 const athleteId =
   '20000000-0000-4000-8000-000000000001' as AthleteId;
@@ -99,6 +100,9 @@ const createRepository =
 const weekRepository = 
   {} as WeekRepository;
 
+const sessionRepository =
+  {} as SessionRepository;
+
 const createUnitOfWork =
   (
     repository:
@@ -112,6 +116,9 @@ const createUnitOfWork =
 
           weeks:
             weekRepository,
+
+          sessions:
+            sessionRepository,
         }),
   });
 

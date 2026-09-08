@@ -3,6 +3,10 @@ import type {
 } from './athlete-repository.port.js';
 
 import type {
+  SessionRepository,
+} from './session-repository.port.js';
+
+import type {
   WeekRepository,
 } from './week-repository.port.js';
 
@@ -12,6 +16,9 @@ export interface TrainingRepositories {
 
   weeks:
     WeekRepository;
+
+  sessions:
+    SessionRepository;
 }
 
 export interface TrainingUnitOfWork {
