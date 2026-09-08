@@ -14,6 +14,8 @@ import type {
   SessionExercise,
   SessionExerciseId,
   TrainingSessionId,
+  PerformanceEntry,
+  PerformanceEntryId,
 } from '../../domain/index.js';
 
 import type {
@@ -21,6 +23,7 @@ import type {
   CreateCustomExerciseData,
   CreateSessionBlockData,
   SessionStructureRepository,
+  CreatePerformanceEntryData,
 } from '../../ports/index.js';
 
 import type {
@@ -142,6 +145,171 @@ const mapSessionExercise = (
 
   position:
     row.position,
+
+  plannedNotes:
+    row.planned_notes,
+
+  actualNotes:
+    row.actual_notes,
+
+  createdAt:
+    row.created_at,
+
+  updatedAt:
+    row.updated_at,
+});
+
+const mapNumeric = (
+  value:
+    string | null,
+): number | null =>
+  value === null
+    ? null
+    : Number(value);
+
+const toNumeric = (
+  value:
+    number | null,
+): string | null =>
+  value === null
+    ? null
+    : String(value);
+
+const mapPerformanceEntry = (
+  row: {
+    id: string;
+    session_exercise_id: string;
+    athlete_id: string;
+    position: number;
+    planned_reps: number | null;
+    actual_reps: number | null;
+    planned_load_kg: string | null;
+    actual_load_kg: string | null;
+    planned_distance_m: string | null;
+    actual_distance_m: string | null;
+    planned_duration_ms: number | null;
+    actual_duration_ms: number | null;
+    planned_result_m: string | null;
+    actual_result_m: string | null;
+    planned_height_m: string | null;
+    actual_height_m: string | null;
+    planned_rpe: string | null;
+    actual_rpe: string | null;
+    planned_rir: string | null;
+    actual_rir: string | null;
+    planned_rest_seconds: number | null;
+    actual_rest_seconds: number | null;
+    actual_success: boolean | null;
+    actual_is_foul: boolean | null;
+    planned_metrics: Record<string, unknown>;
+    actual_metrics: Record<string, unknown>;
+    planned_notes: string | null;
+    actual_notes: string | null;
+    created_at: Date;
+    updated_at: Date;
+  },
+): PerformanceEntry => ({
+  id:
+    row.id as PerformanceEntryId,
+
+  sessionExerciseId:
+    row.session_exercise_id as SessionExerciseId,
+
+  athleteId:
+    row.athlete_id as AthleteId,
+
+  position:
+    row.position,
+
+  plannedReps:
+    row.planned_reps,
+
+  actualReps:
+    row.actual_reps,
+
+  plannedLoadKg:
+    mapNumeric(
+      row.planned_load_kg,
+    ),
+
+  actualLoadKg:
+    mapNumeric(
+      row.actual_load_kg,
+    ),
+
+  plannedDistanceM:
+    mapNumeric(
+      row.planned_distance_m,
+    ),
+
+  actualDistanceM:
+    mapNumeric(
+      row.actual_distance_m,
+    ),
+
+  plannedDurationMs:
+    row.planned_duration_ms,
+
+  actualDurationMs:
+    row.actual_duration_ms,
+
+  plannedResultM:
+    mapNumeric(
+      row.planned_result_m,
+    ),
+
+  actualResultM:
+    mapNumeric(
+      row.actual_result_m,
+    ),
+
+  plannedHeightM:
+    mapNumeric(
+      row.planned_height_m,
+    ),
+
+  actualHeightM:
+    mapNumeric(
+      row.actual_height_m,
+    ),
+
+  plannedRpe:
+    mapNumeric(
+      row.planned_rpe,
+    ),
+
+  actualRpe:
+    mapNumeric(
+      row.actual_rpe,
+    ),
+
+  plannedRir:
+    mapNumeric(
+      row.planned_rir,
+    ),
+
+  actualRir:
+    mapNumeric(
+      row.actual_rir,
+    ),
+
+  plannedRestSeconds:
+    row.planned_rest_seconds,
+
+  actualRestSeconds:
+    row.actual_rest_seconds,
+
+  actualSuccess:
+    row.actual_success,
+
+  actualIsFoul:
+    row.actual_is_foul,
+
+  plannedMetrics:
+    row.planned_metrics,
+
+  actualMetrics:
+    row.actual_metrics,
 
   plannedNotes:
     row.planned_notes,
@@ -393,6 +561,186 @@ implements SessionStructureRepository {
 
     return rows.map(
       mapSessionExercise,
+    );
+  }
+
+  public async findSessionExerciseById(
+    sessionExerciseId:
+      SessionExerciseId,
+  ): Promise<SessionExercise | null> {
+
+    const row =
+      await this.db
+        .selectFrom(
+          'training.session_exercises',
+        )
+        .selectAll()
+        .where(
+          'id',
+          '=',
+          sessionExerciseId,
+        )
+        .executeTakeFirst();
+
+    return row
+      ? mapSessionExercise(
+          row,
+        )
+      : null;
+  }
+
+  public async createPerformanceEntry(
+    data:
+      CreatePerformanceEntryData,
+  ): Promise<PerformanceEntry> {
+
+    const row =
+      await this.db
+        .insertInto(
+          'training.performance_entries',
+        )
+        .values({
+          session_exercise_id:
+            data.sessionExerciseId,
+
+          athlete_id:
+            data.athleteId,
+
+          position:
+            data.position,
+
+          planned_reps:
+            data.plannedReps,
+
+          actual_reps:
+            data.actualReps,
+
+          planned_load_kg:
+            toNumeric(
+              data.plannedLoadKg,
+            ),
+
+          actual_load_kg:
+            toNumeric(
+              data.actualLoadKg,
+            ),
+
+          planned_distance_m:
+            toNumeric(
+              data.plannedDistanceM,
+            ),
+
+          actual_distance_m:
+            toNumeric(
+              data.actualDistanceM,
+            ),
+
+          planned_duration_ms:
+            data.plannedDurationMs,
+
+          actual_duration_ms:
+            data.actualDurationMs,
+
+          planned_result_m:
+            toNumeric(
+              data.plannedResultM,
+            ),
+
+          actual_result_m:
+            toNumeric(
+              data.actualResultM,
+            ),
+
+          planned_height_m:
+            toNumeric(
+              data.plannedHeightM,
+            ),
+
+          actual_height_m:
+            toNumeric(
+              data.actualHeightM,
+            ),
+
+          planned_rpe:
+            toNumeric(
+              data.plannedRpe,
+            ),
+
+          actual_rpe:
+            toNumeric(
+              data.actualRpe,
+            ),
+
+          planned_rir:
+            toNumeric(
+              data.plannedRir,
+            ),
+
+          actual_rir:
+            toNumeric(
+              data.actualRir,
+            ),
+
+          planned_rest_seconds:
+            data.plannedRestSeconds,
+
+          actual_rest_seconds:
+            data.actualRestSeconds,
+
+          actual_success:
+            data.actualSuccess,
+
+          actual_is_foul:
+            data.actualIsFoul,
+
+          planned_metrics:
+            {
+              ...data.plannedMetrics,
+            },
+
+          actual_metrics:
+            {
+              ...data.actualMetrics,
+            },
+
+          planned_notes:
+            data.plannedNotes,
+
+          actual_notes:
+            data.actualNotes,
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+    return mapPerformanceEntry(
+      row,
+    );
+  }
+
+  public async listPerformanceEntries(
+    sessionExerciseId:
+      SessionExerciseId,
+  ): Promise<PerformanceEntry[]> {
+
+    const rows =
+      await this.db
+        .selectFrom(
+          'training.performance_entries',
+        )
+        .selectAll()
+        .where(
+          'session_exercise_id',
+          '=',
+          sessionExerciseId,
+        )
+        .orderBy(
+          'position',
+          'asc',
+        )
+        .execute();
+
+    return rows.map(
+      mapPerformanceEntry,
     );
   }
 }

@@ -204,6 +204,15 @@ const createStructure =
     addExercise:
       vi.fn(),
 
+    findSessionExerciseById:
+      vi.fn(),
+
+    createPerformanceEntry:
+      vi.fn(),
+
+    listPerformanceEntries:
+      vi.fn(),
+
     listExercisesForBlock:
       vi.fn(),
   });

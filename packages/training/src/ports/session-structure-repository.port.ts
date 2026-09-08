@@ -4,9 +4,11 @@ import type {
   ExerciseCatalogId,
   ExerciseCatalogItem,
   ExerciseMetricProfile,
+  PerformanceEntry,
   SessionBlock,
   SessionBlockId,
   SessionExercise,
+  SessionExerciseId,
   TrainingSessionId,
 } from '../domain/index.js';
 
@@ -67,6 +69,99 @@ export interface AddSessionExerciseData {
     string | null;
 }
 
+export interface CreatePerformanceEntryData {
+  sessionExerciseId:
+    SessionExerciseId;
+
+  athleteId:
+    AthleteId;
+
+  position:
+    number;
+
+  plannedReps:
+    number | null;
+
+  actualReps:
+    number | null;
+
+  plannedLoadKg:
+    number | null;
+
+  actualLoadKg:
+    number | null;
+
+  plannedDistanceM:
+    number | null;
+
+  actualDistanceM:
+    number | null;
+
+  plannedDurationMs:
+    number | null;
+
+  actualDurationMs:
+    number | null;
+
+  plannedResultM:
+    number | null;
+
+  actualResultM:
+    number | null;
+
+  plannedHeightM:
+    number | null;
+
+  actualHeightM:
+    number | null;
+
+  plannedRpe:
+    number | null;
+
+  actualRpe:
+    number | null;
+
+  plannedRir:
+    number | null;
+
+  actualRir:
+    number | null;
+
+  plannedRestSeconds:
+    number | null;
+
+  actualRestSeconds:
+    number | null;
+
+  actualSuccess:
+    boolean | null;
+
+  actualIsFoul:
+    boolean | null;
+
+  plannedMetrics:
+    Readonly<
+      Record<
+        string,
+        unknown
+      >
+    >;
+
+  actualMetrics:
+    Readonly<
+      Record<
+        string,
+        unknown
+      >
+    >;
+
+  plannedNotes:
+    string | null;
+
+  actualNotes:
+    string | null;
+}
+
 export interface SessionStructureRepository {
   createBlock(
     data:
@@ -101,8 +196,23 @@ export interface SessionStructureRepository {
       AddSessionExerciseData,
   ): Promise<SessionExercise>;
 
+  findSessionExerciseById(
+    sessionExerciseId:
+      SessionExerciseId,
+  ): Promise<SessionExercise | null>;
+
   listExercisesForBlock(
     blockId:
       SessionBlockId,
   ): Promise<SessionExercise[]>;
+
+  createPerformanceEntry(
+    data:
+      CreatePerformanceEntryData,
+  ): Promise<PerformanceEntry>;
+
+  listPerformanceEntries(
+    sessionExerciseId:
+      SessionExerciseId,
+  ): Promise<PerformanceEntry[]>;
 }
