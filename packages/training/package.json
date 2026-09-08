@@ -1,0 +1,23 @@
+{
+  "name": "@dkturbo/training",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --exclude '**/*.integration.test.ts'",
+    "test:integration": "vitest run .integration.test.ts",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "kysely": "0.29.5",
+    "pg": "8.23.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
