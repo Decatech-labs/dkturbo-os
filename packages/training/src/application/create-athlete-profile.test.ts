@@ -19,6 +19,7 @@ import {
 import type {
   AthleteRepository,
   SessionRepository,
+  SessionStructureRepository,
   TrainingUnitOfWork,
   WeekRepository,
 } from '../ports/index.js';
@@ -63,6 +64,9 @@ const access: AthleteAccess = {
       '2026-09-08T17:00:00Z',
     ),
 };
+
+const sessionStructureRepository =
+  {} as SessionStructureRepository;
 
 const createRepository =
   (): AthleteRepository => ({
@@ -119,6 +123,9 @@ const createUnitOfWork =
 
           sessions:
             sessionRepository,
+
+          sessionStructure:
+            sessionStructureRepository,
         }),
   });
 

@@ -7,6 +7,10 @@ import type {
 } from './session-repository.port.js';
 
 import type {
+  SessionStructureRepository,
+} from './session-structure-repository.port.js';
+
+import type {
   WeekRepository,
 } from './week-repository.port.js';
 
@@ -19,6 +23,9 @@ export interface TrainingRepositories {
 
   sessions:
     SessionRepository;
+
+  sessionStructure:
+    SessionStructureRepository;
 }
 
 export interface TrainingUnitOfWork {

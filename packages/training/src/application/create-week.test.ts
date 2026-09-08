@@ -21,6 +21,7 @@ import {
 import type {
   AthleteRepository,
   SessionRepository,
+  SessionStructureRepository,
   TrainingUnitOfWork,
   WeekRepository,
 } from '../ports/index.js';
@@ -66,6 +67,9 @@ const week:
         '2026-09-08T17:00:00Z',
       ),
   };
+
+const sessionStructureRepository =
+  {} as SessionStructureRepository;
 
 const sessionRepository =
   {} as SessionRepository;
@@ -201,6 +205,9 @@ const createUnitOfWork =
 
           sessions:
             sessionRepository,
+
+          sessionStructure:
+            sessionStructureRepository,
         }),
   });
 

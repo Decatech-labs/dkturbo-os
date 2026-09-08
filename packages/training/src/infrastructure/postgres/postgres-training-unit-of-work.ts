@@ -23,6 +23,10 @@ import {
   PostgresWeekRepository,
 } from './postgres-week.repository.js';
 
+import {
+  PostgresSessionStructureRepository,
+} from './postgres-session-structure.repository.js';
+
 export class PostgresTrainingUnitOfWork
 implements TrainingUnitOfWork {
 
@@ -57,6 +61,11 @@ implements TrainingUnitOfWork {
 
             sessions:
               new PostgresSessionRepository(
+                transaction,
+              ),
+
+            sessionStructure:
+              new PostgresSessionStructureRepository(
                 transaction,
               ),
           }),
