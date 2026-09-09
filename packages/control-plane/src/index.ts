@@ -28,7 +28,12 @@ export {
 
 export {
   createHttpServer,
+
   type CreateHttpServerOptions,
+  type HttpRouteRegistrationContext,
+  type RegisterHttpRoutes,
+  type RequireAccessPermission,
+  type RequireAuthenticatedActor,
 } from './transport/http/index.js';
 
 export {

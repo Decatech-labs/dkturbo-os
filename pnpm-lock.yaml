@@ -44,6 +44,9 @@ importers:
       '@dkturbo/control-plane':
         specifier: workspace:*
         version: link:../../packages/control-plane
+      '@dkturbo/training':
+        specifier: workspace:*
+        version: link:../../packages/training
       dotenv:
         specifier: 17.4.2
         version: 17.4.2

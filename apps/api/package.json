@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@dkturbo/control-plane": "workspace:*",
+    "@dkturbo/training": "workspace:*",
     "dotenv": "17.4.2"
   },
   "devDependencies": {

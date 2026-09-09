@@ -8,6 +8,15 @@ import {
 } from '@dkturbo/control-plane';
 import { config as loadDotEnv } from 'dotenv';
 
+import {
+  createTraining,
+  createTrainingDatabase,
+} from '@dkturbo/training';
+
+import {
+  registerTrainingRoutes,
+} from './training/index.js';
+
 if (process.env.NODE_ENV !== 'production') {
   loadDotEnv({
     path: '../../.env.local',
@@ -20,6 +29,18 @@ const config = loadConfig();
 const database = createDatabase({
   connectionString: config.DATABASE_URL,
 });
+
+const trainingDatabase =
+  createTrainingDatabase({
+    connectionString:
+      config.DATABASE_URL,
+  });
+
+const training =
+  createTraining({
+    database:
+      trainingDatabase,
+  });
 
 const controlPlane = createControlPlane({
   database,
@@ -69,12 +90,20 @@ const app = createHttpServer({
   familyAuthProvisioner:
     betterAuth
       .familyAuthProvisioner,
-      
+
+  registerRoutes:
+    (http) => {
+      registerTrainingRoutes({
+        http,
+        training,
+      });
+    },
 });
 
 const shutdown = async () => {
   await app.close();
   await betterAuth.close();
+  await trainingDatabase.destroy();
   await database.destroy();
 };
 
@@ -106,6 +135,7 @@ const start = async (): Promise<void> => {
     });
   } catch (error) {
     app.log.error(error);
+    await trainingDatabase.destroy();
     await database.destroy();
     process.exit(1);
   }

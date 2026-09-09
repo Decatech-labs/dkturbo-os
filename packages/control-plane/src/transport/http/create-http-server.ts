@@ -148,11 +148,61 @@ const createAccessPermissionTarget =
         ],
     });
 
+export type RequireAuthenticatedActor =
+  (
+    request:
+      FastifyRequest,
+
+    reply:
+      FastifyReply,
+  ) => Promise<ActorRef | null>;
+
+export type RequireAccessPermission =
+  (
+    request:
+      FastifyRequest,
+
+    reply:
+      FastifyReply,
+
+    permission:
+      AccessPermissionKey,
+  ) => Promise<ActorRef | null>;
+
+export interface HttpRouteRegistrationContext {
+  app:
+    FastifyInstance;
+
+  requireAuthenticatedActor:
+    RequireAuthenticatedActor;
+
+  requireAccessPermission:
+    RequireAccessPermission;
+}
+
+export type RegisterHttpRoutes =
+  (
+    context:
+      HttpRouteRegistrationContext,
+  ) =>
+    void |
+    Promise<void>;
+
 export interface CreateHttpServerOptions {
-  database: Kysely<Database>;
-  controlPlane: ControlPlane;
-  auth: HttpAuth;
-  familyAuthProvisioner?: FamilyAuthProvisioner;
+  database:
+    Kysely<Database>;
+
+  controlPlane:
+    ControlPlane;
+
+  auth:
+    HttpAuth;
+
+  familyAuthProvisioner?:
+    FamilyAuthProvisioner;
+
+  registerRoutes?:
+    RegisterHttpRoutes;
 }
 
 export interface HttpAuth {
@@ -226,6 +276,7 @@ export const createHttpServer = ({
   controlPlane,
   auth,
   familyAuthProvisioner,
+  registerRoutes,
 }: CreateHttpServerOptions): FastifyInstance => {
   const app = Fastify({
     logger: true,
@@ -3083,6 +3134,14 @@ export const createHttpServer = ({
         .send();
     },
   );
+
+  if (registerRoutes) {
+    void registerRoutes({
+      app,
+      requireAuthenticatedActor,
+      requireAccessPermission,
+    });
+  }
 
   return app;
 };
