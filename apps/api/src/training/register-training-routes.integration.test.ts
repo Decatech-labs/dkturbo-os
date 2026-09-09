@@ -41,11 +41,17 @@ const ownerUserId =
 const athleteId =
   'd2000000-0000-4000-8000-000000000001';
 
+const otherAthleteId =
+  'd2000000-0000-4000-8000-000000000002';
+
 const athleteAccessId =
   'd2100000-0000-4000-8000-000000000001';
 
 const weekId =
   'd3000000-0000-4000-8000-000000000001';
+
+const otherWeekId =
+  'd3000000-0000-4000-8000-000000000099';
 
 const dayId =
   'd4000000-0000-4000-8000-000000000001';
@@ -157,6 +163,17 @@ describe(
 
         await trainingDatabase
           .deleteFrom(
+            'training.athletes',
+          )
+          .where(
+            'id',
+            '=',
+            otherAthleteId,
+          )
+          .execute();
+
+        await trainingDatabase
+          .deleteFrom(
             'training.exercise_catalog',
           )
           .where(
@@ -227,6 +244,19 @@ describe(
 
         await trainingDatabase
           .insertInto(
+            'training.athletes',
+          )
+          .values({
+            id:
+              otherAthleteId,
+
+            display_name:
+              'Private HTTP Athlete',
+          })
+          .execute();
+
+        await trainingDatabase
+          .insertInto(
             'training.weeks',
           )
           .values({
@@ -241,6 +271,31 @@ describe(
 
             title:
               'HTTP integration week',
+
+            notes:
+              null,
+
+            created_by_user_id:
+              ownerUserId,
+          })
+          .execute();
+
+        await trainingDatabase
+          .insertInto(
+            'training.weeks',
+          )
+          .values({
+            id:
+              otherWeekId,
+
+            athlete_id:
+              otherAthleteId,
+
+            week_start:
+              '2026-09-14',
+
+            title:
+              'Private HTTP week',
 
             notes:
               null,
@@ -522,6 +577,17 @@ describe(
 
         await trainingDatabase
           .deleteFrom(
+            'training.athletes',
+          )
+          .where(
+            'id',
+            '=',
+            otherAthleteId,
+          )
+          .execute();
+
+        await trainingDatabase
+          .deleteFrom(
             'training.exercise_catalog',
           )
           .where(
@@ -544,6 +610,31 @@ describe(
 
         await trainingDatabase.destroy();
         await controlDatabase.destroy();
+      },
+    );
+
+    it(
+      'returns no athletes to an owner without explicit athlete access',
+      async () => {
+
+        const response =
+          await app.inject({
+            method:
+              'GET',
+
+            url:
+              '/api/training/athletes',
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          200,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual([]);
       },
     );
 
@@ -712,6 +803,286 @@ describe(
         ).toBe(
           82.5,
         );
+      },
+    );
+
+    it(
+      'lists only explicitly accessible athletes',
+      async () => {
+
+        const response =
+          await app.inject({
+            method:
+              'GET',
+
+            url:
+              '/api/training/athletes',
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          200,
+        );
+
+        const body =
+          response.json();
+
+        expect(
+          body,
+        ).toHaveLength(
+          1,
+        );
+
+        expect(
+          body[0].id,
+        ).toBe(
+          athleteId,
+        );
+
+        expect(
+          body[0].displayName,
+        ).toBe(
+          'HTTP Athlete',
+        );
+
+        expect(
+          body.some(
+            (
+              athlete:
+                {
+                  id:
+                    string;
+                },
+            ) =>
+              athlete.id ===
+              otherAthleteId,
+          ),
+        ).toBe(
+          false,
+        );
+      },
+    );
+
+    it(
+      'lists weeks for an accessible athlete as read-only',
+      async () => {
+
+        const response =
+          await app.inject({
+            method:
+              'GET',
+
+            url:
+              `/api/training/athletes/${athleteId}/weeks`,
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          200,
+        );
+
+        const body =
+          response.json();
+
+        expect(
+          body,
+        ).toHaveLength(
+          1,
+        );
+
+        expect(
+          body[0].week.id,
+        ).toBe(
+          weekId,
+        );
+
+        expect(
+          body[0].week.title,
+        ).toBe(
+          'HTTP integration week',
+        );
+
+        expect(
+          body[0].accessRole,
+        ).toBe(
+          'VIEWER',
+        );
+
+        expect(
+          body[0].canWrite,
+        ).toBe(
+          false,
+        );
+      },
+    );
+
+    it(
+      'returns week navigation with days and sessions',
+      async () => {
+
+        const response =
+          await app.inject({
+            method:
+              'GET',
+
+            url:
+              `/api/training/athletes/${athleteId}/weeks/${weekId}`,
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          200,
+        );
+
+        const body =
+          response.json();
+
+        expect(
+          body.week.id,
+        ).toBe(
+          weekId,
+        );
+
+        expect(
+          body.accessRole,
+        ).toBe(
+          'VIEWER',
+        );
+
+        expect(
+          body.canWrite,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          body.days,
+        ).toHaveLength(
+          1,
+        );
+
+        expect(
+          body.days[0].day.id,
+        ).toBe(
+          dayId,
+        );
+
+        expect(
+          body.days[0].day.date,
+        ).toBe(
+          '2026-09-09',
+        );
+
+        expect(
+          body.days[0].sessions,
+        ).toHaveLength(
+          1,
+        );
+
+        expect(
+          body.days[0].sessions[0].id,
+        ).toBe(
+          sessionId,
+        );
+
+        expect(
+          body.days[0].sessions[0].title,
+        ).toBe(
+          'HTTP Session',
+        );
+
+        expect(
+          body.days[0].sessions[0].plannedStartTime,
+        ).toBe(
+          '10:00',
+        );
+      },
+    );
+
+    it(
+      'denies week listing for an athlete without explicit access',
+      async () => {
+
+        const response =
+          await app.inject({
+            method:
+              'GET',
+
+            url:
+              `/api/training/athletes/${otherAthleteId}/weeks`,
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          403,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+          error:
+            'athlete_access_denied',
+        });
+      },
+    );
+
+    it(
+      'does not reveal a week belonging to another athlete',
+      async () => {
+
+        const response =
+          await app.inject({
+            method:
+              'GET',
+
+            url:
+              `/api/training/athletes/${athleteId}/weeks/${otherWeekId}`,
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          404,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+          error:
+            'training_week_not_found',
+        });
+      },
+    );
+
+    it(
+      'rejects invalid Training route identifiers',
+      async () => {
+
+        const response =
+          await app.inject({
+            method:
+              'GET',
+
+            url:
+              '/api/training/athletes/not-a-uuid/weeks',
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          400,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+          error:
+            'invalid_request',
+        });
       },
     );
   },

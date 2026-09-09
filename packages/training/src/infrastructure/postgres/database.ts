@@ -54,7 +54,11 @@ export interface TrainingWeekTable {
     string;
 
   week_start:
-    string;
+    ColumnType<
+      string | Date,
+      string,
+      string
+    >;
 
   status:
     ColumnType<
@@ -98,7 +102,11 @@ export interface TrainingDayTable {
     string;
 
   date:
-    string;
+    ColumnType<
+      string | Date,
+      string,
+      string
+    >;
 
   notes:
     string | null;

@@ -21,11 +21,46 @@ import type {
   TrainingDatabase,
 } from './database.js';
 
+const mapDateOnly =
+  (
+    value:
+      string | Date,
+  ): string => {
+
+    if (
+      typeof value ===
+      'string'
+    ) {
+      return value;
+    }
+
+    const year =
+      value.getFullYear();
+
+    const month =
+      String(
+        value.getMonth() + 1,
+      ).padStart(
+        2,
+        '0',
+      );
+
+    const day =
+      String(
+        value.getDate(),
+      ).padStart(
+        2,
+        '0',
+      );
+
+    return `${year}-${month}-${day}`;
+  };
+
 const mapWeek = (
   row: {
     id: string;
     athlete_id: string;
-    week_start: string;
+    week_start: string | Date;
     status: string;
     title: string | null;
     notes: string | null;
@@ -41,7 +76,9 @@ const mapWeek = (
     row.athlete_id as AthleteId,
 
   weekStart:
-    row.week_start,
+    mapDateOnly(
+      row.week_start,
+    ),
 
   status:
     row.status as TrainingWeekStatus,
@@ -67,7 +104,7 @@ const mapDay = (
     id: string;
     week_id: string;
     athlete_id: string;
-    date: string;
+    date: string | Date;
     notes: string | null;
     created_at: Date;
     updated_at: Date;
@@ -83,7 +120,9 @@ const mapDay = (
     row.athlete_id as AthleteId,
 
   date:
-    row.date,
+    mapDateOnly(
+      row.date,
+    ),
 
   notes:
     row.notes,
@@ -210,6 +249,33 @@ implements WeekRepository {
     return row
       ? mapWeek(row)
       : null;
+  }
+
+  public async listForAthlete(
+    athleteId:
+      AthleteId,
+  ): Promise<TrainingWeek[]> {
+
+    const rows =
+      await this.db
+        .selectFrom(
+          'training.weeks',
+        )
+        .selectAll()
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+        .orderBy(
+          'week_start',
+          'desc',
+        )
+        .execute();
+
+    return rows.map(
+      mapWeek,
+    );
   }
 
   public async findDayById(

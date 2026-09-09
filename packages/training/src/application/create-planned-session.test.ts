@@ -184,6 +184,9 @@ const createWeekRepository =
     findWeekByAthleteAndStart:
       vi.fn(),
 
+    listForAthlete:
+      vi.fn(),
+
     findDayById:
       vi.fn()
         .mockResolvedValue(

@@ -176,6 +176,9 @@ const createWeekRepository =
             null,
           ),
 
+      listForAthlete:
+        vi.fn(),
+
       listDaysForWeek:
         vi.fn()
           .mockResolvedValue(

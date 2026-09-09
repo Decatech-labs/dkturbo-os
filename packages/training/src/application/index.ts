@@ -9,3 +9,5 @@ export * from './add-performance-entry.js';
 export * from './record-performance-entry-actual.js';
 export * from './require-athlete-read-access.js';
 export * from './get-session-detail.js';
+export * from './list-weeks-for-athlete.js';
+export * from './get-week-detail.js';

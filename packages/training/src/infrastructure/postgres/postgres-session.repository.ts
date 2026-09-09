@@ -30,6 +30,22 @@ const mapNumeric =
       ? null
       : Number(value);
 
+const mapTimeOnly =
+  (
+    value:
+      string | null,
+  ): string | null => {
+
+    if (value === null) {
+      return null;
+    }
+
+    return value.slice(
+      0,
+      5,
+    );
+  };
+
 const mapSession = (
   row: {
     id: string;
@@ -69,13 +85,17 @@ const mapSession = (
     row.title,
 
   plannedStartTime:
-    row.planned_start_time,
+    mapTimeOnly(
+      row.planned_start_time,
+    ),
 
   plannedDurationMinutes:
     row.planned_duration_minutes,
 
   actualStartTime:
-    row.actual_start_time,
+    mapTimeOnly(
+      row.actual_start_time,
+    ),
 
   actualDurationMinutes:
     row.actual_duration_minutes,

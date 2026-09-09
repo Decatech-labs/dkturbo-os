@@ -56,6 +56,11 @@ export interface WeekRepository {
     weekStart: string,
   ): Promise<TrainingWeek | null>;
 
+  listForAthlete(
+    athleteId:
+      AthleteId,
+  ): Promise<TrainingWeek[]>;
+
   findDayById(
     dayId: TrainingDayId,
   ): Promise<TrainingDay | null>;
