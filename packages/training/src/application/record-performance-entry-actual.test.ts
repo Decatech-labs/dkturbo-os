@@ -250,6 +250,9 @@ const createStructure =
 
     listPerformanceEntries:
       vi.fn(),
+
+    listBlocksForSession:
+      vi.fn(),
   });
 
 const weeks =

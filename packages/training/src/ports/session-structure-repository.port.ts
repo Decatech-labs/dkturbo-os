@@ -225,6 +225,11 @@ export interface SessionStructureRepository {
       SessionBlockId,
   ): Promise<SessionBlock | null>;
 
+  listBlocksForSession(
+    sessionId:
+      TrainingSessionId,
+  ): Promise<SessionBlock[]>;
+
   createCustomExercise(
     data:
       CreateCustomExerciseData,

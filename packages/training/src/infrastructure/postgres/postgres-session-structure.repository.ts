@@ -854,4 +854,31 @@ implements SessionStructureRepository {
       row,
     );
   }
+
+  public async listBlocksForSession(
+    sessionId:
+      TrainingSessionId,
+  ): Promise<SessionBlock[]> {
+
+    const rows =
+      await this.db
+        .selectFrom(
+          'training.session_blocks',
+        )
+        .selectAll()
+        .where(
+          'session_id',
+          '=',
+          sessionId,
+        )
+        .orderBy(
+          'position',
+          'asc',
+        )
+        .execute();
+
+    return rows.map(
+      mapBlock,
+    );
+  }
 }

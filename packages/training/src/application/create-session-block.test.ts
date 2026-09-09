@@ -221,6 +221,9 @@ const createStructure =
 
     updatePerformanceEntryActual:
       vi.fn(),
+
+    listBlocksForSession:
+      vi.fn(),
   });
 
 const weeks =

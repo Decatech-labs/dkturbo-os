@@ -7,3 +7,5 @@ export * from './list-accessible-athletes.js';
 export * from './require-athlete-write-access.js';
 export * from './add-performance-entry.js';
 export * from './record-performance-entry-actual.js';
+export * from './require-athlete-read-access.js';
+export * from './get-session-detail.js';
