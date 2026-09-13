@@ -151,6 +151,9 @@ const createWeeks =
 
     listDaysForWeek:
       vi.fn(),
+
+    updateWeek:
+      vi.fn(),
   });
 
 const sessions =

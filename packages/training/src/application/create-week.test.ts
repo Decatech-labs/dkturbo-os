@@ -190,6 +190,9 @@ const createWeekRepository =
           .mockResolvedValue(
             null,
           ),
+
+      updateWeek:
+        vi.fn(),
     };
   };
 

@@ -38,10 +38,29 @@ export interface CreateDayData {
     string | null;
 }
 
+export interface UpdateWeekData {
+  weekId:
+    TrainingWeekId;
+
+  athleteId:
+    AthleteId;
+
+  title:
+    string | null;
+
+  notes:
+    string | null;
+}
+
 export interface WeekRepository {
   createWeek(
     data: CreateWeekData,
   ): Promise<TrainingWeek>;
+
+  updateWeek(
+    data:
+      UpdateWeekData,
+  ): Promise<TrainingWeek | null>;
 
   createDay(
     data: CreateDayData,

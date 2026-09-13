@@ -15,6 +15,7 @@ import type {
   CreateDayData,
   CreateWeekData,
   WeekRepository,
+  UpdateWeekData,
 } from '../../ports/index.js';
 
 import type {
@@ -171,6 +172,45 @@ implements WeekRepository {
         .executeTakeFirstOrThrow();
 
     return mapWeek(row);
+  }
+
+  public async updateWeek(
+    data:
+      UpdateWeekData,
+  ): Promise<TrainingWeek | null> {
+    const row =
+      await this.db
+        .updateTable(
+          'training.weeks',
+        )
+        .set({
+          title:
+            data.title,
+
+          notes:
+            data.notes,
+
+          updated_at:
+            new Date(),
+        })
+        .where(
+          'id',
+          '=',
+          data.weekId,
+        )
+        .where(
+          'athlete_id',
+          '=',
+          data.athleteId,
+        )
+        .returningAll()
+        .executeTakeFirst();
+
+    return row
+      ? mapWeek(
+          row,
+        )
+      : null;
   }
 
   public async createDay(

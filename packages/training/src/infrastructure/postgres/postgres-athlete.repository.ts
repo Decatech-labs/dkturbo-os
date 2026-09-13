@@ -14,6 +14,7 @@ import type {
   AthleteRepository,
   CreateAthleteData,
   GrantAthleteAccessData,
+  AthleteForUser,
 } from '../../ports/index.js';
 
 import type {
@@ -119,9 +120,9 @@ implements AthleteRepository {
   }
 
   public async listForUser(
-    userId: DkturboUserId,
-  ): Promise<Athlete[]> {
-
+    userId:
+      DkturboUserId,
+  ): Promise<AthleteForUser[]> {
     const rows =
       await this.db
         .selectFrom(
@@ -133,10 +134,15 @@ implements AthleteRepository {
           'athlete.id',
         )
         .select([
-          'athlete.id',
-          'athlete.display_name',
-          'athlete.created_at',
-          'athlete.updated_at',
+          'athlete.id as athlete_id',
+          'athlete.display_name as athlete_display_name',
+          'athlete.created_at as athlete_created_at',
+          'athlete.updated_at as athlete_updated_at',
+
+          'access.id as access_id',
+          'access.user_id as access_user_id',
+          'access.role as access_role',
+          'access.created_at as access_created_at',
         ])
         .where(
           'access.user_id',
@@ -150,7 +156,44 @@ implements AthleteRepository {
         .execute();
 
     return rows.map(
-      mapAthlete,
+      (
+        row,
+      ) => ({
+        athlete: {
+          id:
+            row.athlete_id as
+              AthleteId,
+
+          displayName:
+            row.athlete_display_name,
+
+          createdAt:
+            row.athlete_created_at,
+
+          updatedAt:
+            row.athlete_updated_at,
+        },
+
+        access: {
+          id:
+            row.access_id,
+
+          athleteId:
+            row.athlete_id as
+              AthleteId,
+
+          userId:
+            row.access_user_id as
+              DkturboUserId,
+
+          role:
+            row.access_role as
+              AthleteAccessRole,
+
+          createdAt:
+            row.access_created_at,
+        },
+      }),
     );
   }
 

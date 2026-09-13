@@ -16,6 +16,14 @@ export interface GrantAthleteAccessData {
   role: AthleteAccessRole;
 }
 
+export interface AthleteForUser {
+  athlete:
+    Athlete;
+
+  access:
+    AthleteAccess;
+}
+
 export interface AthleteRepository {
   create(
     data: CreateAthleteData,
@@ -27,7 +35,7 @@ export interface AthleteRepository {
 
   listForUser(
     userId: DkturboUserId,
-  ): Promise<Athlete[]>;
+  ): Promise<AthleteForUser[]>;
 
   grantAccess(
     data: GrantAthleteAccessData,

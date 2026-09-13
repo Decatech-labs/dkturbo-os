@@ -195,6 +195,9 @@ const createWeekRepository =
 
     listDaysForWeek:
       vi.fn(),
+
+    updateWeek:
+      vi.fn(),
   });
 
 const createSessionRepository =

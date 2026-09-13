@@ -237,6 +237,9 @@ const createWeeks =
         .mockResolvedValue([
           day,
         ]),
+
+    updateWeek:
+      vi.fn(),
   });
 
 const createSessions =
