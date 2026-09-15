@@ -23,8 +23,8 @@ import type {
 } from '../ports/index.js';
 
 import {
-  recordPerformanceEntryActual,
-} from './record-performance-entry-actual.js';
+  updatePerformanceEntryPlanned,
+} from './update-performance-entry-planned.js';
 
 const athleteId =
   '20000000-0000-4000-8000-000000000001' as AthleteId;
@@ -40,7 +40,7 @@ const performanceEntryId =
 
 const now =
   new Date(
-    '2026-09-08T21:00:00Z',
+    '2026-09-14T15:30:00Z',
   );
 
 const access:
@@ -59,7 +59,7 @@ const access:
       now,
   };
 
-const plannedEntry:
+const performanceEntry:
   PerformanceEntry = {
     id:
       performanceEntryId,
@@ -155,34 +155,34 @@ const plannedEntry:
 
 const updatedEntry:
   PerformanceEntry = {
-    ...plannedEntry,
+    ...performanceEntry,
 
-    actualReps:
-      6,
+    plannedReps:
+      8,
 
-    actualLoadKg:
+    plannedLoadKg:
       82.5,
 
-    actualRpe:
+    plannedRpe:
       8.5,
 
-    actualRir:
+    plannedRir:
       1,
 
-    actualRestSeconds:
-      200,
+    plannedRestSeconds:
+      150,
 
-    actualMetrics: {
-      pain:
-        1,
+    plannedMetrics: {
+      tempo:
+        '2-1-1',
     },
 
-    actualNotes:
-      'Mejor de lo previsto',
+    plannedNotes:
+      'Plan actualizado',
 
     updatedAt:
       new Date(
-        '2026-09-08T21:05:00Z',
+        '2026-09-14T15:35:00Z',
       ),
   };
 
@@ -236,31 +236,31 @@ const createStructure =
     createPerformanceEntry:
       vi.fn(),
 
+    listPerformanceEntries:
+      vi.fn(),
+
     findPerformanceEntryById:
       vi.fn()
         .mockResolvedValue(
-          plannedEntry,
+          performanceEntry,
         ),
 
     updatePerformanceEntryActual:
+      vi.fn(),
+
+    updatePerformanceEntryPlanned:
       vi.fn()
         .mockResolvedValue(
           updatedEntry,
         ),
 
-    listPerformanceEntries:
-      vi.fn(),
-
-    listBlocksForSession:
-      vi.fn(),
-
-    updatePerformanceEntryPlanned:
-      vi.fn(),
-
     deletePerformanceEntry:
       vi.fn(),
 
     reorderPerformanceEntries:
+      vi.fn(),
+
+    listBlocksForSession:
       vi.fn(),
 
     updateBlock:
@@ -297,14 +297,57 @@ const createUnitOfWork =
         }),
   });
 
+const createInput =
+  () => ({
+    athleteId,
+
+    performanceEntryId,
+
+    reps:
+      8,
+
+    loadKg:
+      82.5,
+
+    distanceM:
+      null,
+
+    durationMs:
+      null,
+
+    resultM:
+      null,
+
+    heightM:
+      null,
+
+    rpe:
+      8.5,
+
+    rir:
+      1,
+
+    restSeconds:
+      150,
+
+    metrics: {
+      tempo:
+        '2-1-1',
+    },
+
+    notes:
+      'Plan actualizado',
+
+    updatedByUserId:
+      userId,
+  });
+
 describe(
-  'recordPerformanceEntryActual',
+  'updatePerformanceEntryPlanned',
   () => {
-
     it(
-      'records actual execution for an existing planned entry',
+      'updates planned values for an existing performance entry',
       async () => {
-
         const athletes =
           createAthletes();
 
@@ -312,91 +355,55 @@ describe(
           createStructure();
 
         const result =
-          await recordPerformanceEntryActual(
+          await updatePerformanceEntryPlanned(
             createUnitOfWork(
               athletes,
               structure,
             ),
-            {
-              athleteId,
-
-              performanceEntryId,
-
-              reps:
-                6,
-
-              loadKg:
-                82.5,
-
-              rpe:
-                8.5,
-
-              rir:
-                1,
-
-              restSeconds:
-                200,
-
-              metrics: {
-                pain:
-                  1,
-              },
-
-              notes:
-                'Mejor de lo previsto',
-
-              updatedByUserId:
-                userId,
-            },
+            createInput(),
           );
 
         expect(
-          structure.updatePerformanceEntryActual,
+          structure.updatePerformanceEntryPlanned,
         ).toHaveBeenCalledWith({
           performanceEntryId,
 
           athleteId,
 
-          actualReps:
-            6,
+          plannedReps:
+            8,
 
-          actualLoadKg:
+          plannedLoadKg:
             82.5,
 
-          actualDistanceM:
+          plannedDistanceM:
             null,
 
-          actualDurationMs:
+          plannedDurationMs:
             null,
 
-          actualResultM:
+          plannedResultM:
             null,
 
-          actualHeightM:
+          plannedHeightM:
             null,
 
-          actualRpe:
+          plannedRpe:
             8.5,
 
-          actualRir:
+          plannedRir:
             1,
 
-          actualRestSeconds:
-            200,
+          plannedRestSeconds:
+            150,
 
-          actualSuccess:
-            null,
-
-          actualIsFoul:
-            null,
-
-          actualMetrics: {
-            pain:
-              1,
+          plannedMetrics: {
+            tempo:
+              '2-1-1',
           },
 
-          actualNotes:
-            'Mejor de lo previsto',
+          plannedNotes:
+            'Plan actualizado',
         });
 
         expect(
@@ -408,182 +415,69 @@ describe(
     );
 
     it(
-      'preserves planned values in the returned entry',
+      'allows clearing optional planned values',
       async () => {
-
         const athletes =
           createAthletes();
 
         const structure =
           createStructure();
 
-        const result =
-          await recordPerformanceEntryActual(
-            createUnitOfWork(
-              athletes,
-              structure,
-            ),
-            {
-              athleteId,
-
-              performanceEntryId,
-
-              reps:
-                6,
-
-              loadKg:
-                82.5,
-
-              rpe:
-                8.5,
-
-              updatedByUserId:
-                userId,
-            },
-          );
-
-        expect(
-          result.plannedReps,
-        ).toBe(
-          6,
-        );
-
-        expect(
-          result.plannedLoadKg,
-        ).toBe(
-          80,
-        );
-
-        expect(
-          result.plannedRpe,
-        ).toBe(
-          8,
-        );
-
-        expect(
-          result.plannedRir,
-        ).toBe(
-          2,
-        );
-
-        expect(
-          result.plannedRestSeconds,
-        ).toBe(
-          180,
-        );
-
-        expect(
-          result.plannedMetrics,
-        ).toEqual({
-          tempo:
-            '3-1-1',
-        });
-
-        expect(
-          result.plannedNotes,
-        ).toBe(
-          'Plan original',
-        );
-      },
-    );
-
-    it(
-      'records a throwing result without planned values',
-      async () => {
-
-        const athletes =
-          createAthletes();
-
-        const structure =
-          createStructure();
-
-        vi.mocked(
-          structure.updatePerformanceEntryActual,
-        ).mockResolvedValue({
-          ...plannedEntry,
-
-          actualResultM:
-            63.1,
-
-          actualIsFoul:
-            false,
-        });
-
-        await recordPerformanceEntryActual(
+        await updatePerformanceEntryPlanned(
           createUnitOfWork(
             athletes,
             structure,
           ),
           {
-            athleteId,
+            ...createInput(),
 
-            performanceEntryId,
+            reps:
+              null,
 
-            resultM:
-              63.1,
+            loadKg:
+              null,
 
-            isFoul:
-              false,
+            rpe:
+              null,
 
-            updatedByUserId:
-              userId,
+            rir:
+              null,
+
+            restSeconds:
+              null,
+
+            metrics:
+              {},
+
+            notes:
+              null,
           },
         );
 
         expect(
-          structure.updatePerformanceEntryActual,
+          structure.updatePerformanceEntryPlanned,
         ).toHaveBeenCalledWith(
           expect.objectContaining({
-            actualResultM:
-              63.1,
+            plannedReps:
+              null,
 
-            actualIsFoul:
-              false,
-          }),
-        );
-      },
-    );
+            plannedLoadKg:
+              null,
 
-    it(
-      'records a pole vault attempt',
-      async () => {
+            plannedRpe:
+              null,
 
-        const athletes =
-          createAthletes();
+            plannedRir:
+              null,
 
-        const structure =
-          createStructure();
+            plannedRestSeconds:
+              null,
 
-        await recordPerformanceEntryActual(
-          createUnitOfWork(
-            athletes,
-            structure,
-          ),
-          {
-            athleteId,
+            plannedMetrics:
+              {},
 
-            performanceEntryId,
-
-            heightM:
-              5,
-
-            success:
-              true,
-
-            updatedByUserId:
-              userId,
-          },
-        );
-
-        expect(
-          structure.updatePerformanceEntryActual,
-        ).toHaveBeenCalledWith(
-          expect.objectContaining({
-            actualHeightM:
-              5,
-
-            actualSuccess:
-              true,
+            plannedNotes:
+              null,
           }),
         );
       },
@@ -592,7 +486,6 @@ describe(
     it(
       'rejects a missing performance entry',
       async () => {
-
         const athletes =
           createAthletes();
 
@@ -606,29 +499,19 @@ describe(
         );
 
         await expect(
-          recordPerformanceEntryActual(
+          updatePerformanceEntryPlanned(
             createUnitOfWork(
               athletes,
               structure,
             ),
-            {
-              athleteId,
-
-              performanceEntryId,
-
-              reps:
-                6,
-
-              updatedByUserId:
-                userId,
-            },
+            createInput(),
           ),
         ).rejects.toThrow(
           'Performance entry not found',
         );
 
         expect(
-          structure.updatePerformanceEntryActual,
+          structure.updatePerformanceEntryPlanned,
         ).not.toHaveBeenCalled();
       },
     );
@@ -636,7 +519,6 @@ describe(
     it(
       'rejects a performance entry belonging to another athlete',
       async () => {
-
         const athletes =
           createAthletes();
 
@@ -646,36 +528,26 @@ describe(
         vi.mocked(
           structure.findPerformanceEntryById,
         ).mockResolvedValue({
-          ...plannedEntry,
+          ...performanceEntry,
 
           athleteId:
             otherAthleteId,
         });
 
         await expect(
-          recordPerformanceEntryActual(
+          updatePerformanceEntryPlanned(
             createUnitOfWork(
               athletes,
               structure,
             ),
-            {
-              athleteId,
-
-              performanceEntryId,
-
-              reps:
-                6,
-
-              updatedByUserId:
-                userId,
-            },
+            createInput(),
           ),
         ).rejects.toThrow(
           'Performance entry does not belong to athlete',
         );
 
         expect(
-          structure.updatePerformanceEntryActual,
+          structure.updatePerformanceEntryPlanned,
         ).not.toHaveBeenCalled();
       },
     );
@@ -683,7 +555,6 @@ describe(
     it(
       'rejects a user without athlete write access',
       async () => {
-
         const athletes =
           createAthletes();
 
@@ -697,22 +568,12 @@ describe(
           createStructure();
 
         await expect(
-          recordPerformanceEntryActual(
+          updatePerformanceEntryPlanned(
             createUnitOfWork(
               athletes,
               structure,
             ),
-            {
-              athleteId,
-
-              performanceEntryId,
-
-              reps:
-                6,
-
-              updatedByUserId:
-                userId,
-            },
+            createInput(),
           ),
         ).rejects.toThrow(
           'User does not have write access to athlete',
@@ -723,33 +584,91 @@ describe(
         ).not.toHaveBeenCalled();
 
         expect(
-          structure.updatePerformanceEntryActual,
+          structure.updatePerformanceEntryPlanned,
         ).not.toHaveBeenCalled();
       },
     );
 
     it(
-      'rejects negative metrics before opening a transaction',
+      'rejects VIEWER access',
       async () => {
+        const athletes =
+          createAthletes();
 
+        vi.mocked(
+          athletes.findAccess,
+        ).mockResolvedValue({
+          ...access,
+
+          role:
+            'VIEWER',
+        });
+
+        const structure =
+          createStructure();
+
+        await expect(
+          updatePerformanceEntryPlanned(
+            createUnitOfWork(
+              athletes,
+              structure,
+            ),
+            createInput(),
+          ),
+        ).rejects.toThrow(
+          'User does not have write access to athlete',
+        );
+
+        expect(
+          structure.updatePerformanceEntryPlanned,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      'rejects RPE above 10 before opening a transaction',
+      async () => {
         const execute =
           vi.fn();
 
         await expect(
-          recordPerformanceEntryActual(
+          updatePerformanceEntryPlanned(
             {
               execute,
             },
             {
-              athleteId,
+              ...createInput(),
 
-              performanceEntryId,
+              rpe:
+                11,
+            },
+          ),
+        ).rejects.toThrow(
+          'rpe must be between 0 and 10',
+        );
+
+        expect(
+          execute,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      'rejects negative numeric values before opening a transaction',
+      async () => {
+        const execute =
+          vi.fn();
+
+        await expect(
+          updatePerformanceEntryPlanned(
+            {
+              execute,
+            },
+            {
+              ...createInput(),
 
               loadKg:
                 -1,
-
-              updatedByUserId:
-                userId,
             },
           ),
         ).rejects.toThrow(
@@ -765,63 +684,23 @@ describe(
     it(
       'rejects fractional integer metrics before opening a transaction',
       async () => {
-
         const execute =
           vi.fn();
 
         await expect(
-          recordPerformanceEntryActual(
+          updatePerformanceEntryPlanned(
             {
               execute,
             },
             {
-              athleteId,
-
-              performanceEntryId,
+              ...createInput(),
 
               reps:
-                5.5,
-
-              updatedByUserId:
-                userId,
+                7.5,
             },
           ),
         ).rejects.toThrow(
           'reps must be a non-negative integer',
-        );
-
-        expect(
-          execute,
-        ).not.toHaveBeenCalled();
-      },
-    );
-
-    it(
-      'rejects RPE outside the 0 to 10 range before opening a transaction',
-      async () => {
-
-        const execute =
-          vi.fn();
-
-        await expect(
-          recordPerformanceEntryActual(
-            {
-              execute,
-            },
-            {
-              athleteId,
-
-              performanceEntryId,
-
-              rpe:
-                10.1,
-
-              updatedByUserId:
-                userId,
-            },
-          ),
-        ).rejects.toThrow(
-          'rpe must be between 0 and 10',
         );
 
         expect(

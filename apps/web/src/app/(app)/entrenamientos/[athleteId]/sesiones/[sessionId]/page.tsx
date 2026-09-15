@@ -12,6 +12,26 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 
+import {
+  NewBlockControl,
+} from './new-block-control';
+
+import {
+  AddExerciseControl,
+} from './add-exercise-control';
+
+import {
+  AddPerformanceEntryControl,
+} from './add-performance-entry-control';
+
+import {
+  PerformanceEntryTable,
+} from './performance-entry-table';
+
+import {
+  SessionBlockList,
+} from './session-block-list';
+
 interface PageProps {
   params: Promise<{
     athleteId: string;
@@ -45,59 +65,6 @@ const sessionTypeLabel = (
   );
 };
 
-const formatDistance = (
-  value: number | null,
-): string | null =>
-  value === null
-    ? null
-    : `${value} m`;
-
-const formatDuration = (
-  value: number | null,
-): string | null => {
-  if (value === null) {
-    return null;
-  }
-
-  const totalSeconds =
-    Math.round(
-      value / 1000,
-    );
-
-  const minutes =
-    Math.floor(
-      totalSeconds / 60,
-    );
-
-  const seconds =
-    totalSeconds % 60;
-
-  return `${minutes}:${String(
-    seconds,
-  ).padStart(2, '0')}`;
-};
-
-const formatMetric = (
-  label: string,
-  planned: string | number | null,
-  actual: string | number | null,
-) => {
-  if (
-    planned === null &&
-    actual === null
-  ) {
-    return null;
-  }
-
-  return {
-    label,
-    planned:
-      planned ?? '—',
-    actual:
-      actual ?? '—',
-  };
-};
-
 export default async function TrainingSessionPage(
   {
     params,
@@ -124,6 +91,18 @@ export default async function TrainingSessionPage(
     canWrite,
     accessRole,
   } = detail;
+
+  const nextBlockPosition =
+    blocks.length === 0
+      ? 0
+      : Math.max(
+          ...blocks.map(
+            ({
+              block,
+            }) =>
+              block.position,
+          ),
+        ) + 1;
 
   return (
     <main className="training-page training-session-page">
@@ -193,283 +172,294 @@ export default async function TrainingSessionPage(
 
       <section className="training-session-blocks">
 
-        {blocks.length === 0 ? (
+                <SessionBlockList
 
-          <div className="training-session-empty">
-            Esta sesión todavía no tiene bloques.
-          </div>
+          athleteId={
+            athleteId
+          }
 
-        ) : (
+          sessionId={
+            sessionId
+          }
 
-          blocks.map(
+          canWrite={
+            canWrite
+          }
+
+          blocks={
+
+            blocks.map(
+
+              ({
+                block,
+                exercises,
+              }) => ({
+
+                id:
+                  block.id,
+
+                position:
+                  block.position,
+
+                title:
+                  block.title ??
+                  'Bloque de entrenamiento',
+
+                notes:
+                  block.notes,
+
+                exerciseCount:
+                  exercises.length,
+
+              }),
+
+            )
+
+          }
+
+        >
+
+          {blocks.map(
+
             ({
               block,
               exercises,
             }) => (
 
-              <section
-                key={block.id}
-                className="training-session-block"
+              <div
+
+                key={
+                  block.id
+                }
+
+                className="training-session-exercises"
+
               >
 
-                <header className="training-session-block-header">
+                {exercises.map(
 
-                  <div>
+                  ({
+                    sessionExercise,
+                    catalogItem,
+                    performanceEntries,
+                  }) => (
 
-                    <span className="training-session-block-index">
-                      Bloque {block.position + 1}
-                    </span>
+                    <article
 
-                    <h2>
-                      {block.title ??
-                        'Bloque de entrenamiento'}
-                    </h2>
+                      key={
+                        sessionExercise.id
+                      }
 
-                  </div>
+                      className="training-session-exercise"
 
-                  <span>
-                    {exercises.length}
-                    {' '}
-                    {exercises.length === 1
-                      ? 'ejercicio'
-                      : 'ejercicios'}
-                  </span>
+                    >
 
-                </header>
+                      <div className="training-session-exercise-main">
 
-                {block.notes && (
-                  <p className="training-session-block-notes">
-                    {block.notes}
-                  </p>
-                )}
+                        <div className="training-session-exercise-name">
 
-                <div className="training-session-exercises">
+                          <strong>
 
-                  {exercises.map(
-                    ({
-                      sessionExercise,
-                      catalogItem,
-                      performanceEntries,
-                    }) => (
+                            {
+                              catalogItem.name
+                            }
 
-                      <article
-                        key={
-                          sessionExercise.id
-                        }
-                        className="training-session-exercise"
-                      >
+                          </strong>
 
-                        <div className="training-session-exercise-main">
+                          <span>
 
-                          <div className="training-session-exercise-name">
+                            {
+                              catalogItem.metricProfile
+                            }
 
-                            <strong>
-                              {
-                                catalogItem.name
-                              }
-                            </strong>
-
-                            <span>
-                              {
-                                catalogItem.metricProfile
-                              }
-                            </span>
-
-                          </div>
-
-                          {sessionExercise.plannedNotes && (
-                            <p>
-                              {
-                                sessionExercise.plannedNotes
-                              }
-                            </p>
-                          )}
+                          </span>
 
                         </div>
 
-                        <div className="training-session-exercise-body">
+                        {sessionExercise.plannedNotes && (
 
-                          {sessionExercise.plannedNotes && (
-                            <p className="training-session-exercise-plan-note">
-                              {sessionExercise.plannedNotes}
-                            </p>
+                          <p>
+
+                            {
+                              sessionExercise.plannedNotes
+                            }
+
+                          </p>
+
+                        )}
+
+                      </div>
+
+                      <div className="training-session-exercise-body">
+
+                        {sessionExercise.plannedNotes && (
+
+                          <p className="training-session-exercise-plan-note">
+
+                            {
+                              sessionExercise.plannedNotes
+                            }
+
+                          </p>
+
+                        )}
+
+                        {performanceEntries.length > 0 && (
+
+                          <PerformanceEntryTable
+
+                            athleteId={
+                              athleteId
+                            }
+
+                            sessionExerciseId={
+                              sessionExercise.id
+                            }
+
+                            metricProfile={
+                              catalogItem.metricProfile
+                            }
+
+                            entries={
+                              performanceEntries
+                            }
+
+                            canWrite={
+                              canWrite
+                            }
+
+                          />
+
+                        )}
+
+                        {canWrite && (
+
+                          <AddPerformanceEntryControl
+
+                            athleteId={
+                              athleteId
+                            }
+
+                            sessionExerciseId={
+                              sessionExercise.id
+                            }
+
+                            metricProfile={
+                              catalogItem.metricProfile
+                            }
+
+                            position={
+
+                              performanceEntries.length ===
+                              0
+                                ? 0
+                                : Math.max(
+
+                                    ...performanceEntries.map(
+                                      entry =>
+                                        entry.position,
+                                    ),
+
+                                  ) + 1
+
+                            }
+
+                          />
+
+                        )}
+
+                        <div className="training-session-exercise-footer">
+
+                          {catalogItem.origin ===
+                            'CUSTOM' && (
+
+                            <span className="training-custom-badge">
+
+                              Personalizado
+
+                            </span>
+
                           )}
 
-                          {performanceEntries.length > 0 && (
-                            <div className="training-performance-list">
+                          <span>
 
-                              <div className="training-performance-header">
-                                <span />
-                                <span>
-                                  Planificado
-                                </span>
-                                <span>
-                                  Realizado
-                                </span>
-                              </div>
+                            {
+                              performanceEntries.length
+                            }{' '}
 
-                              {performanceEntries.map(
-                                (
-                                  entry,
-                                  entryIndex,
-                                ) => {
-                                  const rows = [
-                                    formatMetric(
-                                      'Distancia',
-                                      formatDistance(
-                                        entry.plannedDistanceM,
-                                      ),
-                                      formatDistance(
-                                        entry.actualDistanceM,
-                                      ),
-                                    ),
-
-                                    formatMetric(
-                                      'Tiempo',
-                                      formatDuration(
-                                        entry.plannedDurationMs,
-                                      ),
-                                      formatDuration(
-                                        entry.actualDurationMs,
-                                      ),
-                                    ),
-
-                                    formatMetric(
-                                      'RPE',
-                                      entry.plannedRpe,
-                                      entry.actualRpe,
-                                    ),
-
-                                    formatMetric(
-                                      'Descanso',
-                                      entry.plannedRestSeconds === null
-                                        ? null
-                                        : `${entry.plannedRestSeconds} s`,
-                                      entry.actualRestSeconds === null
-                                        ? null
-                                        : `${entry.actualRestSeconds} s`,
-                                    ),
-                                  ].filter(
-                                    (
-                                      row,
-                                    ): row is {
-                                      label: string;
-                                      planned:
-                                        string | number;
-                                      actual:
-                                        string | number;
-                                    } =>
-                                      row !== null,
-                                  );
-
-                                  return (
-                                    <div
-                                      key={entry.id}
-                                      className="training-performance-entry"
-                                    >
-
-                                      {performanceEntries.length > 1 && (
-                                        <div className="training-performance-entry-title">
-                                          Serie {entryIndex + 1}
-                                        </div>
-                                      )}
-
-                                      {rows.map(
-                                        row => (
-                                          <div
-                                            key={row.label}
-                                            className="training-performance-row"
-                                          >
-                                            <span>
-                                              {row.label}
-                                            </span>
-
-                                            <strong>
-                                              {row.planned}
-                                            </strong>
-
-                                            <strong>
-                                              {row.actual}
-                                            </strong>
-                                          </div>
-                                        ),
-                                      )}
-
-                                      {(
-                                        entry.plannedNotes ||
-                                        entry.actualNotes
-                                      ) && (
-                                        <div className="training-performance-notes">
-
-                                          <div>
-                                            <span>
-                                              Plan
-                                            </span>
-
-                                            <p>
-                                              {
-                                                entry.plannedNotes ??
-                                                '—'
-                                              }
-                                            </p>
-                                          </div>
-
-                                          <div>
-                                            <span>
-                                              Real
-                                            </span>
-
-                                            <p>
-                                              {
-                                                entry.actualNotes ??
-                                                '—'
-                                              }
-                                            </p>
-                                          </div>
-
-                                        </div>
-                                      )}
-
-                                    </div>
-                                  );
-                                },
-                              )}
-
-                            </div>
-                          )}
-
-                          <div className="training-session-exercise-footer">
-
-                            {catalogItem.origin ===
-                              'CUSTOM' && (
-                              <span className="training-custom-badge">
-                                Personalizado
-                              </span>
-                            )}
-
-                            <span>
-                              {performanceEntries.length}
-                              {' '}
-                              {performanceEntries.length ===
+                            {
+                              performanceEntries.length ===
                               1
                                 ? 'registro'
-                                : 'registros'}
-                            </span>
+                                : 'registros'
+                            }
 
-                          </div>
+                          </span>
 
                         </div>
 
-                      </article>
-                    ),
-                  )}
+                      </div>
 
-                </div>
+                    </article>
 
-              </section>
+                  ),
+
+                )}
+
+                {canWrite && (
+
+                  <AddExerciseControl
+
+                    athleteId={
+                      athleteId
+                    }
+
+                    blockId={
+                      block.id
+                    }
+
+                    position={
+
+                      exercises.length ===
+                      0
+                        ? 0
+                        : Math.max(
+
+                            ...exercises.map(
+                              ({
+                                sessionExercise,
+                              }) =>
+                                sessionExercise.position,
+                            ),
+
+                          ) + 1
+
+                    }
+
+                  />
+
+                )}
+
+              </div>
+
             ),
-          )
 
+          )}
+
+        </SessionBlockList>
+
+        {canWrite && (
+          <NewBlockControl
+            athleteId={
+              athleteId
+            }
+            sessionId={
+              sessionId
+            }
+            position={
+              nextBlockPosition
+            }
+          />
         )}
 
       </section>

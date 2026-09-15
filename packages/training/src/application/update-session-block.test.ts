@@ -11,8 +11,6 @@ import type {
   DkturboUserId,
   SessionBlock,
   SessionBlockId,
-  TrainingDayId,
-  TrainingSession,
   TrainingSessionId,
 } from '../domain/index.js';
 
@@ -25,8 +23,8 @@ import type {
 } from '../ports/index.js';
 
 import {
-  createSessionBlock,
-} from './create-session-block.js';
+  updateSessionBlock,
+} from './update-session-block.js';
 
 const athleteId =
   '20000000-0000-4000-8000-000000000001' as AthleteId;
@@ -45,83 +43,30 @@ const blockId =
 
 const now =
   new Date(
-    '2026-09-08T20:00:00Z',
+    '2026-09-15T15:15:00Z',
   );
 
 const access:
   AthleteAccess = {
+
     id:
       '70000000-0000-4000-8000-000000000001',
 
     athleteId,
+
     userId,
+
     role:
-      'COACH',
-    createdAt:
-      now,
-  };
-
-const session:
-  TrainingSession = {
-    id:
-      sessionId,
-
-    dayId:
-      '40000000-0000-4000-8000-000000000001' as TrainingDayId,
-
-    athleteId,
-
-    type:
-      'STRENGTH',
-
-    title:
-      'Gimnasio',
-
-    plannedStartTime:
-      null,
-
-    plannedDurationMinutes:
-      null,
-
-    actualStartTime:
-      null,
-
-    actualDurationMinutes:
-      null,
-
-    status:
-      'PLANNED',
-
-    plannedNotes:
-      null,
-
-    actualNotes:
-      null,
-
-    plannedRpe:
-      null,
-
-    actualRpe:
-      null,
-
-    source:
-      'MANUAL',
-
-    externalId:
-      null,
-
-    createdByUserId:
-      userId,
+      'SELF',
 
     createdAt:
       now,
 
-    updatedAt:
-      now,
   };
 
 const block:
   SessionBlock = {
+
     id:
       blockId,
 
@@ -136,17 +81,19 @@ const block:
       'Fuerza principal',
 
     notes:
-      null,
+      'Trabajo pesado',
 
     createdAt:
       now,
 
     updatedAt:
       now,
+
   };
 
 const createAthletes =
   (): AthleteRepository => ({
+
     create:
       vi.fn(),
 
@@ -164,32 +111,38 @@ const createAthletes =
         .mockResolvedValue(
           access,
         ),
-  });
 
-const createSessions =
-  (): SessionRepository => ({
-    createPlanned:
-      vi.fn(),
-
-    findById:
-      vi.fn()
-        .mockResolvedValue(
-          session,
-        ),
-
-    listForDay:
-      vi.fn(),
   });
 
 const createStructure =
   (): SessionStructureRepository => ({
+
     createBlock:
+      vi.fn(),
+
+    updateBlock:
+      vi.fn()
+        .mockResolvedValue({
+          ...block,
+          title:
+            'Potencia',
+          notes:
+            'Más velocidad',
+        }),
+
+    deleteBlock:
+      vi.fn(),
+
+    reorderBlocks:
+      vi.fn(),
+
+    findBlockById:
       vi.fn()
         .mockResolvedValue(
           block,
         ),
 
-    findBlockById:
+    listBlocksForSession:
       vi.fn(),
 
     createCustomExercise:
@@ -207,22 +160,16 @@ const createStructure =
     findSessionExerciseById:
       vi.fn(),
 
+    listExercisesForBlock:
+      vi.fn(),
+
     createPerformanceEntry:
       vi.fn(),
 
     listPerformanceEntries:
       vi.fn(),
 
-    listExercisesForBlock:
-      vi.fn(),
-
     findPerformanceEntryById:
-      vi.fn(),
-
-    updatePerformanceEntryActual:
-      vi.fn(),
-
-    listBlocksForSession:
       vi.fn(),
 
     updatePerformanceEntryPlanned:
@@ -234,120 +181,197 @@ const createStructure =
     reorderPerformanceEntries:
       vi.fn(),
 
-    updateBlock:
+    updatePerformanceEntryActual:
       vi.fn(),
 
-    deleteBlock:
-      vi.fn(),
-
-    reorderBlocks:
-      vi.fn(),
   });
 
 const weeks =
   {} as WeekRepository;
+
+const sessions =
+  {} as SessionRepository;
 
 const createUnitOfWork =
   (
     athletes:
       AthleteRepository,
 
-    sessions:
-      SessionRepository,
-
     sessionStructure:
       SessionStructureRepository,
   ): TrainingUnitOfWork => ({
+
     execute:
-      async (work) =>
+      async (
+        work,
+      ) =>
         work({
+
           athletes,
+
           weeks,
+
           sessions,
+
           sessionStructure,
+
         }),
+
   });
 
 describe(
-  'createSessionBlock',
+  'updateSessionBlock',
   () => {
 
     it(
-      'creates a block for an authorized session',
+      'updates title and notes for an authorized athlete',
+
       async () => {
 
         const athletes =
           createAthletes();
 
-        const sessions =
-          createSessions();
-
         const structure =
           createStructure();
 
         const result =
-          await createSessionBlock(
+
+          await updateSessionBlock(
+
             createUnitOfWork(
               athletes,
-              sessions,
               structure,
             ),
+
             {
               athleteId,
-              sessionId,
-              position:
-                0,
+
+              blockId,
+
               title:
-                '  Fuerza principal  ',
-              createdByUserId:
+                '  Potencia  ',
+
+              notes:
+                '  Más velocidad  ',
+
+              updatedByUserId:
                 userId,
             },
+
           );
 
         expect(
-          structure.createBlock,
+          structure.updateBlock,
         ).toHaveBeenCalledWith({
-          sessionId,
+
+          blockId,
+
           athleteId,
-          position:
-            0,
+
           title:
-            'Fuerza principal',
+            'Potencia',
+
           notes:
-            null,
+            'Más velocidad',
+
         });
 
         expect(
-          result,
-        ).toEqual(
-          block,
+          result.title,
+        ).toBe(
+          'Potencia',
         );
+
+      },
+    );
+
+    it(
+      'normalizes empty notes to null',
+
+      async () => {
+
+        const athletes =
+          createAthletes();
+
+        const structure =
+          createStructure();
+
+        await updateSessionBlock(
+
+          createUnitOfWork(
+            athletes,
+            structure,
+          ),
+
+          {
+            athleteId,
+
+            blockId,
+
+            title:
+              'Potencia',
+
+            notes:
+              '   ',
+
+            updatedByUserId:
+              userId,
+          },
+
+        );
+
+        expect(
+          structure.updateBlock,
+        ).toHaveBeenCalledWith({
+
+          blockId,
+
+          athleteId,
+
+          title:
+            'Potencia',
+
+          notes:
+            null,
+
+        });
+
       },
     );
 
     it(
       'rejects an empty title before opening a transaction',
+
       async () => {
 
         const execute =
           vi.fn();
 
         await expect(
-          createSessionBlock(
+
+          updateSessionBlock(
+
             {
               execute,
             },
+
             {
               athleteId,
-              sessionId,
-              position:
-                0,
+
+              blockId,
+
               title:
                 '   ',
-              createdByUserId:
+
+              notes:
+                null,
+
+              updatedByUserId:
                 userId,
             },
+
           ),
+
         ).rejects.toThrow(
           'Session block title is required',
         );
@@ -355,136 +379,122 @@ describe(
         expect(
           execute,
         ).not.toHaveBeenCalled();
+
       },
     );
 
     it(
-      'rejects an invalid position',
-      async () => {
+      'rejects a missing block',
 
-        const execute =
-          vi.fn();
-
-        await expect(
-          createSessionBlock(
-            {
-              execute,
-            },
-            {
-              athleteId,
-              sessionId,
-              position:
-                -1,
-              title:
-                'Fuerza',
-              createdByUserId:
-                userId,
-            },
-          ),
-        ).rejects.toThrow(
-          'Session block position must be a non-negative integer',
-        );
-
-        expect(
-          execute,
-        ).not.toHaveBeenCalled();
-      },
-    );
-
-    it(
-      'rejects a missing session',
       async () => {
 
         const athletes =
           createAthletes();
 
-        const sessions =
-          createSessions();
+        const structure =
+          createStructure();
 
         vi.mocked(
-          sessions.findById,
+          structure.findBlockById,
         ).mockResolvedValue(
           null,
         );
 
-        const structure =
-          createStructure();
-
         await expect(
-          createSessionBlock(
+
+          updateSessionBlock(
+
             createUnitOfWork(
               athletes,
-              sessions,
               structure,
             ),
+
             {
               athleteId,
-              sessionId,
-              position:
-                0,
+
+              blockId,
+
               title:
-                'Fuerza',
-              createdByUserId:
+                'Potencia',
+
+              notes:
+                null,
+
+              updatedByUserId:
                 userId,
             },
+
           ),
+
         ).rejects.toThrow(
-          'Training session not found',
+          'Session block not found',
         );
 
         expect(
-          structure.createBlock,
+          structure.updateBlock,
         ).not.toHaveBeenCalled();
+
       },
     );
 
     it(
-      'rejects a session belonging to another athlete',
+      'rejects a block belonging to another athlete',
+
       async () => {
 
         const athletes =
           createAthletes();
 
-        const sessions =
-          createSessions();
-
-        vi.mocked(
-          sessions.findById,
-        ).mockResolvedValue({
-          ...session,
-          athleteId:
-            otherAthleteId,
-        });
-
         const structure =
           createStructure();
 
+        vi.mocked(
+          structure.findBlockById,
+        ).mockResolvedValue({
+
+          ...block,
+
+          athleteId:
+            otherAthleteId,
+
+        });
+
         await expect(
-          createSessionBlock(
+
+          updateSessionBlock(
+
             createUnitOfWork(
               athletes,
-              sessions,
               structure,
             ),
+
             {
               athleteId,
-              sessionId,
-              position:
-                0,
+
+              blockId,
+
               title:
-                'Fuerza',
-              createdByUserId:
+                'Potencia',
+
+              notes:
+                null,
+
+              updatedByUserId:
                 userId,
             },
+
           ),
+
         ).rejects.toThrow(
-          'Training session does not belong to athlete',
+          'Session block does not belong to athlete',
         );
 
         expect(
-          structure.createBlock,
+          structure.updateBlock,
         ).not.toHaveBeenCalled();
+
       },
     );
+
   },
 );

@@ -25,6 +25,9 @@ import type {
   SessionStructureRepository,
   CreatePerformanceEntryData,
   UpdatePerformanceEntryActualData,
+  SearchAvailableExercisesFilters,
+  UpdatePerformanceEntryPlannedData,
+  UpdateSessionBlockData,
 } from '../../ports/index.js';
 
 import type {
@@ -367,6 +370,283 @@ implements SessionStructureRepository {
     );
   }
 
+    public async updateBlock(
+
+    data:
+      UpdateSessionBlockData,
+
+  ): Promise<SessionBlock> {
+
+    const row =
+
+      await this.db
+
+        .updateTable(
+          'training.session_blocks',
+        )
+
+        .set({
+
+          title:
+            data.title,
+
+          notes:
+            data.notes,
+
+          updated_at:
+            new Date(),
+
+        })
+
+        .where(
+          'id',
+          '=',
+          data.blockId,
+        )
+
+        .where(
+          'athlete_id',
+          '=',
+          data.athleteId,
+        )
+
+        .returningAll()
+
+        .executeTakeFirstOrThrow();
+
+    return mapBlock(
+      row,
+    );
+
+  }
+
+  public async deleteBlock(
+
+    blockId:
+      SessionBlockId,
+
+    athleteId:
+      AthleteId,
+
+  ): Promise<boolean> {
+
+    const result =
+
+      await this.db
+
+        .deleteFrom(
+          'training.session_blocks',
+        )
+
+        .where(
+          'id',
+          '=',
+          blockId,
+        )
+
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+
+        .executeTakeFirst();
+
+    return (
+      Number(
+        result.numDeletedRows,
+      ) >
+      0
+    );
+
+  }
+
+  public async reorderBlocks(
+
+    sessionId:
+      TrainingSessionId,
+
+    athleteId:
+      AthleteId,
+
+    orderedIds:
+      readonly SessionBlockId[],
+
+  ): Promise<SessionBlock[]> {
+
+    if (
+      orderedIds.length ===
+      0
+    ) {
+      return [];
+    }
+
+    const currentRows =
+
+      await this.db
+
+        .selectFrom(
+          'training.session_blocks',
+        )
+
+        .select([
+          'id',
+          'position',
+        ])
+
+        .where(
+          'session_id',
+          '=',
+          sessionId,
+        )
+
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+
+        .orderBy(
+          'position',
+          'asc',
+        )
+
+        .execute();
+
+    const maxPosition =
+
+      currentRows.reduce(
+
+        (
+          currentMax,
+          row,
+        ) =>
+          Math.max(
+            currentMax,
+            row.position,
+          ),
+
+        -1,
+
+      );
+
+    const temporaryBase =
+
+      maxPosition +
+      orderedIds.length +
+      1000;
+
+    for (
+      let index = 0;
+      index <
+      orderedIds.length;
+      index += 1
+    ) {
+
+      const id =
+        orderedIds[index];
+
+      if (!id) {
+        continue;
+      }
+
+      await this.db
+
+        .updateTable(
+          'training.session_blocks',
+        )
+
+        .set({
+
+          position:
+            temporaryBase +
+            index,
+
+          updated_at:
+            new Date(),
+
+        })
+
+        .where(
+          'id',
+          '=',
+          id,
+        )
+
+        .where(
+          'session_id',
+          '=',
+          sessionId,
+        )
+
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+
+        .execute();
+
+    }
+
+    for (
+      let index = 0;
+      index <
+      orderedIds.length;
+      index += 1
+    ) {
+
+      const id =
+        orderedIds[index];
+
+      if (!id) {
+        continue;
+      }
+
+      await this.db
+
+        .updateTable(
+          'training.session_blocks',
+        )
+
+        .set({
+
+          position:
+            index,
+
+          updated_at:
+            new Date(),
+
+        })
+
+        .where(
+          'id',
+          '=',
+          id,
+        )
+
+        .where(
+          'session_id',
+          '=',
+          sessionId,
+        )
+
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+
+        .execute();
+
+    }
+
+    return this.listBlocksForSession(
+      sessionId,
+    );
+
+  }
+
   public async findBlockById(
     blockId:
       SessionBlockId,
@@ -466,10 +746,12 @@ implements SessionStructureRepository {
 
     query:
       string,
-  ): Promise<ExerciseCatalogItem[]> {
 
-    const rows =
-      await this.db
+    filters:
+      SearchAvailableExercisesFilters = {},
+  ): Promise<ExerciseCatalogItem[]> {
+    let statement =
+      this.db
         .selectFrom(
           'training.exercise_catalog',
         )
@@ -478,12 +760,57 @@ implements SessionStructureRepository {
           'archived_at',
           'is',
           null,
-        )
-        .where(
+        );
+
+    const normalizedQuery =
+      query.trim();
+
+    if (normalizedQuery) {
+      statement =
+        statement.where(
           'name',
           'ilike',
-          `%${query}%`,
-        )
+          `%${normalizedQuery}%`,
+        );
+    }
+
+    if (
+      filters.metricProfile
+    ) {
+      statement =
+        statement.where(
+          'metric_profile',
+          '=',
+          filters.metricProfile,
+        );
+    }
+
+    if (
+      filters.origin
+    ) {
+      statement =
+        statement.where(
+          'origin',
+          '=',
+          filters.origin,
+        );
+    }
+
+    const normalizedSport =
+      filters.sport
+        ?.trim();
+
+    if (normalizedSport) {
+      statement =
+        statement.where(
+          'sport',
+          'ilike',
+          `%${normalizedSport}%`,
+        );
+    }
+
+    const rows =
+      await statement
         .orderBy(
           'name',
           'asc',
@@ -768,6 +1095,289 @@ implements SessionStructureRepository {
           row,
         )
       : null;
+  }
+
+  public async updatePerformanceEntryPlanned(
+    data:
+      UpdatePerformanceEntryPlannedData,
+  ): Promise<PerformanceEntry> {
+
+    const row =
+      await this.db
+        .updateTable(
+          'training.performance_entries',
+        )
+        .set({
+          planned_reps:
+            data.plannedReps,
+
+          planned_load_kg:
+            toNumeric(
+              data.plannedLoadKg,
+            ),
+
+          planned_distance_m:
+            toNumeric(
+              data.plannedDistanceM,
+            ),
+
+          planned_duration_ms:
+            data.plannedDurationMs,
+
+          planned_result_m:
+            toNumeric(
+              data.plannedResultM,
+            ),
+
+          planned_height_m:
+            toNumeric(
+              data.plannedHeightM,
+            ),
+
+          planned_rpe:
+            toNumeric(
+              data.plannedRpe,
+            ),
+
+          planned_rir:
+            toNumeric(
+              data.plannedRir,
+            ),
+
+          planned_rest_seconds:
+            data.plannedRestSeconds,
+
+          planned_metrics: {
+            ...data.plannedMetrics,
+          },
+
+          planned_notes:
+            data.plannedNotes,
+
+          updated_at:
+            new Date(),
+        })
+        .where(
+          'id',
+          '=',
+          data.performanceEntryId,
+        )
+        .where(
+          'athlete_id',
+          '=',
+          data.athleteId,
+        )
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+    return mapPerformanceEntry(
+      row,
+    );
+  }
+
+  public async deletePerformanceEntry(
+    performanceEntryId:
+      PerformanceEntryId,
+
+    athleteId:
+      AthleteId,
+  ): Promise<boolean> {
+
+    const result =
+      await this.db
+        .deleteFrom(
+          'training.performance_entries',
+        )
+        .where(
+          'id',
+          '=',
+          performanceEntryId,
+        )
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+        .executeTakeFirst();
+
+    return Number(
+      result.numDeletedRows,
+    ) > 0;
+  }
+
+    public async reorderPerformanceEntries(
+
+    sessionExerciseId:
+      SessionExerciseId,
+
+    athleteId:
+      AthleteId,
+
+    orderedIds:
+      readonly PerformanceEntryId[],
+
+  ): Promise<PerformanceEntry[]> {
+
+    if (
+      orderedIds.length ===
+      0
+    ) {
+      return [];
+    }
+
+    const currentRows =
+      await this.db
+
+        .selectFrom(
+          'training.performance_entries',
+        )
+
+        .select([
+          'id',
+          'position',
+        ])
+
+        .where(
+          'session_exercise_id',
+          '=',
+          sessionExerciseId,
+        )
+
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+
+        .orderBy(
+          'position',
+          'asc',
+        )
+
+        .execute();
+
+    const maxPosition =
+      currentRows.reduce(
+        (
+          currentMax,
+          row,
+        ) =>
+          Math.max(
+            currentMax,
+            row.position,
+          ),
+        -1,
+      );
+
+    const temporaryBase =
+      maxPosition +
+      orderedIds.length +
+      1000;
+
+    for (
+      let index = 0;
+      index <
+      orderedIds.length;
+      index += 1
+    ) {
+      const id =
+        orderedIds[
+          index
+        ];
+
+      if (!id) {
+        continue;
+      }
+
+      await this.db
+
+        .updateTable(
+          'training.performance_entries',
+        )
+
+        .set({
+          position:
+            temporaryBase +
+            index,
+
+          updated_at:
+            new Date(),
+        })
+
+        .where(
+          'id',
+          '=',
+          id,
+        )
+
+        .where(
+          'session_exercise_id',
+          '=',
+          sessionExerciseId,
+        )
+
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+
+        .execute();
+    }
+
+    for (
+      let index = 0;
+      index <
+      orderedIds.length;
+      index += 1
+    ) {
+      const id =
+        orderedIds[
+          index
+        ];
+
+      if (!id) {
+        continue;
+      }
+
+      await this.db
+
+        .updateTable(
+          'training.performance_entries',
+        )
+
+        .set({
+          position:
+            index,
+
+          updated_at:
+            new Date(),
+        })
+
+        .where(
+          'id',
+          '=',
+          id,
+        )
+
+        .where(
+          'session_exercise_id',
+          '=',
+          sessionExerciseId,
+        )
+
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+
+        .execute();
+    }
+
+    return this.listPerformanceEntries(
+      sessionExerciseId,
+    );
   }
 
   public async updatePerformanceEntryActual(

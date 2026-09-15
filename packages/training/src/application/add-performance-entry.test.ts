@@ -253,6 +253,24 @@ const createStructure =
 
     listBlocksForSession:
       vi.fn(),
+
+    updatePerformanceEntryPlanned:
+      vi.fn(),
+
+    deletePerformanceEntry:
+      vi.fn(),
+
+    reorderPerformanceEntries:
+      vi.fn(),
+
+    updateBlock:
+      vi.fn(),
+
+    deleteBlock:
+      vi.fn(),
+
+    reorderBlocks:
+      vi.fn(),
   });
 
 const weeks =

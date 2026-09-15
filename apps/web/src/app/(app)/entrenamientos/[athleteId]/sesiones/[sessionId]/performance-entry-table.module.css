@@ -1,0 +1,237 @@
+.wrapper {
+  width: 100%;
+  margin-top: 14px;
+  overflow: hidden;
+
+  border: 1px solid rgba(77, 66, 52, 0.08);
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.headerRow {
+  height: 34px;
+
+  background: rgba(74, 64, 51, 0.025);
+}
+
+.headerCell {
+  padding: 0 10px;
+
+  border-bottom: 1px solid rgba(77, 66, 52, 0.075);
+
+  color: rgba(47, 41, 34, 0.38);
+
+  font-size: 0.62rem;
+  font-weight: 720;
+  letter-spacing: 0.045em;
+
+  text-align: center;
+  white-space: nowrap;
+}
+
+.indexHeader,
+.indexCell {
+  width: 58px;
+}
+
+.indexCell {
+  color: rgba(47, 41, 34, 0.3);
+
+  font-size: 0.69rem;
+  font-weight: 680;
+
+  text-align: center;
+}
+
+.indexContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.dragHandle {
+  width: 24px;
+  height: 28px;
+
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: rgba(47, 41, 34, 0.22);
+
+  cursor: grab;
+
+  touch-action: none;
+
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.dragHandle:hover {
+  background: rgba(76, 65, 51, 0.05);
+
+  color: rgba(47, 41, 34, 0.55);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle svg {
+  width: 14px;
+  height: 14px;
+}
+
+.draggingRow {
+  position: relative;
+  z-index: 5;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  box-shadow:
+    0 8px 22px rgba(45, 38, 30, 0.08);
+
+  opacity: 0.86;
+}
+
+.reorderError {
+  padding: 8px 12px;
+
+  border-top: 1px solid rgba(180, 50, 55, 0.08);
+
+  background: rgba(185, 52, 58, 0.035);
+
+  color: rgba(181, 49, 54, 0.9);
+
+  font-size: 0.66rem;
+  font-weight: 620;
+}
+
+.actionsHeader,
+.actionsCell {
+  width: 44px;
+}
+
+.row {
+  height: 48px;
+
+  transition:
+    background 120ms ease;
+}
+
+.row:hover {
+  background: rgba(76, 65, 51, 0.026);
+}
+
+.row:not(:last-child) .cell,
+.row:not(:last-child) .indexCell,
+.row:not(:last-child) .actionsCell {
+  border-bottom: 1px solid rgba(77, 66, 52, 0.055);
+}
+
+.cell {
+  padding: 8px 10px;
+
+  text-align: center;
+  vertical-align: middle;
+}
+
+.planned {
+  display: block;
+
+  color: rgba(39, 34, 28, 0.9);
+
+  font-size: 0.79rem;
+  font-weight: 660;
+
+  line-height: 1.15;
+
+  white-space: nowrap;
+}
+
+.actual {
+  display: block;
+
+  margin-top: 3px;
+
+  color: rgba(136, 91, 29, 0.6);
+
+  font-size: 0.6rem;
+  font-weight: 590;
+
+  line-height: 1.1;
+
+  white-space: nowrap;
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  padding: 10px 12px;
+
+  border-top: 1px solid rgba(77, 66, 52, 0.065);
+
+  background: rgba(77, 66, 52, 0.018);
+}
+
+.note {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  min-width: 0;
+
+  color: rgba(47, 41, 34, 0.53);
+
+  font-size: 0.67rem;
+}
+
+.noteIndex {
+  flex: 0 0 auto;
+
+  color: rgba(47, 41, 34, 0.32);
+
+  font-size: 0.63rem;
+  font-weight: 720;
+}
+
+.noteText {
+  min-width: 0;
+}
+
+.actualNote {
+  color: rgba(133, 88, 29, 0.66);
+}
+
+@media (max-width: 760px) {
+  .wrapper {
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 480px;
+  }
+
+  .headerCell,
+  .cell {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+}

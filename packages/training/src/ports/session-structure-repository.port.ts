@@ -12,6 +12,17 @@ import type {
   TrainingSessionId,
 } from '../domain/index.js';
 
+export interface SearchAvailableExercisesFilters {
+  metricProfile?:
+    ExerciseMetricProfile;
+
+  origin?:
+    'SYSTEM' | 'CUSTOM';
+
+  sport?:
+    string;
+}
+
 export interface CreateSessionBlockData {
   sessionId:
     TrainingSessionId;
@@ -27,6 +38,22 @@ export interface CreateSessionBlockData {
 
   notes:
     string | null;
+}
+
+export interface UpdateSessionBlockData {
+
+  blockId:
+    SessionBlockId;
+
+  athleteId:
+    AthleteId;
+
+  title:
+    string;
+
+  notes:
+    string | null;
+
 }
 
 export interface CreateCustomExerciseData {
@@ -162,6 +189,52 @@ export interface CreatePerformanceEntryData {
     string | null;
 }
 
+export interface UpdatePerformanceEntryPlannedData {
+  performanceEntryId:
+    PerformanceEntry['id'];
+
+  athleteId:
+    AthleteId;
+
+  plannedReps:
+    number | null;
+
+  plannedLoadKg:
+    number | null;
+
+  plannedDistanceM:
+    number | null;
+
+  plannedDurationMs:
+    number | null;
+
+  plannedResultM:
+    number | null;
+
+  plannedHeightM:
+    number | null;
+
+  plannedRpe:
+    number | null;
+
+  plannedRir:
+    number | null;
+
+  plannedRestSeconds:
+    number | null;
+
+  plannedMetrics:
+    Readonly<
+      Record<
+        string,
+        unknown
+      >
+    >;
+
+  plannedNotes:
+    string | null;
+}
+
 export interface UpdatePerformanceEntryActualData {
   performanceEntryId:
     PerformanceEntry['id'];
@@ -220,6 +293,30 @@ export interface SessionStructureRepository {
       CreateSessionBlockData,
   ): Promise<SessionBlock>;
 
+  updateBlock(
+    data:
+      UpdateSessionBlockData,
+  ): Promise<SessionBlock>;
+
+  deleteBlock(
+    blockId:
+      SessionBlockId,
+
+    athleteId:
+      AthleteId,
+  ): Promise<boolean>;
+
+  reorderBlocks(
+    sessionId:
+      TrainingSessionId,
+
+    athleteId:
+      AthleteId,
+
+    orderedIds:
+      readonly SessionBlockId[],
+  ): Promise<SessionBlock[]>;
+
   findBlockById(
     blockId:
       SessionBlockId,
@@ -246,6 +343,9 @@ export interface SessionStructureRepository {
 
     query:
       string,
+
+    filters?:
+      SearchAvailableExercisesFilters,
   ): Promise<ExerciseCatalogItem[]>;
 
   addExercise(
@@ -277,6 +377,39 @@ export interface SessionStructureRepository {
     performanceEntryId:
       PerformanceEntry['id'],
   ): Promise<PerformanceEntry | null>;
+
+  updatePerformanceEntryPlanned(
+    data:
+      UpdatePerformanceEntryPlannedData,
+  ): Promise<PerformanceEntry>;
+
+    deletePerformanceEntry(
+
+    performanceEntryId:
+
+      PerformanceEntry['id'],
+
+    athleteId:
+
+      AthleteId,
+
+  ): Promise<boolean>;
+
+  reorderPerformanceEntries(
+
+    sessionExerciseId:
+
+      SessionExerciseId,
+
+    athleteId:
+
+      AthleteId,
+
+    orderedIds:
+
+      readonly PerformanceEntry['id'][],
+
+  ): Promise<PerformanceEntry[]>;
 
   updatePerformanceEntryActual(
     data:

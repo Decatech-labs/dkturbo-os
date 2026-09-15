@@ -329,7 +329,14 @@ export interface TrainingSessionBlockResponse {
 export interface TrainingExerciseCatalogItemResponse {
   id: string;
   name: string;
-  metricProfile: string;
+  metricProfile:
+  | 'STRENGTH'
+  | 'INTERVAL'
+  | 'CONTINUOUS'
+  | 'ATTEMPT_DISTANCE'
+  | 'ATTEMPT_HEIGHT'
+  | 'REHAB'
+  | 'GENERIC';
   origin: 'SYSTEM' | 'CUSTOM';
   createdByUserId: string | null;
 }

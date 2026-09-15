@@ -1,0 +1,441 @@
+.root {
+  position: relative;
+
+  display: flex;
+  justify-content: center;
+}
+
+.menuButton {
+  width: 28px;
+  height: 28px;
+
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: rgba(47, 41, 34, 0.34);
+
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+
+  cursor: pointer;
+
+  opacity: 0;
+
+  transition:
+    opacity 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+:global(tr:hover) .menuButton,
+.menuButton:focus-visible,
+.menuButton[aria-expanded='true'] {
+  opacity: 1;
+}
+
+.menuButton:hover {
+  background: rgba(76, 65, 51, 0.06);
+
+  color: rgba(47, 41, 34, 0.76);
+}
+
+.menu {
+  position: fixed;
+  z-index: 1100;
+
+  width: 170px;
+
+  padding: 6px;
+
+  border: 1px solid rgba(65, 56, 44, 0.1);
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.98);
+
+  box-shadow:
+    0 12px 30px rgba(41, 35, 28, 0.12),
+    0 2px 8px rgba(41, 35, 28, 0.06);
+}
+
+.menu > button {
+  width: 100%;
+  height: 34px;
+
+  padding: 0 9px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: rgba(40, 35, 29, 0.82);
+
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 620;
+
+  cursor: pointer;
+
+  text-align: left;
+}
+
+.menu > button:hover {
+  background: rgba(72, 61, 48, 0.05);
+}
+
+.menu > button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.menu svg {
+  width: 14px;
+  height: 14px;
+
+  flex: 0 0 auto;
+}
+
+.separator {
+  height: 1px;
+
+  margin: 5px 4px;
+
+  background: rgba(65, 56, 44, 0.08);
+}
+
+.menu .danger {
+  color: rgba(186, 55, 59, 0.88);
+}
+
+.menu .danger:hover {
+  background: rgba(186, 55, 59, 0.055);
+}
+
+.confirm {
+  padding: 5px;
+}
+
+.confirm > span {
+  display: block;
+
+  padding: 4px 3px 9px;
+
+  color: rgba(40, 35, 29, 0.65);
+
+  font-size: 0.69rem;
+  font-weight: 620;
+}
+
+.confirm > div {
+  display: flex;
+  gap: 6px;
+}
+
+.confirm button {
+  flex: 1;
+
+  min-height: 30px;
+
+  padding: 0 8px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: rgba(75, 64, 51, 0.055);
+
+  color: rgba(40, 35, 29, 0.7);
+
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+.confirm .confirmDelete {
+  background: rgba(186, 55, 59, 0.09);
+
+  color: rgba(174, 43, 49, 0.92);
+}
+
+.menuError {
+  display: block;
+
+  padding: 7px 5px 3px;
+
+  color: rgb(190, 62, 67);
+
+  font-size: 0.62rem;
+}
+
+.overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+
+  padding: 20px;
+
+  display: grid;
+  place-items: center;
+
+  background: rgba(29, 26, 22, 0.23);
+
+  backdrop-filter: blur(3px);
+}
+
+.dialog {
+  width: min(
+    620px,
+    100%
+  );
+
+  max-height: calc(
+    100vh -
+    40px
+  );
+
+  overflow-y: auto;
+
+  padding: 22px;
+
+  border: 1px solid rgba(66, 56, 44, 0.08);
+  border-radius: 20px;
+
+  background: rgb(255, 254, 251);
+
+  box-shadow:
+    0 28px 80px rgba(37, 31, 24, 0.18),
+    0 4px 14px rgba(37, 31, 24, 0.07);
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: rgba(43, 37, 31, 0.38);
+
+  font-size: 0.64rem;
+  font-weight: 720;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dialogHeader h3 {
+  margin: 0;
+
+  color: rgba(35, 31, 26, 0.94);
+
+  font-size: 1.15rem;
+  font-weight: 720;
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: rgba(73, 62, 48, 0.045);
+
+  color: rgba(43, 37, 31, 0.5);
+
+  cursor: pointer;
+}
+
+.closeButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(
+        100px,
+        1fr
+      )
+    );
+  gap: 10px;
+}
+
+.field,
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field > span,
+.notes > span {
+  color: rgba(44, 38, 32, 0.44);
+
+  font-size: 0.64rem;
+  font-weight: 680;
+}
+
+.field input,
+.notes input {
+  width: 100%;
+  box-sizing: border-box;
+
+  height: 40px;
+
+  padding: 0 11px;
+
+  border: 1px solid rgba(68, 58, 45, 0.1);
+  border-radius: 10px;
+
+  outline: none;
+
+  background: rgba(78, 67, 53, 0.035);
+
+  color: rgba(36, 31, 26, 0.9);
+
+  font: inherit;
+  font-size: 0.8rem;
+
+  transition:
+    border 120ms ease,
+    box-shadow 120ms ease,
+    background 120ms ease;
+}
+
+.field input:focus,
+.notes input:focus {
+  border-color: rgba(79, 67, 51, 0.22);
+
+  background: rgba(255, 255, 255, 0.8);
+
+  box-shadow:
+    0 0 0 3px rgba(79, 67, 51, 0.045);
+}
+
+.notes {
+  margin-top: 12px;
+}
+
+.error {
+  display: block;
+
+  margin-top: 10px;
+
+  color: rgb(190, 62, 67);
+
+  font-size: 0.7rem;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  margin-top: 20px;
+}
+
+.cancelButton,
+.saveButton {
+  min-height: 38px;
+
+  padding: 0 14px;
+
+  border: 0;
+  border-radius: 10px;
+
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 680;
+
+  cursor: pointer;
+}
+
+.cancelButton {
+  background: rgba(72, 61, 48, 0.055);
+
+  color: rgba(42, 36, 30, 0.62);
+}
+
+.saveButton {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  background: rgba(54, 48, 40, 0.92);
+
+  color: white;
+}
+
+.saveButton svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cancelButton:disabled,
+.saveButton:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+@media (max-width: 760px) {
+  .menuButton {
+    opacity: 1;
+  }
+
+  .menu {
+    right: -4px;
+  }
+
+  .overlay {
+    padding: 12px;
+    align-items: end;
+  }
+
+  .dialog {
+    width: 100%;
+
+    max-height: 85vh;
+
+    border-radius: 20px 20px 14px 14px;
+  }
+
+  .fields {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(
+          0,
+          1fr
+        )
+      );
+  }
+}

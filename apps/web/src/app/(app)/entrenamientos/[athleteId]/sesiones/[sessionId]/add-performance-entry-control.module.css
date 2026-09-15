@@ -1,0 +1,190 @@
+.trigger {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 9px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(46, 40, 33, 0.44);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 620;
+  cursor: pointer;
+  transition:
+    background 130ms ease,
+    color 130ms ease;
+}
+
+.trigger:hover {
+  background: rgba(81, 71, 58, 0.035);
+  color: rgba(46, 40, 33, 0.72);
+}
+
+.trigger svg {
+  width: 13px;
+  height: 13px;
+}
+
+.editor {
+  margin-top: 10px;
+  padding: 13px;
+  border: 1px solid rgba(90, 77, 60, 0.09);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.editorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+
+.editorHeader > span {
+  font-size: 0.72rem;
+  font-weight: 720;
+  color: rgba(46, 40, 33, 0.58);
+}
+
+.iconButton {
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(46, 40, 33, 0.4);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: rgba(81, 71, 58, 0.06);
+  color: rgba(46, 40, 33, 0.75);
+}
+
+.iconButton svg {
+  width: 13px;
+  height: 13px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(90px, 1fr)
+    );
+  gap: 8px;
+}
+
+.field,
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field > span,
+.notes > span {
+  padding-left: 2px;
+  color: rgba(46, 40, 33, 0.4);
+  font-size: 0.61rem;
+  font-weight: 680;
+}
+
+.field input,
+.notes input {
+  width: 100%;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 9px;
+  border: 1px solid rgba(90, 77, 60, 0.1);
+  border-radius: 9px;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.72);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.field input:focus,
+.notes input:focus {
+  border-color: rgba(187, 135, 52, 0.32);
+  box-shadow: 0 0 0 3px rgba(205, 153, 69, 0.08);
+}
+
+.notes {
+  margin-top: 9px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.cancel,
+.save {
+  min-height: 33px;
+  padding: 0 11px;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.cancel {
+  border: 1px solid rgba(90, 77, 60, 0.08);
+  background: transparent;
+  color: rgba(46, 40, 33, 0.5);
+}
+
+.save {
+  border: 1px solid rgba(169, 115, 29, 0.13);
+  background: rgba(205, 153, 69, 0.13);
+  color: rgba(105, 68, 15, 0.92);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.save:hover:not(:disabled) {
+  background: rgba(205, 153, 69, 0.2);
+}
+
+.save svg {
+  width: 12px;
+  height: 12px;
+}
+
+.save:disabled,
+.cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.error {
+  display: block;
+  margin-top: 8px;
+  color: rgb(177, 65, 70);
+  font-size: 0.68rem;
+}
+
+@media (max-width: 760px) {
+  .fields {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}

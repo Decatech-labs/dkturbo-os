@@ -1,0 +1,536 @@
+.trigger {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  border: 1px dashed rgba(81, 71, 58, 0.16);
+  border-radius: 14px;
+  background: transparent;
+  color: rgba(46, 40, 33, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 620;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.trigger:hover {
+  background: rgba(255, 255, 255, 0.46);
+  border-color: rgba(81, 71, 58, 0.25);
+  color: rgba(46, 40, 33, 0.85);
+  transform: translateY(-1px);
+}
+
+.trigger svg {
+  width: 15px;
+  height: 15px;
+}
+
+.panel {
+  width: 100%;
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px solid rgba(90, 77, 60, 0.11);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 252, 247, 0.52)
+    );
+  box-shadow:
+    0 12px 32px rgba(67, 53, 36, 0.045),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 15px;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.headerText strong {
+  font-size: 0.95rem;
+  font-weight: 720;
+  letter-spacing: -0.015em;
+}
+
+.headerText span {
+  color: rgba(46, 40, 33, 0.44);
+  font-size: 0.71rem;
+}
+
+.close {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(81, 71, 58, 0.055);
+  color: rgba(46, 40, 33, 0.58);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.close:hover {
+  background: rgba(81, 71, 58, 0.1);
+  color: rgba(46, 40, 33, 0.9);
+  transform: scale(1.04);
+}
+
+.close svg {
+  width: 15px;
+  height: 15px;
+}
+
+.search {
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid rgba(90, 77, 60, 0.13);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.76);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow:
+    0 1px 2px rgba(67, 53, 36, 0.025),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.search:focus-within {
+  border-color: rgba(183, 132, 50, 0.42);
+  box-shadow:
+    0 0 0 3px rgba(218, 168, 82, 0.11),
+    0 1px 2px rgba(67, 53, 36, 0.025);
+}
+
+.search svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  color: rgba(46, 40, 33, 0.38);
+}
+
+.search input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.search input::placeholder {
+  color: rgba(46, 40, 33, 0.32);
+}
+
+.filterToolbar {
+  min-height: 38px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterButton {
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(46, 40, 33, 0.46);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.filterButton:hover,
+.filterButtonOpen {
+  border-color: rgba(90, 77, 60, 0.08);
+  background: rgba(81, 71, 58, 0.045);
+  color: rgba(46, 40, 33, 0.76);
+}
+
+.filterButtonActive {
+  color: rgba(46, 40, 33, 0.82);
+}
+
+.filterButton svg {
+  width: 13px;
+  height: 13px;
+}
+
+.filterCount {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(205, 153, 69, 0.15);
+  color: rgba(126, 83, 24, 0.9);
+  display: grid;
+  place-items: center;
+  font-size: 0.63rem;
+  font-weight: 760;
+}
+
+.clearFilters {
+  padding: 5px 4px;
+  border: 0;
+  background: transparent;
+  color: rgba(46, 40, 33, 0.36);
+  font: inherit;
+  font-size: 0.69rem;
+  cursor: pointer;
+}
+
+.clearFilters:hover {
+  color: rgba(46, 40, 33, 0.68);
+}
+
+.filters {
+  margin: 2px 0 13px;
+  padding: 13px;
+  border: 1px solid rgba(90, 77, 60, 0.08);
+  border-radius: 13px;
+  background: rgba(81, 71, 58, 0.025);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 12px 14px;
+}
+
+.field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  padding-left: 2px;
+  color: rgba(46, 40, 33, 0.42);
+  font-size: 0.64rem;
+  font-weight: 690;
+  letter-spacing: 0.02em;
+}
+
+.field select,
+.field input {
+  width: 100%;
+  height: 35px;
+  padding: 0 10px;
+  border: 1px solid rgba(90, 77, 60, 0.1);
+  border-radius: 9px;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.7);
+  color: inherit;
+  font: inherit;
+  font-size: 0.76rem;
+}
+
+.sportField {
+  grid-column: 1 / -1;
+}
+
+.origin {
+  height: 35px;
+  padding: 3px;
+  border: 1px solid rgba(90, 77, 60, 0.08);
+  border-radius: 10px;
+  background: rgba(81, 71, 58, 0.035);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+.origin button {
+  min-width: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(46, 40, 33, 0.42);
+  font: inherit;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.origin button:hover {
+  color: rgba(46, 40, 33, 0.72);
+}
+
+.originSelected {
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: rgba(46, 40, 33, 0.86) !important;
+  box-shadow: 0 1px 3px rgba(55, 43, 29, 0.07);
+  font-weight: 650 !important;
+}
+
+.results {
+  max-height: 330px;
+  margin-top: 2px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.result {
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 8px;
+  border: 0;
+  border-bottom: 1px solid rgba(90, 77, 60, 0.065);
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    padding 120ms ease;
+}
+
+.result:first-child {
+  border-top: 1px solid rgba(90, 77, 60, 0.065);
+}
+
+.result:hover,
+.result:focus-visible {
+  padding-left: 12px;
+  padding-right: 12px;
+  background: rgba(81, 71, 58, 0.032);
+  outline: 0;
+}
+
+.result:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.resultMain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resultName {
+  overflow: hidden;
+  color: rgba(40, 35, 29, 0.94);
+  font-size: 0.86rem;
+  font-weight: 680;
+  letter-spacing: -0.008em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resultMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: rgba(46, 40, 33, 0.4);
+  font-size: 0.66rem;
+}
+
+.metaSeparator {
+  opacity: 0.45;
+}
+
+.metric {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: rgba(81, 71, 58, 0.045);
+  color: rgba(46, 40, 33, 0.48);
+  font-size: 0.62rem;
+  font-weight: 720;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.status {
+  display: block;
+  padding: 22px 8px;
+  color: rgba(46, 40, 33, 0.38);
+  font-size: 0.76rem;
+  text-align: center;
+}
+
+.create {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(128, 86, 26, 0.76);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 630;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 130ms ease,
+    color 130ms ease;
+}
+
+.create:hover {
+  background: rgba(213, 163, 77, 0.07);
+  color: rgba(110, 70, 17, 0.98);
+}
+
+.create svg {
+  width: 14px;
+  height: 14px;
+}
+
+.customForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.customTitle {
+  margin-bottom: 1px;
+  color: rgba(46, 40, 33, 0.88);
+  font-size: 0.87rem;
+  font-weight: 680;
+}
+
+.customForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.customForm label > span {
+  color: rgba(46, 40, 33, 0.43);
+  font-size: 0.67rem;
+  font-weight: 650;
+}
+
+.customForm input,
+.customForm select {
+  width: 100%;
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid rgba(90, 77, 60, 0.11);
+  border-radius: 10px;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.72);
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.customActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.secondary,
+.primary {
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.secondary {
+  border: 1px solid rgba(90, 77, 60, 0.09);
+  background: transparent;
+  color: rgba(46, 40, 33, 0.55);
+}
+
+.primary {
+  border: 1px solid rgba(166, 113, 31, 0.15);
+  background: rgba(205, 153, 69, 0.14);
+  color: rgba(104, 67, 14, 0.94);
+}
+
+.primary:hover:not(:disabled) {
+  background: rgba(205, 153, 69, 0.21);
+}
+
+.primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.error {
+  display: block;
+  margin-top: 10px;
+  color: rgb(177, 65, 70);
+  font-size: 0.72rem;
+}
+
+@media (max-width: 760px) {
+  .panel {
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .sportField {
+    grid-column: auto;
+  }
+
+  .result {
+    gap: 10px;
+  }
+
+  .metric {
+    font-size: 0.58rem;
+  }
+}

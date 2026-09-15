@@ -19,6 +19,10 @@ import {
   InlineWeekMetadata,
 } from './inline-week-metadata';
 
+import {
+  NewSessionControl,
+} from '../../new-session-control';
+
 export const dynamic =
   'force-dynamic';
 
@@ -224,9 +228,45 @@ export default async function TrainingWeekPage({
                     </span>
                   </div>
 
-                  <span className="training-day-count">
-                    {sessions.length}
-                  </span>
+                  <div className="training-day-actions">
+                    <span className="training-day-count">
+                      {sessions.length}
+                    </span>
+
+                    {detail.canWrite && (
+                      <NewSessionControl
+                        athleteId={
+                          athleteId
+                        }
+                        dayId={
+                          day.id
+                        }
+                        date={
+                          day.date
+                        }
+                        dateLabel={
+                          new Intl.DateTimeFormat(
+                            'es-ES',
+                            {
+                              weekday:
+                                'long',
+
+                              day:
+                                'numeric',
+
+                              month:
+                                'long',
+                            },
+                          ).format(
+                            new Date(
+                              `${day.date}T12:00:00`,
+                            ),
+                          )
+                        }
+                      />
+                    )}
+
+                  </div>
 
                 </header>
 

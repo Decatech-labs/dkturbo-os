@@ -6500,3 +6500,218 @@ summary::-webkit-details-marker {
   }
 
 }
+
+/* =========================================================
+   TRAINING — ADD SESSION BLOCK
+   ========================================================= */
+
+.training-add-block {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding:
+    15px 18px;
+
+  border:
+    1px dashed
+    rgba(127, 127, 127, 0.2);
+
+  border-radius:
+    14px;
+
+  background:
+    transparent;
+
+  color:
+    inherit;
+
+  opacity:
+    0.48;
+
+  cursor:
+    pointer;
+
+  font:
+    inherit;
+
+  transition:
+    opacity 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.training-add-block:hover,
+.training-add-block:focus-visible {
+  opacity:
+    0.85;
+
+  background:
+    rgba(127, 127, 127, 0.035);
+
+  border-color:
+    rgba(127, 127, 127, 0.3);
+
+  outline:
+    none;
+}
+
+.training-add-block svg {
+  width:
+    15px;
+
+  height:
+    15px;
+}
+
+.training-add-block-editor {
+  position:
+    relative;
+
+  width:
+    100%;
+}
+
+.training-add-block-editor input {
+  width:
+    100%;
+
+  box-sizing:
+    border-box;
+
+  padding:
+    16px 18px;
+
+  border:
+    1px solid
+    rgba(127, 127, 127, 0.18);
+
+  border-radius:
+    14px;
+
+  outline:
+    none;
+
+  background:
+    rgba(127, 127, 127, 0.045);
+
+  color:
+    inherit;
+
+  font:
+    inherit;
+
+  font-size:
+    1rem;
+
+  font-weight:
+    650;
+}
+
+.training-add-block-editor input:focus {
+  border-color:
+    rgba(127, 127, 127, 0.32);
+
+  box-shadow:
+    0 0 0 4px
+    rgba(127, 127, 127, 0.055);
+}
+
+.training-add-block-status,
+.training-add-block-error {
+  display:
+    block;
+
+  margin-top:
+    7px;
+
+  font-size:
+    0.72rem;
+}
+
+.training-add-block-status {
+  opacity:
+    0.4;
+}
+
+.training-add-block-error {
+  color:
+    rgb(200, 70, 80);
+}
+
+/* =========================================================
+   TRAINING — ADD SESSION FROM WEEK VIEW
+   ========================================================= */
+
+.training-week-day-header {
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  justify-content:
+    space-between;
+
+  gap:
+    12px;
+}
+
+.training-week-session-add {
+  flex:
+    0 0 auto;
+}
+
+.training-week-session-add
+.training-calendar-add-session {
+  display:
+    grid;
+
+  opacity:
+    0.55;
+}
+
+.training-week-session-add
+.training-calendar-add-session:hover,
+.training-week-session-add
+.training-calendar-add-session:focus-visible {
+  opacity:
+    1;
+}
+
+@media (max-width: 760px) {
+
+  .training-week-session-add
+  .training-calendar-add-session {
+    display:
+      grid;
+
+    width:
+      28px;
+
+    height:
+      28px;
+
+    opacity:
+      0.72;
+  }
+
+}
+
+.training-day-actions {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  margin-left:
+    auto;
+}
+
