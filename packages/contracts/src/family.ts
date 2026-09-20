@@ -212,6 +212,7 @@ export const dkturboAppIdSchema =
     'photos',
     'automations',
     'security',
+    'nutrition',
   ]);
 
 export type DkturboAppId =
@@ -229,6 +230,7 @@ export const accessPermissionKeys =
     'family.users.manage',
 
     'app.training.access',
+    'app.nutrition.access',
     
     'app.files.access',
     'app.photos.access',

@@ -14,6 +14,7 @@ import {
   Shield,
   Users,
   Dumbbell,
+  Apple,
 } from 'lucide-react';
 
 import type {
@@ -81,6 +82,16 @@ const apps: AppDefinition[] = [
     accessPermission: 'app.training.access',
     icon: Dumbbell,
     tone: 'blue',
+    capabilities: [],
+  },
+
+  {
+    id: 'nutrition',
+    name: 'Nutrición',
+    accessPermission:
+      'app.nutrition.access',
+    icon: Apple,
+    tone: 'green',
     capabilities: [],
   },
 

@@ -120,6 +120,9 @@ const accessPermissionApp:
     'app.training.access':
       'training',
 
+    'app.nutrition.access':
+      'nutrition',
+
     'app.files.access':
       'files',
 

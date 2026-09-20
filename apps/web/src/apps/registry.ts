@@ -31,11 +31,16 @@ import {
   trainingApp,
 } from './training/manifest';
 
+import {
+  nutritionApp,
+} from './nutrition/manifest';
+
 const registeredApps =
   [
     systemApp,
     familyApp,
     trainingApp,
+    nutritionApp,
     filesApp,
     photosApp,
     automationsApp,

@@ -14,8 +14,17 @@ import {
 } from '@dkturbo/training';
 
 import {
+  createNutrition,
+  createNutritionDatabase,
+} from '@dkturbo/nutrition';
+
+import {
   registerTrainingRoutes,
 } from './training/index.js';
+
+import {
+  registerNutritionRoutes,
+} from './nutrition/index.js';
 
 if (process.env.NODE_ENV !== 'production') {
   loadDotEnv({
@@ -40,6 +49,18 @@ const training =
   createTraining({
     database:
       trainingDatabase,
+  });
+
+const nutritionDatabase =
+  createNutritionDatabase({
+    connectionString:
+      config.DATABASE_URL,
+  });
+
+const nutrition =
+  createNutrition({
+    database:
+      nutritionDatabase,
   });
 
 const controlPlane = createControlPlane({
@@ -91,11 +112,36 @@ const app = createHttpServer({
     betterAuth
       .familyAuthProvisioner,
 
-  registerRoutes:
+    registerRoutes:
     (http) => {
       registerTrainingRoutes({
         http,
         training,
+      });
+
+      registerNutritionRoutes({
+        http,
+        nutrition,
+
+        listPeople:
+          async () => {
+
+            const users =
+              await controlPlane
+                .identity
+                .listUsers
+                .execute();
+
+            return users.map(
+              (user) => ({
+                id:
+                  user.id,
+
+                name:
+                  user.name,
+              }),
+            );
+          },
       });
     },
 });
@@ -103,6 +149,7 @@ const app = createHttpServer({
 const shutdown = async () => {
   await app.close();
   await betterAuth.close();
+  await nutritionDatabase.destroy();
   await trainingDatabase.destroy();
   await database.destroy();
 };
@@ -135,6 +182,7 @@ const start = async (): Promise<void> => {
     });
   } catch (error) {
     app.log.error(error);
+    await nutritionDatabase.destroy();
     await trainingDatabase.destroy();
     await database.destroy();
     process.exit(1);
