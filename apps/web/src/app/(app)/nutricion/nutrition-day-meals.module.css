@@ -1,0 +1,628 @@
+.dropZone {
+  min-height: 46px;
+  transition:
+    background 130ms ease,
+    box-shadow 130ms ease;
+}
+
+.dropZoneOver {
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.045
+    );
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(
+      94,
+      132,
+      85,
+      0.11
+    );
+}
+
+.foodRow {
+  position: relative;
+
+  display: grid !important;
+
+  grid-template-columns:
+    22px
+    minmax(
+      0,
+      1fr
+    )
+    auto;
+
+  align-items: center;
+
+  gap: 8px !important;
+
+  transition:
+    opacity 120ms ease,
+    background 120ms ease;
+}
+
+.dragging {
+  z-index: 10;
+  opacity: 0.55;
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.92
+    );
+}
+
+.dragHandle {
+  width: 22px;
+  height: 28px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+  color: inherit;
+
+  opacity: 0.25;
+  cursor: grab;
+
+  touch-action: none;
+
+  transition:
+    opacity 120ms ease,
+    background 120ms ease;
+}
+
+.dragHandle:hover {
+  opacity: 0.65;
+
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.06
+    );
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle svg {
+  width: 15px;
+  height: 15px;
+}
+
+.foodIdentity {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.foodIcon {
+  width: 34px;
+  height: 34px;
+
+  flex:
+    0
+    0
+    34px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 11px;
+
+  border:
+    1px solid
+    rgba(
+      127,
+      127,
+      127,
+      0.06
+    );
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(
+      255,
+      255,
+      255,
+      0.5
+    );
+}
+
+.foodIcon svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.8;
+}
+
+.foodIcon_carbohydrate {
+  color:
+    rgb(
+      157,
+      118,
+      34
+    );
+
+  background:
+    rgba(
+      226,
+      188,
+      88,
+      0.17
+    );
+}
+
+.foodIcon_protein {
+  color:
+    rgb(
+      167,
+      75,
+      82
+    );
+
+  background:
+    rgba(
+      223,
+      137,
+      142,
+      0.15
+    );
+}
+
+.foodIcon_fat {
+  color:
+    rgb(
+      91,
+      118,
+      66
+    );
+
+  background:
+    rgba(
+      139,
+      164,
+      100,
+      0.16
+    );
+}
+
+.foodIcon_dairy {
+  color:
+    rgb(
+      72,
+      111,
+      157
+    );
+
+  background:
+    rgba(
+      123,
+      166,
+      214,
+      0.15
+    );
+}
+
+.foodIcon_fruit {
+  color:
+    rgb(
+      90,
+      132,
+      72
+    );
+
+  background:
+    rgba(
+      127,
+      177,
+      105,
+      0.15
+    );
+}
+
+.foodIcon_vegetable {
+  color:
+    rgb(
+      70,
+      123,
+      87
+    );
+
+  background:
+    rgba(
+      109,
+      170,
+      126,
+      0.15
+    );
+}
+
+.foodIcon_supplement {
+  color:
+    rgb(
+      105,
+      88,
+      160
+    );
+
+  background:
+    rgba(
+      150,
+      129,
+      205,
+      0.15
+    );
+}
+
+.foodIcon_balanced {
+  color:
+    rgba(
+      80,
+      75,
+      68,
+      0.68
+    );
+
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.08
+    );
+}
+
+.foodText {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 2px;
+}
+
+.foodName {
+  min-width: 0;
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-weight: 650;
+  opacity: 0.82;
+}
+
+.foodMeta {
+  min-width: 0;
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.68rem;
+  font-weight: 560;
+
+  opacity: 0.38;
+}
+
+.rowControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quantityButton {
+  min-height: 30px;
+  padding: 0 7px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: inherit;
+
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+
+  cursor: text;
+
+  transition:
+    background 120ms ease;
+}
+
+.quantityButton:hover {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.06
+    );
+}
+
+.quantityEditor {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  font-size: 0.8rem;
+}
+
+.quantityEditor input {
+  width: 68px;
+  min-height: 30px;
+
+  box-sizing: border-box;
+
+  padding: 3px 6px;
+
+  border:
+    1px solid
+    rgba(
+      94,
+      132,
+      85,
+      0.28
+    );
+
+  border-radius: 8px;
+  outline: none;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.76
+    );
+
+  color: inherit;
+  font: inherit;
+  text-align: right;
+}
+
+.quantityEditor span {
+  font-size: 0.72rem;
+  opacity: 0.5;
+}
+
+.menu {
+  position: relative;
+}
+
+.menuButton {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: inherit;
+
+  cursor: pointer;
+  opacity: 0.3;
+
+  transition:
+    opacity 120ms ease,
+    background 120ms ease;
+}
+
+.foodRow:hover .menuButton,
+.menuButton[aria-expanded='true'] {
+  opacity: 0.7;
+}
+
+.menuButton:hover,
+.menuButton[aria-expanded='true'] {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.06
+    );
+}
+
+.menuButton svg {
+  width: 15px;
+  height: 15px;
+}
+
+.menuPopover {
+  position: absolute;
+  z-index: 30;
+
+  top: calc(100% + 5px);
+  right: 0;
+
+  width: 190px;
+
+  padding: 5px;
+
+  border:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.08
+    );
+
+  border-radius: 12px;
+
+  background:
+    rgba(
+      255,
+      252,
+      247,
+      0.98
+    );
+
+  box-shadow:
+    0 14px 38px
+    rgba(
+      49,
+      39,
+      29,
+      0.12
+    );
+
+  backdrop-filter:
+    blur(
+      16px
+    );
+}
+
+.deleteButton {
+  width: 100%;
+  min-height: 34px;
+
+  padding: 0 9px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color:
+    rgb(
+      165,
+      58,
+      58
+    );
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+.deleteButton:hover {
+  background:
+    rgba(
+      181,
+      49,
+      54,
+      0.07
+    );
+}
+
+.deleteButton:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.deleteButton svg {
+  width: 13px;
+  height: 13px;
+}
+
+.rowError {
+  grid-column: 2 / -1;
+
+  padding-top: 2px;
+
+  color:
+    rgb(
+      155,
+      51,
+      51
+    );
+
+  font-size: 10px;
+}
+
+.boardError {
+  margin-top: 8px;
+
+  color:
+    rgb(
+      155,
+      51,
+      51
+    );
+
+  font-size: 11px;
+}
+
+@media (
+  max-width: 700px
+) {
+
+  .foodRow {
+    grid-template-columns:
+      20px
+      minmax(
+        0,
+        1fr
+      )
+      auto;
+
+    gap: 6px !important;
+  }
+
+  .dragHandle {
+    width: 20px;
+  }
+
+  .quantityButton {
+    padding:
+      0
+      5px;
+
+    font-size:
+      0.8rem;
+  }
+
+  .menuButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .foodIdentity {
+    gap: 8px;
+  }
+
+  .foodIcon {
+    width: 30px;
+    height: 30px;
+
+    flex-basis: 30px;
+
+    border-radius: 10px;
+  }
+
+  .foodIcon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .foodMeta {
+    font-size: 0.64rem;
+  }
+}

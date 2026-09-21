@@ -13,9 +13,16 @@ import type {
 } from '../index.js';
 
 import {
-  createFood,
   InvalidNutritionFoodError,
 } from './create-food.js';
+
+import {
+  NutritionFoodNotFoundError,
+} from './add-food-to-meal.js';
+
+import {
+  updateFood,
+} from './update-food.js';
 
 const userId =
   '10000000-0000-4000-8000-000000000001' as DkturboUserId;
@@ -24,7 +31,10 @@ const foodId =
   '20000000-0000-4000-8000-000000000001' as NutritionFoodId;
 
 const createUnitOfWork =
-  (): NutritionUnitOfWork => ({
+  (
+    existing:
+      boolean = true,
+  ): NutritionUnitOfWork => ({
     execute:
       async <T>(
         work: (
@@ -45,10 +55,26 @@ const createUnitOfWork =
 
           foods: {
             create:
-              async data =>
-                ({
+              async () => {
+                throw new Error(
+                  'Not implemented',
+                );
+              },
+
+            findById:
+              async () =>
+                null,
+
+            update:
+              async data => {
+
+                if (!existing) {
+                  return null;
+                }
+
+                return {
                   id:
-                    foodId,
+                    data.foodId,
 
                   name:
                     data.name,
@@ -81,7 +107,7 @@ const createUnitOfWork =
                     data.fiberG,
 
                   createdByUserId:
-                    data.createdByUserId,
+                    userId,
 
                   archivedAt:
                     null,
@@ -91,15 +117,8 @@ const createUnitOfWork =
 
                   updatedAt:
                     new Date(),
-                }) satisfies NutritionFood,
-
-            findById:
-              async () =>
-                null,
-
-            update:
-              async () =>
-                null,
+                } satisfies NutritionFood;
+              },
 
             archive:
               async () =>
@@ -198,130 +217,91 @@ const createUnitOfWork =
         }),
   });
 
+const validInput = {
+  foodId,
+
+  name:
+    '  Avena integral  ',
+
+  brand:
+    '  Hacendado  ',
+
+  category:
+    'CEREALS' as const,
+
+  referenceAmount:
+    100,
+
+  referenceUnit:
+    'G' as const,
+
+  caloriesKcal:
+    370,
+
+  proteinG:
+    13,
+
+  carbohydratesG:
+    60,
+
+  fatG:
+    7,
+
+  fiberG:
+    10,
+};
+
 describe(
-  'createFood',
+  'updateFood',
   () => {
 
     it(
-      'creates a food with nutrition data',
+      'updates food data and trims text values',
       async () => {
 
         const result =
-          await createFood(
+          await updateFood(
             createUnitOfWork(),
-            {
-              name:
-                'Arroz basmati',
-
-              brand:
-                null,
-
-              referenceAmount:
-                100,
-
-              referenceUnit:
-                'G',
-
-              caloriesKcal:
-                356,
-
-              proteinG:
-                7.5,
-
-              carbohydratesG:
-                78,
-
-              fatG:
-                0.9,
-
-              fiberG:
-                1.2,
-
-              createdByUserId:
-                userId,
-            },
+            validInput,
           );
 
         expect(
           result,
         ).toMatchObject({
+          id:
+            foodId,
+
           name:
-            'Arroz basmati',
+            'Avena integral',
+
+          brand:
+            'Hacendado',
+
+          category:
+            'CEREALS',
 
           referenceAmount:
             100,
 
-          referenceUnit:
-            'G',
-
           caloriesKcal:
-            356,
-
-          proteinG:
-            7.5,
-
-          carbohydratesG:
-            78,
-
-          fatG:
-            0.9,
-
-          fiberG:
-            1.2,
+            370,
         });
       },
     );
 
     it(
-      'trims name and brand',
+      'throws when the food does not exist',
       async () => {
 
-        const result =
-          await createFood(
-            createUnitOfWork(),
-            {
-              name:
-                '  Yogur griego  ',
-
-              brand:
-                '  Hacendado  ',
-
-              referenceAmount:
-                100,
-
-              referenceUnit:
-                'G',
-
-              caloriesKcal:
-                60,
-
-              proteinG:
-                10,
-
-              carbohydratesG:
-                4,
-
-              fatG:
-                0,
-
-              fiberG:
-                null,
-
-              createdByUserId:
-                userId,
-            },
-          );
-
-        expect(
-          result.name,
-        ).toBe(
-          'Yogur griego',
-        );
-
-        expect(
-          result.brand,
-        ).toBe(
-          'Hacendado',
+        await expect(
+          updateFood(
+            createUnitOfWork(
+              false,
+            ),
+            validInput,
+          ),
+        ).rejects.toBeInstanceOf(
+          NutritionFoodNotFoundError,
         );
       },
     );
@@ -332,12 +312,6 @@ describe(
           'referenceAmount',
         value:
           0,
-      },
-      {
-        field:
-          'referenceAmount',
-        value:
-          -1,
       },
       {
         field:
@@ -376,43 +350,11 @@ describe(
         value,
       }) => {
 
-        const input = {
-          name:
-            'Arroz',
-
-          brand:
-            null,
-
-          referenceAmount:
-            100,
-
-          referenceUnit:
-            'G' as const,
-
-          caloriesKcal:
-            356,
-
-          proteinG:
-            7.5,
-
-          carbohydratesG:
-            78,
-
-          fatG:
-            0.9,
-
-          fiberG:
-            1.2,
-
-          createdByUserId:
-            userId,
-        };
-
         await expect(
-          createFood(
+          updateFood(
             createUnitOfWork(),
             {
-              ...input,
+              ...validInput,
 
               [field]:
                 value,

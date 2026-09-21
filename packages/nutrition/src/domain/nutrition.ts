@@ -162,6 +162,25 @@ export interface NutritionMeal {
     Date;
 }
 
+export type NutritionFoodCategory =
+  | 'CEREALS'
+  | 'PASTA'
+  | 'RICE'
+  | 'BREAD'
+  | 'TUBERS'
+  | 'MEAT'
+  | 'FISH'
+  | 'EGGS'
+  | 'DAIRY'
+  | 'LEGUMES'
+  | 'FRUIT'
+  | 'VEGETABLES'
+  | 'NUTS_SEEDS'
+  | 'FATS_OILS'
+  | 'BEVERAGES'
+  | 'SUPPLEMENTS'
+  | 'OTHER';
+
 export interface NutritionFood {
   id:
     NutritionFoodId;
@@ -171,6 +190,9 @@ export interface NutritionFood {
 
   brand:
     string | null;
+
+  category:
+    NutritionFoodCategory;
 
   referenceAmount:
     number;

@@ -7,11 +7,13 @@ import type {
   NutritionFood,
   NutritionFoodId,
   NutritionUnit,
+  NutritionFoodCategory,
 } from '../../domain/index.js';
 
 import type {
   CreateFoodData,
   FoodRepository,
+  UpdateFoodData,
 } from '../../ports/index.js';
 
 import type {
@@ -29,6 +31,9 @@ const mapFood =
 
       brand:
         string | null;
+
+      category:
+        string;
 
       reference_amount:
         string;
@@ -73,6 +78,10 @@ const mapFood =
 
     brand:
       row.brand,
+
+    category:
+      row.category as
+        NutritionFoodCategory,
 
     referenceAmount:
       Number(
@@ -150,6 +159,9 @@ implements FoodRepository {
           brand:
             data.brand,
 
+          category:
+            data.category,
+
           reference_amount:
             String(
               data.referenceAmount,
@@ -222,9 +234,128 @@ implements FoodRepository {
       : null;
   }
 
+  public async update(
+    data:
+      UpdateFoodData,
+  ): Promise<NutritionFood | null> {
+
+    const row =
+      await this.db
+        .updateTable(
+          'nutrition.foods',
+        )
+        .set({
+          name:
+            data.name,
+
+          brand:
+            data.brand,
+
+          category:
+            data.category,
+
+          reference_amount:
+            String(
+              data.referenceAmount,
+            ),
+
+          reference_unit:
+            data.referenceUnit,
+
+          calories_kcal:
+            String(
+              data.caloriesKcal,
+            ),
+
+          protein_g:
+            String(
+              data.proteinG,
+            ),
+
+          carbohydrates_g:
+            String(
+              data.carbohydratesG,
+            ),
+
+          fat_g:
+            String(
+              data.fatG,
+            ),
+
+          fiber_g:
+            data.fiberG ===
+              null
+              ? null
+              : String(
+                  data.fiberG,
+                ),
+
+          updated_at:
+            new Date(),
+        })
+        .where(
+          'id',
+          '=',
+          data.foodId,
+        )
+        .where(
+          'archived_at',
+          'is',
+          null,
+        )
+        .returningAll()
+        .executeTakeFirst();
+
+    return row
+      ? mapFood(
+          row,
+        )
+      : null;
+  }
+
+  public async archive(
+    foodId:
+      NutritionFoodId,
+  ): Promise<boolean> {
+
+    const row =
+      await this.db
+        .updateTable(
+          'nutrition.foods',
+        )
+        .set({
+          archived_at:
+            new Date(),
+
+          updated_at:
+            new Date(),
+        })
+        .where(
+          'id',
+          '=',
+          foodId,
+        )
+        .where(
+          'archived_at',
+          'is',
+          null,
+        )
+        .returning(
+          'id',
+        )
+        .executeTakeFirst();
+
+    return Boolean(
+      row,
+    );
+  }
+
   public async searchActive(
     query:
       string,
+
+    category:
+      NutritionFoodCategory | null,
   ): Promise<NutritionFood[]> {
 
     const normalizedQuery =
@@ -250,6 +381,18 @@ implements FoodRepository {
           'name',
           'ilike',
           `%${normalizedQuery}%`,
+        );
+    }
+
+    if (
+      category !==
+      null
+    ) {
+      statement =
+        statement.where(
+          'category',
+          '=',
+          category,
         );
     }
 

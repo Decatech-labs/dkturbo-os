@@ -165,6 +165,9 @@ export interface NutritionFoodTable {
   brand:
     string | null;
 
+  category:
+    string;
+
   reference_amount:
     string;
 

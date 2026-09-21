@@ -38,6 +38,21 @@ export interface MealItemRepository {
       AddNutritionMealItemData,
   ): Promise<NutritionMealItem>;
 
+  findById(
+    mealItemId:
+      NutritionMealItemId,
+  ): Promise<NutritionMealItem | null>;
+
+  setLocations(
+    data:
+      SetMealItemLocationData[],
+  ): Promise<void>;
+
+  delete(
+    mealItemId:
+      NutritionMealItemId,
+  ): Promise<boolean>;
+
   saveQuantities(
     data:
       SaveMealItemQuantityData[],
@@ -47,4 +62,15 @@ export interface MealItemRepository {
     mealId:
       NutritionMealId,
   ): Promise<NutritionMealItemDetail[]>;
+}
+
+export interface SetMealItemLocationData {
+  mealItemId:
+    NutritionMealItemId;
+
+  mealId:
+    NutritionMealId;
+
+  position:
+    number;
 }

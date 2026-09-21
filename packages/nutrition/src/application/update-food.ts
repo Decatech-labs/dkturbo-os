@@ -1,8 +1,8 @@
 import type {
-  DkturboUserId,
   NutritionFood,
-  NutritionUnit,
   NutritionFoodCategory,
+  NutritionFoodId,
+  NutritionUnit,
 } from '../domain/index.js';
 
 import type {
@@ -10,18 +10,25 @@ import type {
 } from '../ports/index.js';
 
 import {
-  inferNutritionFoodCategory,
-} from '../domain/index.js';
+  NutritionFoodNotFoundError,
+} from './add-food-to-meal.js';
 
-export interface CreateFoodInput {
+import {
+  InvalidNutritionFoodError,
+} from './create-food.js';
+
+export interface UpdateFoodInput {
+  foodId:
+    NutritionFoodId;
+
   name:
     string;
 
   brand:
     string | null;
 
-  category?:
-    NutritionFoodCategory | null;
+  category:
+    NutritionFoodCategory;
 
   referenceAmount:
     number;
@@ -43,13 +50,7 @@ export interface CreateFoodInput {
 
   fiberG:
     number | null;
-
-  createdByUserId:
-    DkturboUserId;
 }
-
-export class InvalidNutritionFoodError
-extends Error {}
 
 const VALID_UNITS =
   new Set<NutritionUnit>([
@@ -71,13 +72,13 @@ const isNonNegativeFinite =
     value >=
       0;
 
-export const createFood =
+export const updateFood =
   async (
     unitOfWork:
       NutritionUnitOfWork,
 
     input:
-      CreateFoodInput,
+      UpdateFoodInput,
   ): Promise<NutritionFood> => {
 
     const name =
@@ -147,47 +148,52 @@ export const createFood =
       );
     }
 
-    const category =
-      input.category ??
-      inferNutritionFoodCategory(
-        name,
-        brand,
-      );
-
     return unitOfWork.execute(
       async ({
         foods,
-      }) =>
-        foods.create({
-          name,
+      }) => {
 
-          brand,
+        const updated =
+          await foods.update({
+            foodId:
+              input.foodId,
 
-          category,
+            name,
 
-          referenceAmount:
-            input.referenceAmount,
+            brand,
 
-          referenceUnit:
-            input.referenceUnit,
+            category:
+              input.category,
 
-          caloriesKcal:
-            input.caloriesKcal,
+            referenceAmount:
+              input.referenceAmount,
 
-          proteinG:
-            input.proteinG,
+            referenceUnit:
+              input.referenceUnit,
 
-          carbohydratesG:
-            input.carbohydratesG,
+            caloriesKcal:
+              input.caloriesKcal,
 
-          fatG:
-            input.fatG,
+            proteinG:
+              input.proteinG,
 
-          fiberG:
-            input.fiberG,
+            carbohydratesG:
+              input.carbohydratesG,
 
-          createdByUserId:
-            input.createdByUserId,
-        }),
+            fatG:
+              input.fatG,
+
+            fiberG:
+              input.fiberG,
+          });
+
+        if (!updated) {
+          throw new NutritionFoodNotFoundError(
+            'Nutrition food not found',
+          );
+        }
+
+        return updated;
+      },
     );
   };

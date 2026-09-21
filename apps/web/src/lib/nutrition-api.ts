@@ -135,6 +135,25 @@ export interface NutritionFoodResponse {
   brand:
     string | null;
 
+  category:
+    | 'CEREALS'
+    | 'PASTA'
+    | 'RICE'
+    | 'BREAD'
+    | 'TUBERS'
+    | 'MEAT'
+    | 'FISH'
+    | 'EGGS'
+    | 'DAIRY'
+    | 'LEGUMES'
+    | 'FRUIT'
+    | 'VEGETABLES'
+    | 'NUTS_SEEDS'
+    | 'FATS_OILS'
+    | 'BEVERAGES'
+    | 'SUPPLEMENTS'
+    | 'OTHER';
+
   referenceAmount:
     number;
 

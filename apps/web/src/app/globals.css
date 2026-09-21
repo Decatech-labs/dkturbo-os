@@ -7112,3 +7112,65 @@ summary::-webkit-details-marker {
     gap: 7px;
   }
 }
+
+
+/* ==========================================================================
+   APP LAYOUT PRIMITIVES
+   Shared by DKTURBO OS applications.
+   ========================================================================== */
+
+.app-page {
+  width:
+    min(
+      calc(100% - 48px),
+      1040px
+    );
+
+  margin:
+    0 auto;
+
+  padding:
+    54px 0 96px;
+}
+
+.app-page-header {
+  min-height:
+    52px;
+
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  gap:
+    18px;
+
+  /*
+   * Reserved space for the fixed account control.
+   * Prevents app-level actions from competing with it.
+   */
+  padding-right:
+    64px;
+}
+
+@media (
+  max-width: 700px
+) {
+
+  .app-page {
+    width:
+      calc(100% - 28px);
+
+    padding:
+      32px 0 72px;
+  }
+
+  .app-page-header {
+    gap:
+      12px;
+
+    padding-right:
+      52px;
+  }
+}

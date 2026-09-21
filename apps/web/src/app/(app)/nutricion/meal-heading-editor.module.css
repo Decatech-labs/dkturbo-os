@@ -1,0 +1,288 @@
+.identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.nameButton {
+  max-width: 100%;
+  padding: 3px 5px;
+  margin: -3px -5px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.02rem;
+  font-weight: 730;
+  letter-spacing: -0.02em;
+  text-align: left;
+  cursor: text;
+  transition:
+    background 130ms ease;
+}
+
+.nameButton:hover {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.065
+    );
+}
+
+.nameInput {
+  width: min(
+    100%,
+    360px
+  );
+  box-sizing: border-box;
+  min-height: 34px;
+  padding: 4px 8px;
+  border:
+    1px solid
+    rgba(
+      94,
+      132,
+      85,
+      0.3
+    );
+  border-radius: 8px;
+  outline: none;
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.74
+    );
+  color: inherit;
+  font: inherit;
+  font-size: 1.02rem;
+  font-weight: 730;
+  letter-spacing: -0.02em;
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      94,
+      132,
+      85,
+      0.055
+    );
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.timeButton {
+  min-height: 30px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.06
+    );
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 650;
+  cursor: text;
+  opacity: 0.74;
+  transition:
+    background 130ms ease,
+    opacity 130ms ease;
+}
+
+.timeButton:hover {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.1
+    );
+  opacity: 1;
+}
+
+.timeInput {
+  min-height: 30px;
+  padding: 0 7px;
+  border:
+    1px solid
+    rgba(
+      94,
+      132,
+      85,
+      0.28
+    );
+  border-radius: 9px;
+  outline: none;
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.72
+    );
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.menu {
+  position: relative;
+}
+
+.menuButton {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.42;
+  transition:
+    opacity 130ms ease,
+    background 130ms ease;
+}
+
+.menuButton:hover,
+.menuButton[aria-expanded='true'] {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.065
+    );
+  opacity: 0.8;
+}
+
+.menuButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.menuPopover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 5px);
+  right: 0;
+  width: 170px;
+  padding: 5px;
+  border:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.08
+    );
+  border-radius: 12px;
+  background:
+    rgba(
+      255,
+      252,
+      247,
+      0.98
+    );
+  box-shadow:
+    0 14px 38px
+    rgba(
+      49,
+      39,
+      29,
+      0.12
+    );
+  backdrop-filter:
+    blur(
+      16px
+    );
+}
+
+.deleteButton {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color:
+    rgb(
+      165,
+      58,
+      58
+    );
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.deleteButton:hover {
+  background:
+    rgba(
+      181,
+      49,
+      54,
+      0.07
+    );
+}
+
+.deleteButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.deleteButton svg {
+  width: 13px;
+  height: 13px;
+}
+
+.error {
+  grid-column: 1 / -1;
+  padding-top: 4px;
+  color:
+    rgb(
+      155,
+      51,
+      51
+    );
+  font-size: 10px;
+}
+
+@media (
+  max-width: 700px
+) {
+
+  .nameButton,
+  .nameInput {
+    font-size: 0.95rem;
+  }
+
+  .controls {
+    gap: 3px;
+  }
+
+  .timeButton {
+    padding:
+      0
+      7px;
+  }
+}
+

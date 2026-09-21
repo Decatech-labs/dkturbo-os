@@ -15,6 +15,14 @@ const API_BASE_URL =
     '',
   );
 
+interface RouteContext {
+  params:
+    Promise<{
+      mealId:
+        string;
+    }>;
+}
+
 const getCookieHeader =
   async (): Promise<string> => {
 
@@ -33,54 +41,47 @@ const getCookieHeader =
       .join('; ');
   };
 
-export async function GET(
-  request: Request,
+export async function PATCH(
+  request:
+    Request,
+
+  {
+    params,
+  }:
+    RouteContext,
 ) {
+
+  const {
+    mealId,
+  } =
+    await params;
 
   const cookie =
     await getCookieHeader();
 
-  const {
-    searchParams,
-  } =
-    new URL(
-      request.url,
-    );
-
-  const query =
-    searchParams.get(
-      'query',
-    ) ?? '';
-
-  const category =
-    searchParams.get(
-      'category',
-    ) ?? '';
-
-  const apiSearchParams =
-    new URLSearchParams();
-
-  apiSearchParams.set(
-    'query',
-    query,
-  );
-
-  if (
-    category
-  ) {
-    apiSearchParams.set(
-      'category',
-      category,
-    );
-  }
+  const body =
+    await request.json();
 
   const response =
     await fetch(
-      `${API_BASE_URL}/api/nutrition/foods?${apiSearchParams.toString()}`,
+      `${API_BASE_URL}/api/nutrition/meals/${encodeURIComponent(
+        mealId,
+      )}`,
       {
+        method:
+          'PATCH',
+
         headers: {
+          'content-type':
+            'application/json',
+
           cookie,
         },
+
+        body:
+          JSON.stringify(
+            body,
+          ),
 
         cache:
           'no-store',
@@ -99,39 +100,54 @@ export async function GET(
   );
 }
 
-export async function POST(
-  request: Request,
+export async function DELETE(
+  _request:
+    Request,
+
+  {
+    params,
+  }:
+    RouteContext,
 ) {
+
+  const {
+    mealId,
+  } =
+    await params;
 
   const cookie =
     await getCookieHeader();
 
-  const body =
-    await request.json();
-
   const response =
     await fetch(
-      `${API_BASE_URL}/api/nutrition/foods`,
+      `${API_BASE_URL}/api/nutrition/meals/${encodeURIComponent(
+        mealId,
+      )}`,
       {
         method:
-          'POST',
+          'DELETE',
 
         headers: {
-          'content-type':
-            'application/json',
-
           cookie,
         },
-
-        body:
-          JSON.stringify(
-            body,
-          ),
 
         cache:
           'no-store',
       },
     );
+
+  if (
+    response.status ===
+    204
+  ) {
+    return new Response(
+      null,
+      {
+        status:
+          204,
+      },
+    );
+  }
 
   const responseBody =
     await response.json();

@@ -1,0 +1,626 @@
+.primaryButton,
+.compactButton {
+  border:
+    0;
+
+  color:
+    inherit;
+
+  font:
+    inherit;
+
+  cursor:
+    pointer;
+}
+
+.primaryButton {
+  min-height:
+    40px;
+
+  padding:
+    0 14px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    7px;
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.13
+    );
+
+  font-size:
+    12px;
+
+  font-weight:
+    700;
+
+  transition:
+    transform 140ms ease,
+    background 140ms ease;
+}
+
+.primaryButton:hover {
+  transform:
+    translateY(
+      -1px
+    );
+
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.19
+    );
+}
+
+.primaryButton svg,
+.compactButton svg {
+  width:
+    15px;
+
+  height:
+    15px;
+}
+
+.compactButton {
+  min-height:
+    34px;
+
+  padding:
+    0 10px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    6px;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.09
+    );
+
+  font-size:
+    11px;
+
+  font-weight:
+    680;
+}
+
+.backdrop {
+  position:
+    fixed;
+
+  z-index:
+    100;
+
+  inset:
+    0;
+
+  padding:
+    20px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  background:
+    rgba(
+      23,
+      21,
+      18,
+      0.24
+    );
+
+  backdrop-filter:
+    blur(
+      9px
+    );
+}
+
+.modal {
+  width:
+    min(
+      100%,
+      480px
+    );
+
+  overflow:
+    hidden;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.78
+    );
+
+  border-radius:
+    24px;
+
+  background:
+    rgba(
+      255,
+      252,
+      247,
+      0.97
+    );
+
+  box-shadow:
+    0 24px 70px
+    rgba(
+      48,
+      38,
+      27,
+      0.17
+    );
+}
+
+.header {
+  padding:
+    19px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    auto
+    minmax(
+      0,
+      1fr
+    )
+    auto;
+
+  align-items:
+    start;
+
+  gap:
+    12px;
+
+  border-bottom:
+    1px solid
+    rgba(
+      44,
+      39,
+      33,
+      0.065
+    );
+}
+
+.icon {
+  width:
+    40px;
+
+  height:
+    40px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  border-radius:
+    13px;
+
+  background:
+    rgba(
+      205,
+      221,
+      198,
+      0.66
+    );
+}
+
+.icon svg {
+  width:
+    18px;
+
+  height:
+    18px;
+}
+
+.heading h2 {
+  margin:
+    1px
+    0
+    0;
+
+  font-size:
+    16px;
+
+  letter-spacing:
+    -0.02em;
+}
+
+.heading p {
+  margin:
+    3px
+    0
+    0;
+
+  font-size:
+    11px;
+
+  opacity:
+    0.5;
+}
+
+.closeButton {
+  width:
+    32px;
+
+  height:
+    32px;
+
+  padding:
+    0;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  border:
+    0;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.07
+    );
+
+  color:
+    inherit;
+
+  cursor:
+    pointer;
+}
+
+.closeButton svg {
+  width:
+    14px;
+
+  height:
+    14px;
+}
+
+.form {
+  padding:
+    19px;
+
+  display:
+    grid;
+
+  gap:
+    15px;
+}
+
+.field {
+  display:
+    grid;
+
+  gap:
+    6px;
+}
+
+.field > span {
+  display:
+    flex;
+
+  align-items:
+    baseline;
+
+  gap:
+    5px;
+
+  font-size:
+    11px;
+
+  font-weight:
+    680;
+
+  opacity:
+    0.72;
+}
+
+.field small {
+  font-size:
+    9px;
+
+  font-weight:
+    500;
+
+  opacity:
+    0.5;
+}
+
+.field input,
+.field textarea {
+  width:
+    100%;
+
+  box-sizing:
+    border-box;
+
+  border:
+    1px solid
+    rgba(
+      40,
+      35,
+      30,
+      0.1
+    );
+
+  border-radius:
+    12px;
+
+  outline:
+    none;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.64
+    );
+
+  color:
+    inherit;
+
+  font:
+    inherit;
+
+  font-size:
+    12px;
+
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.field input {
+  min-height:
+    42px;
+
+  padding:
+    0 11px;
+}
+
+.field textarea {
+  min-height:
+    82px;
+
+  padding:
+    10px 11px;
+
+  resize:
+    vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color:
+    rgba(
+      94,
+      132,
+      85,
+      0.4
+    );
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      94,
+      132,
+      85,
+      0.07
+    );
+}
+
+.timeField {
+  position:
+    relative;
+}
+
+.timeField > svg {
+  position:
+    absolute;
+
+  z-index:
+    1;
+
+  top:
+    50%;
+
+  left:
+    11px;
+
+  width:
+    15px;
+
+  height:
+    15px;
+
+  transform:
+    translateY(
+      -50%
+    );
+
+  opacity:
+    0.42;
+
+  pointer-events:
+    none;
+}
+
+.timeField input {
+  padding-left:
+    35px;
+}
+
+.error {
+  padding:
+    9px 11px;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(
+      181,
+      49,
+      54,
+      0.08
+    );
+
+  color:
+    rgb(
+      150,
+      44,
+      48
+    );
+
+  font-size:
+    10px;
+}
+
+.actions {
+  padding-top:
+    3px;
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    7px;
+}
+
+.actions button {
+  min-height:
+    38px;
+
+  padding:
+    0 13px;
+
+  border:
+    0;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.07
+    );
+
+  color:
+    inherit;
+
+  font:
+    inherit;
+
+  font-size:
+    11px;
+
+  font-weight:
+    680;
+
+  cursor:
+    pointer;
+}
+
+.actions .submit {
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.15
+    );
+}
+
+.actions button:disabled {
+  cursor:
+    default;
+
+  opacity:
+    0.45;
+}
+
+@media (
+  max-width: 700px
+) {
+
+  .backdrop {
+    padding:
+      10px;
+
+    align-items:
+      end;
+  }
+
+  .modal {
+    border-radius:
+      22px
+      22px
+      14px
+      14px;
+  }
+
+  .primaryButton {
+    width:
+      100%;
+  }
+
+  .actions {
+    display:
+      grid;
+
+    grid-template-columns:
+      1fr
+      1fr;
+  }
+}

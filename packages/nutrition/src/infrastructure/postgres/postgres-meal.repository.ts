@@ -11,6 +11,7 @@ import type {
 import type {
   CreateNutritionMealData,
   MealRepository,
+  UpdateNutritionMealData,
 } from '../../ports/index.js';
 
 import type {
@@ -132,6 +133,72 @@ implements MealRepository {
 
     return mapMeal(
       row,
+    );
+  }
+
+  public async update(
+    data:
+      UpdateNutritionMealData,
+  ): Promise<NutritionMeal | null> {
+
+    const row =
+      await this.db
+        .updateTable(
+          'nutrition.meals',
+        )
+        .set({
+          name:
+            data.name,
+
+          planned_time:
+            data.plannedTime,
+
+          position:
+            data.position,
+
+          notes:
+            data.notes,
+
+          updated_at:
+            new Date(),
+        })
+        .where(
+          'id',
+          '=',
+          data.mealId,
+        )
+        .returningAll()
+        .executeTakeFirst();
+
+    return row
+      ? mapMeal(
+          row,
+        )
+      : null;
+  }
+
+  public async delete(
+    mealId:
+      NutritionMealId,
+  ): Promise<boolean> {
+
+    const result =
+      await this.db
+        .deleteFrom(
+          'nutrition.meals',
+        )
+        .where(
+          'id',
+          '=',
+          mealId,
+        )
+        .returning(
+          'id',
+        )
+        .executeTakeFirst();
+
+    return Boolean(
+      result,
     );
   }
 

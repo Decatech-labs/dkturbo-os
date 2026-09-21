@@ -1,9 +1,9 @@
 import {
   Apple,
   ArrowLeft,
-  CalendarDays,
+  ChevronLeft,
   ChevronRight,
-  Clock3,
+  ShoppingBasket,
   UsersRound,
 } from 'lucide-react';
 
@@ -20,11 +20,119 @@ import {
 import {
   getNutritionPlanDetail,
   getNutritionPlans,
+  getNutritionPeople,
   type NutritionNutrientsResponse,
 } from '../../../lib/nutrition-api';
 
+import {
+  NewWeekForm,
+} from './new-week-form';
+
+import {
+  AddMealForm,
+} from './add-meal-form';
+
+import {
+  NutritionDayMeals,
+} from './nutrition-day-meals';
+
 export const dynamic =
   'force-dynamic';
+
+interface NutritionPageProps {
+  searchParams:
+    Promise<{
+      date?:
+        string;
+    }>;
+}
+
+const DATE_PATTERN =
+  /^\d{4}-\d{2}-\d{2}$/;
+
+const parseDate =
+  (
+    value:
+      string,
+  ): Date | null => {
+
+    if (
+      !DATE_PATTERN.test(
+        value,
+      )
+    ) {
+      return null;
+    }
+
+    const [
+      year,
+      month,
+      day,
+    ] =
+      value
+        .split('-')
+        .map(Number);
+
+    if (
+      !year ||
+      !month ||
+      !day
+    ) {
+      return null;
+    }
+
+    const date =
+      new Date(
+        year,
+        month - 1,
+        day,
+        12,
+        0,
+        0,
+        0,
+      );
+
+    if (
+      date.getFullYear() !==
+        year ||
+      date.getMonth() !==
+        month - 1 ||
+      date.getDate() !==
+        day
+    ) {
+      return null;
+    }
+
+    return date;
+  };
+
+const formatInputDate =
+  (
+    date:
+      Date,
+  ): string => {
+
+    const year =
+      date.getFullYear();
+
+    const month =
+      String(
+        date.getMonth() + 1,
+      ).padStart(
+        2,
+        '0',
+      );
+
+    const day =
+      String(
+        date.getDate(),
+      ).padStart(
+        2,
+        '0',
+      );
+
+    return `${year}-${month}-${day}`;
+  };
 
 const getTodayDate =
   (): string => {
@@ -83,26 +191,18 @@ const getTodayDate =
     return `${year}-${month}-${day}`;
   };
 
-const formatDate =
+const formatLongDate =
   (
     value:
       string,
   ): string => {
 
-    const [
-      year,
-      month,
-      day,
-    ] =
-      value
-        .split('-')
-        .map(Number);
+    const date =
+      parseDate(
+        value,
+      );
 
-    if (
-      !year ||
-      !month ||
-      !day
-    ) {
+    if (!date) {
       return value;
     }
 
@@ -121,35 +221,62 @@ const formatDate =
         },
       )
       .format(
-        new Date(
-          year,
-          month - 1,
-          day,
-        ),
+        date,
       );
   };
 
-const formatQuantity =
+const formatWeekRange =
   (
-    quantity:
-      number,
+    start:
+      string,
 
-    unit:
+    end:
       string,
   ): string => {
 
-    const normalizedUnit =
-      unit === 'G'
-        ? 'g'
-        : unit === 'KG'
-          ? 'kg'
-          : unit === 'ML'
-            ? 'ml'
-            : unit === 'L'
-              ? 'l'
-              : 'ud';
+    const startDate =
+      parseDate(
+        start,
+      );
 
-    return `${quantity} ${normalizedUnit}`;
+    const endDate =
+      parseDate(
+        end,
+      );
+
+    if (
+      !startDate ||
+      !endDate
+    ) {
+      return `${start} — ${end}`;
+    }
+
+    const startDay =
+      new Intl.DateTimeFormat(
+        'es-ES',
+        {
+          day:
+            'numeric',
+        },
+      ).format(
+        startDate,
+      );
+
+    const endLabel =
+      new Intl.DateTimeFormat(
+        'es-ES',
+        {
+          day:
+            'numeric',
+
+          month:
+            'long',
+        },
+      ).format(
+        endDate,
+      );
+
+    return `${startDay}–${endLabel}`;
   };
 
 const emptyNutrients =
@@ -170,22 +297,143 @@ const emptyNutrients =
       0,
   });
 
-export default async function NutritionPage() {
+const buildWeekDates =
+  (
+    startDate:
+      string,
+  ): string[] => {
+
+    const start =
+      parseDate(
+        startDate,
+      );
+
+    if (!start) {
+      return [];
+    }
+
+    return Array.from(
+      {
+        length:
+          7,
+      },
+      (
+        _,
+        index,
+      ) => {
+
+        const day =
+          new Date(
+            start,
+          );
+
+        day.setDate(
+          day.getDate() +
+            index,
+        );
+
+        return formatInputDate(
+          day,
+        );
+      },
+    );
+  };
+
+const formatWeekday =
+  (
+    date:
+      string,
+  ): string => {
+
+    const value =
+      parseDate(
+        date,
+      );
+
+    if (!value) {
+      return '';
+    }
+
+    return new Intl
+      .DateTimeFormat(
+        'es-ES',
+        {
+          weekday:
+            'short',
+        },
+      )
+      .format(
+        value,
+      )
+      .replace(
+        '.',
+        '',
+      )
+      .slice(
+        0,
+        1,
+      )
+      .toUpperCase();
+  };
+
+const formatDayNumber =
+  (
+    date:
+      string,
+  ): string => {
+
+    const value =
+      parseDate(
+        date,
+      );
+
+    return value
+      ? String(
+          value.getDate(),
+        )
+      : '';
+  };
+
+export default async function NutritionPage({
+  searchParams,
+}: NutritionPageProps) {
 
   await requireAccessPermission(
     'app.nutrition.access',
   );
 
-  const session =
-    await requireCurrentSession();
-
-  const plans =
-    await getNutritionPlans();
+  const [
+    session,
+    plans,
+    query,
+    people,
+  ] =
+    await Promise.all([
+      requireCurrentSession(),
+      getNutritionPlans(),
+      searchParams,
+      getNutritionPeople(),
+    ]);
 
   const today =
     getTodayDate();
 
+  const requestedDate =
+    query.date &&
+    parseDate(
+      query.date,
+    )
+      ? query.date
+      : today;
+
   const currentPlan =
+    plans.find(
+      (plan) =>
+        plan.startDate <=
+          requestedDate &&
+        plan.endDate >=
+          requestedDate,
+    ) ??
     plans.find(
       (plan) =>
         plan.startDate <=
@@ -204,7 +452,7 @@ export default async function NutritionPage() {
 
   if (!currentPlan) {
     return (
-      <main className="training-page">
+      <main className="app-page nutrition-home-page">
 
         <header className="training-page-header">
 
@@ -222,25 +470,33 @@ export default async function NutritionPage() {
             </h1>
 
             <p>
-              Alimentación, macros y planificación familiar.
+              Todavía no hay ninguna semana nutricional.
             </p>
           </div>
 
         </header>
 
-        <section className="training-empty">
+        <section className="nutrition-home-empty">
 
           <div className="training-empty-icon">
             <Apple />
           </div>
 
-          <strong>
-            Todavía no hay ninguna dieta
-          </strong>
+          <div>
+            <strong>
+              Empieza tu planificación
+            </strong>
 
-          <span>
-            Cuando crees una semana nutricional aparecerá aquí.
-          </span>
+            <span>
+              Crea una semana para empezar a organizar comidas y cantidades.
+            </span>
+          </div>
+
+          <NewWeekForm
+            today={
+              today
+            }
+          />
 
         </section>
 
@@ -253,19 +509,27 @@ export default async function NutritionPage() {
       currentPlan.id,
     );
 
-  const todayDetail =
+  const selectedDate =
+    requestedDate >=
+      currentPlan.startDate &&
+    requestedDate <=
+      currentPlan.endDate
+      ? requestedDate
+      : currentPlan.startDate;
+
+  const selectedDay =
     detail.days.find(
       ({
         day,
       }) =>
         day.date ===
-        today,
+        selectedDate,
     ) ??
     detail.days[0] ??
     null;
 
   const personalProgress =
-    todayDetail
+    selectedDay
       ?.progressByUser
       .find(
         ({
@@ -282,284 +546,434 @@ export default async function NutritionPage() {
     emptyNutrients();
 
   const personalMeals =
-    todayDetail
-      ? todayDetail.meals
-          .map(
-            (mealDetail) => ({
-              ...mealDetail,
+  selectedDay
+    ? [...selectedDay.meals]
+        .sort(
+          (
+            a,
+            b,
+          ) => {
 
-              items:
-                mealDetail.items
-                  .map(
-                    (itemDetail) => {
+            const aTime =
+              a.meal.plannedTime;
 
-                      const quantity =
-                        itemDetail.quantities.find(
+            const bTime =
+              b.meal.plannedTime;
+
+            if (
+              aTime !== null &&
+              bTime !== null &&
+              aTime !== bTime
+            ) {
+              return aTime.localeCompare(
+                bTime,
+              );
+            }
+
+            if (
+              aTime !== null
+            ) {
+              return -1;
+            }
+
+            if (
+              bTime !== null
+            ) {
+              return 1;
+            }
+
+            return (
+              a.meal.position -
+              b.meal.position
+            );
+          },
+        )
+        .map(
+          mealDetail => ({
+            ...mealDetail,
+
+            totalItemCount:
+              mealDetail.items.length,
+
+            items:
+              mealDetail.items
+                .map(
+                  itemDetail => {
+
+                    const quantity =
+                      itemDetail
+                        .quantities
+                        .find(
                           ({
                             userId,
                           }) =>
                             userId ===
-                            session.user.id,
+                            session
+                              .user
+                              .id,
                         );
 
-                      return quantity
-                        ? {
-                            ...itemDetail,
+                    return quantity
+                      ? {
+                          ...itemDetail,
 
-                            personalQuantity:
-                              quantity.quantity,
-                          }
-                        : null;
-                    },
-                  )
-                  .filter(
-                    (
-                      item,
-                    ): item is NonNullable<
-                      typeof item
-                    > =>
-                      item !==
-                      null,
-                  ),
-            }),
-          )
-          .filter(
-            ({
-              items,
-            }) =>
-              items.length >
-              0,
-          )
-      : [];
-
-  const now =
-    new Date();
-
-  const currentMinutes =
-    Number(
-      new Intl.DateTimeFormat(
-        'en-GB',
-        {
-          timeZone:
-            'Europe/Madrid',
-
-          hour:
-            '2-digit',
-
-          minute:
-            '2-digit',
-
-          hour12:
-            false,
-        },
-      )
-        .format(
-          now,
+                          personalQuantity:
+                            quantity.quantity,
+                        }
+                      : null;
+                  },
+                )
+                .filter(
+                  (
+                    item,
+                  ): item is NonNullable<
+                    typeof item
+                  > =>
+                    item !==
+                    null,
+                ),
+          }),
         )
-        .split(':')[0],
-    ) *
-      60 +
-    Number(
-      new Intl.DateTimeFormat(
-        'en-GB',
-        {
-          timeZone:
-            'Europe/Madrid',
+    : [];
 
-          hour:
-            '2-digit',
-
-          minute:
-            '2-digit',
-
-          hour12:
-            false,
-        },
-      )
-        .format(
-          now,
-        )
-        .split(':')[1],
+  const weekDates =
+    buildWeekDates(
+      currentPlan.startDate,
     );
 
-  const nextMeal =
-    personalMeals
-      .filter(
-        ({
-          meal,
-        }) =>
-          meal.plannedTime !==
-          null,
-      )
-      .map(
-        (mealDetail) => {
+  const selectedIndex =
+    weekDates.indexOf(
+      selectedDate,
+    );
 
-          const [
-            hours,
-            minutes,
-          ] =
-            mealDetail
-              .meal
-              .plannedTime!
-              .split(':')
-              .map(Number);
+  const previousDate =
+    selectedIndex >
+    0
+      ? weekDates[
+          selectedIndex -
+            1
+        ] ??
+        null
+      : null;
 
-          return {
-            ...mealDetail,
-
-            minutesOfDay:
-              (
-                hours ??
-                0
-              ) *
-                60 +
-              (
-                minutes ??
-                0
-              ),
-          };
-        },
-      )
-      .filter(
-        ({
-          minutesOfDay,
-        }) =>
-          minutesOfDay >=
-          currentMinutes,
-      )
-      .sort(
-        (a, b) =>
-          a.minutesOfDay -
-          b.minutesOfDay,
-      )[0] ??
-    null;
+  const nextDate =
+    selectedIndex >=
+      0 &&
+    selectedIndex <
+      weekDates.length -
+        1
+      ? weekDates[
+          selectedIndex +
+            1
+        ] ??
+        null
+      : null;
 
   return (
-    <main className="training-page">
+    <main className="app-page nutrition-home-page">
 
-      <header className="training-page-header">
+      <header className="app-page-header nutrition-home-header">
 
-        <Link
-          href="/"
-          className="system-back"
-          aria-label="Volver al inicio"
-        >
-          <ArrowLeft />
-        </Link>
+        <div className="nutrition-home-title">
 
-        <div>
-          <h1>
-            Nutrición
-          </h1>
+          <Link
+            href="/"
+            className="system-back"
+            aria-label="Volver al inicio"
+          >
+            <ArrowLeft />
+          </Link>
 
-          <p>
-            {currentPlan.title}
-          </p>
+          <div>
+            <h1>
+              Nutrición
+            </h1>
+
+            <span>
+              Semana{' '}
+              {formatWeekRange(
+                currentPlan.startDate,
+                currentPlan.endDate,
+              )}
+            </span>
+          </div>
+
         </div>
+
+        <details className="nutrition-week-menu">
+
+          <summary
+            aria-label="Opciones de la semana"
+          >
+            ···
+          </summary>
+
+          <div className="nutrition-week-menu-popover">
+
+            <NewWeekForm
+              today={
+                today
+              }
+            />
+
+          </div>
+
+        </details>
 
       </header>
 
-      <section className="nutrition-today">
+      <nav
+        className="nutrition-primary-nav"
+        aria-label="Secciones de Nutrición"
+      >
 
-        <div className="training-section-heading">
+        <Link
+          href="/nutricion"
+          className="nutrition-primary-nav-active"
+        >
+          Hoy
+        </Link>
+
+        <Link
+          href={`/nutricion/semanas/${currentPlan.id}`}
+        >
+          Semana
+        </Link>
+
+        <span
+          className="nutrition-primary-nav-disabled"
+          title="Disponible próximamente"
+        >
+          <ShoppingBasket />
+          Compra
+        </span>
+
+        <Link
+          href={`/nutricion/semanas/${currentPlan.id}?view=family`}
+        >
+          <UsersRound />
+          Familia
+        </Link>
+
+      </nav>
+
+      <section className="nutrition-week-strip">
+
+        <div className="nutrition-week-strip-heading">
+
+          {previousDate ? (
+            <Link
+              href={`/nutricion?date=${previousDate}`}
+              aria-label="Día anterior"
+            >
+              <ChevronLeft />
+            </Link>
+          ) : (
+            <span className="nutrition-week-strip-arrow-disabled">
+              <ChevronLeft />
+            </span>
+          )}
+
+          <strong>
+            {selectedDate ===
+            today
+              ? 'Hoy'
+              : formatLongDate(
+                  selectedDate,
+                )}
+          </strong>
+
+          {nextDate ? (
+            <Link
+              href={`/nutricion?date=${nextDate}`}
+              aria-label="Día siguiente"
+            >
+              <ChevronRight />
+            </Link>
+          ) : (
+            <span className="nutrition-week-strip-arrow-disabled">
+              <ChevronRight />
+            </span>
+          )}
+
+        </div>
+
+        <div className="nutrition-week-days-strip">
+
+          {weekDates.map(
+            (
+              date,
+            ) => {
+
+              const selected =
+                date ===
+                selectedDate;
+
+              const isToday =
+                date ===
+                today;
+
+              return (
+                <Link
+                  key={
+                    date
+                  }
+                  href={
+                    date ===
+                    today
+                      ? '/nutricion'
+                      : `/nutricion?date=${date}`
+                  }
+                  className={[
+                    'nutrition-week-day-button',
+                    selected
+                      ? 'nutrition-week-day-button-selected'
+                      : '',
+                    isToday
+                      ? 'nutrition-week-day-button-today'
+                      : '',
+                  ]
+                    .filter(
+                      Boolean,
+                    )
+                    .join(
+                      ' ',
+                    )}
+                  aria-current={
+                    selected
+                      ? 'date'
+                      : undefined
+                  }
+                >
+                  <span>
+                    {formatWeekday(
+                      date,
+                    )}
+                  </span>
+
+                  <strong>
+                    {formatDayNumber(
+                      date,
+                    )}
+                  </strong>
+                </Link>
+              );
+            },
+          )}
+
+        </div>
+
+      </section>
+
+      <section className="nutrition-day-feed">
+
+        <header className="nutrition-day-feed-heading">
+
           <div>
             <span>
-              Hoy
+              {selectedDate ===
+              today
+                ? 'Hoy'
+                : 'Plan del día'}
             </span>
 
             <h2>
-              {todayDetail
-                ? formatDate(
-                    todayDetail.day.date,
-                  )
-                : 'Sin planificación'}
+              {formatLongDate(
+                selectedDate,
+              )}
             </h2>
           </div>
-        </div>
 
-        {nextMeal ? (
-          <article className="nutrition-next-meal">
+          {selectedDay && (
+            <AddMealForm
+              dayId={
+                selectedDay.day.id
+              }
+              position={
+                selectedDay
+                  .meals
+                  .length
+              }
+              compact={
+                personalMeals.length >
+                0
+              }
+            />
+          )}
 
-            <div className="nutrition-next-meal-heading">
+        </header>
 
-              <div>
-                <span>
-                  Ahora / siguiente
-                </span>
+        {personalMeals.length >
+          0 ? (
+            <NutritionDayMeals
+              meals={
+                personalMeals
+              }
+              people={
+                people
+              }
+              userId={
+                session.user.id
+              }
+            />
+          ) : (
+            <section className="nutrition-day-empty">
 
-                <strong>
-                  {nextMeal.meal.name}
-                </strong>
+              <div className="nutrition-day-empty-icon">
+                <Apple />
               </div>
 
-              {nextMeal.meal.plannedTime && (
-                <div className="nutrition-meal-time">
-                  <Clock3 />
+              <div>
+                <strong>
+                  No hay comidas planificadas
+                </strong>
 
-                  {
-                    nextMeal
-                      .meal
-                      .plannedTime
-                  }
-                </div>
-              )}
+                <span>
+                  Este día todavía está vacío.
+                </span>
+              </div>
 
-            </div>
+            </section>
+          )}
 
-            <div className="nutrition-food-list">
+      </section>
 
-              {nextMeal.items.map(
-                ({
-                  item,
-                  food,
-                  personalQuantity,
-                }) => (
-                  <div
-                    key={
-                      item.id
-                    }
-                    className="nutrition-food-row"
-                  >
-                    <span>
-                      {food.name}
-                    </span>
+      <section className="nutrition-day-target">
 
-                    <strong>
-                      {formatQuantity(
-                        personalQuantity,
-                        food.referenceUnit,
-                      )}
-                    </strong>
-                  </div>
-                ),
-              )}
-
-            </div>
-
-          </article>
-        ) : (
-          <article className="nutrition-next-meal">
-            <strong>
-              No quedan comidas planificadas para hoy
-            </strong>
-          </article>
-        )}
-
-        <div className="nutrition-macro-grid">
-
+        <div className="nutrition-day-target-heading">
           <div>
             <span>
-              Energía
+              Plan del día
             </span>
 
             <strong>
               {planned.caloriesKcal}
-            </strong>
-
-            <small>
+              {' '}
               kcal
-            </small>
+            </strong>
           </div>
+
+          {personalProgress
+            ?.target
+            ?.caloriesKcal !==
+          null &&
+            personalProgress
+              ?.target
+              ?.caloriesKcal !==
+              undefined && (
+              <span>
+                de{' '}
+                {
+                  personalProgress
+                    .target
+                    .caloriesKcal
+                }{' '}
+                kcal
+              </span>
+            )}
+        </div>
+
+        <div className="nutrition-day-target-macros">
 
           <div>
             <span>
@@ -568,11 +982,27 @@ export default async function NutritionPage() {
 
             <strong>
               {planned.proteinG}
+              {' g'}
             </strong>
 
-            <small>
-              g
-            </small>
+            {personalProgress
+              ?.target
+              ?.proteinG !==
+              null &&
+              personalProgress
+                ?.target
+                ?.proteinG !==
+                undefined && (
+                <small>
+                  /{' '}
+                  {
+                    personalProgress
+                      .target
+                      .proteinG
+                  }{' '}
+                  g
+                </small>
+              )}
           </div>
 
           <div>
@@ -581,12 +1011,31 @@ export default async function NutritionPage() {
             </span>
 
             <strong>
-              {planned.carbohydratesG}
+              {
+                planned
+                  .carbohydratesG
+              }
+              {' g'}
             </strong>
 
-            <small>
-              g
-            </small>
+            {personalProgress
+              ?.target
+              ?.carbohydratesG !==
+              null &&
+              personalProgress
+                ?.target
+                ?.carbohydratesG !==
+                undefined && (
+                <small>
+                  /{' '}
+                  {
+                    personalProgress
+                      .target
+                      .carbohydratesG
+                  }{' '}
+                  g
+                </small>
+              )}
           </div>
 
           <div>
@@ -596,64 +1045,30 @@ export default async function NutritionPage() {
 
             <strong>
               {planned.fatG}
+              {' g'}
             </strong>
 
-            <small>
-              g
-            </small>
+            {personalProgress
+              ?.target
+              ?.fatG !==
+              null &&
+              personalProgress
+                ?.target
+                ?.fatG !==
+                undefined && (
+                <small>
+                  /{' '}
+                  {
+                    personalProgress
+                      .target
+                      .fatG
+                  }{' '}
+                  g
+                </small>
+              )}
           </div>
 
         </div>
-
-      </section>
-
-      <section className="nutrition-shortcuts">
-
-        <Link
-          href={`/nutricion/semanas/${currentPlan.id}`}
-          className="training-athlete-card"
-        >
-          <div className="training-athlete-icon">
-            <CalendarDays />
-          </div>
-
-          <div className="training-athlete-content">
-            <strong>
-              Mi semana
-            </strong>
-
-            <span>
-              Ver toda tu planificación nutricional.
-            </span>
-          </div>
-
-          <div className="training-athlete-arrow">
-            <ChevronRight />
-          </div>
-        </Link>
-
-        <Link
-          href={`/nutricion/semanas/${currentPlan.id}?view=family`}
-          className="training-athlete-card"
-        >
-          <div className="training-athlete-icon">
-            <UsersRound />
-          </div>
-
-          <div className="training-athlete-content">
-            <strong>
-              Familia
-            </strong>
-
-            <span>
-              Ver cantidades y comidas de todos.
-            </span>
-          </div>
-
-          <div className="training-athlete-arrow">
-            <ChevronRight />
-          </div>
-        </Link>
 
       </section>
 

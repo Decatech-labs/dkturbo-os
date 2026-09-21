@@ -141,6 +141,14 @@ const createUnitOfWork =
               async () =>
                 null,
 
+            update:
+              async () =>
+                null,
+
+            archive:
+              async () =>
+                false,
+
             searchActive:
               async () =>
                 [],
@@ -153,6 +161,14 @@ const createUnitOfWork =
                   'Not implemented',
                 );
               },
+
+            update:
+              async () =>
+                null,
+
+            delete:
+              async () =>
+                false,
 
             findById:
               async () =>
@@ -170,6 +186,17 @@ const createUnitOfWork =
                   'Not implemented',
                 );
               },
+
+            findById:
+              async () =>
+                null,
+
+            setLocations:
+              async () => {},
+
+            delete:
+              async () =>
+                false,
 
             saveQuantities:
               async () => {},

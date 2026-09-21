@@ -13,12 +13,14 @@ import type {
   NutritionMealItemQuantity,
   NutritionMealItemQuantityId,
   NutritionUnit,
+  NutritionFoodCategory,
 } from '../../domain/index.js';
 
 import type {
   AddNutritionMealItemData,
   MealItemRepository,
   SaveMealItemQuantityData,
+  SetMealItemLocationData,
 } from '../../ports/index.js';
 
 import type {
@@ -87,6 +89,9 @@ const mapFood =
       brand:
         string | null;
 
+      category:
+        string;
+
       reference_amount:
         string;
 
@@ -130,6 +135,10 @@ const mapFood =
 
     brand:
       row.brand,
+
+    category:
+      row.category as 
+        NutritionFoodCategory,
 
     referenceAmount:
       Number(
@@ -221,6 +230,31 @@ implements MealItemRepository {
     );
   }
 
+  public async findById(
+    mealItemId:
+      NutritionMealItemId,
+  ): Promise<NutritionMealItem | null> {
+
+    const row =
+      await this.db
+        .selectFrom(
+          'nutrition.meal_items',
+        )
+        .selectAll()
+        .where(
+          'id',
+          '=',
+          mealItemId,
+        )
+        .executeTakeFirst();
+
+    return row
+      ? mapMealItem(
+          row,
+        )
+      : null;
+  }
+
   public async saveQuantities(
     data:
       SaveMealItemQuantityData[],
@@ -279,6 +313,66 @@ implements MealItemRepository {
     }
   }
 
+    public async setLocations(
+    data:
+      SetMealItemLocationData[],
+  ): Promise<void> {
+
+    const now =
+      new Date();
+
+    for (
+      const item of data
+    ) {
+
+      await this.db
+        .updateTable(
+          'nutrition.meal_items',
+        )
+        .set({
+          meal_id:
+            item.mealId,
+
+          position:
+            item.position,
+
+          updated_at:
+            now,
+        })
+        .where(
+          'id',
+          '=',
+          item.mealItemId,
+        )
+        .execute();
+    }
+  }
+
+  public async delete(
+    mealItemId:
+      NutritionMealItemId,
+  ): Promise<boolean> {
+
+    const deleted =
+      await this.db
+        .deleteFrom(
+          'nutrition.meal_items',
+        )
+        .where(
+          'id',
+          '=',
+          mealItemId,
+        )
+        .returning(
+          'id',
+        )
+        .executeTakeFirst();
+
+    return Boolean(
+      deleted,
+    );
+  }
+
   public async listDetailsForMeal(
     mealId:
       NutritionMealId,
@@ -306,6 +400,7 @@ implements MealItemRepository {
           'food.id as food_id',
           'food.name as food_name',
           'food.brand as food_brand',
+          'food.category as food_category',
           'food.reference_amount as food_reference_amount',
           'food.reference_unit as food_reference_unit',
           'food.calories_kcal as food_calories_kcal',
@@ -389,6 +484,9 @@ implements MealItemRepository {
 
             brand:
               row.food_brand,
+
+            category:
+              row.food_category,
 
             reference_amount:
               row.food_reference_amount,

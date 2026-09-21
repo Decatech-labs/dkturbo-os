@@ -351,7 +351,7 @@ export default async function NutritionWeekPage({
     );
 
   return (
-    <main className="training-page nutrition-week-page">
+    <main className="app-page nutrition-week-page">
 
       <header className="training-page-header">
 

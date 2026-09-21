@@ -242,6 +242,14 @@ const createUnitOfWork =
               async () =>
                 lunch,
 
+            update:
+              async () =>
+                null,
+
+            delete:
+              async () =>
+                false,
+
             findById:
               async () =>
                 lunch,
@@ -268,6 +276,14 @@ const createUnitOfWork =
               async () =>
                 null,
 
+            update:
+              async () =>
+                null,
+
+            archive:
+              async () =>
+                false,
+
             searchActive:
               async () =>
                 [],
@@ -280,6 +296,17 @@ const createUnitOfWork =
                   'Not implemented',
                 );
               },
+
+            findById:
+              async () =>
+                null,
+
+            setLocations:
+              async () => {},
+
+            delete:
+              async () =>
+                false,
 
             saveQuantities:
               async () => {},
@@ -322,6 +349,9 @@ const createUnitOfWork =
 
                           brand:
                             null,
+
+                          category:
+                            'OTHER',
 
                           referenceAmount:
                             100,

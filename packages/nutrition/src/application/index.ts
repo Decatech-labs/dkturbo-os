@@ -1,15 +1,15 @@
 export * from './add-food-to-meal.js';
-
 export * from './create-food.js';
-
 export * from './create-meal.js';
-
 export * from './create-weekly-plan.js';
-
 export * from './get-meal-detail.js';
-
 export * from './get-weekly-plan-detail.js';
-
 export * from './nutrition-calculations.js';
-
 export * from './set-plan-target.js';
+export * from './update-meal.js';
+export * from './delete-meal.js';
+export * from './move-meal-item.js';
+export * from './remove-meal-item.js';
+export * from './set-meal-item-quantity.js';
+export * from './archive-food.js';
+export * from './update-food.js';

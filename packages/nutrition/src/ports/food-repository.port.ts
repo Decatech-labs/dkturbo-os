@@ -3,6 +3,7 @@ import type {
   NutritionFood,
   NutritionFoodId,
   NutritionUnit,
+  NutritionFoodCategory,
 } from '../domain/index.js';
 
 export interface CreateFoodData {
@@ -11,6 +12,9 @@ export interface CreateFoodData {
 
   brand:
     string | null;
+
+  category:
+    NutritionFoodCategory;
 
   referenceAmount:
     number;
@@ -37,6 +41,41 @@ export interface CreateFoodData {
     DkturboUserId;
 }
 
+export interface UpdateFoodData {
+  foodId:
+    NutritionFoodId;
+
+  name:
+    string;
+
+  brand:
+    string | null;
+
+  category:
+    NutritionFoodCategory;
+
+  referenceAmount:
+    number;
+
+  referenceUnit:
+    NutritionUnit;
+
+  caloriesKcal:
+    number;
+
+  proteinG:
+    number;
+
+  carbohydratesG:
+    number;
+
+  fatG:
+    number;
+
+  fiberG:
+    number | null;
+}
+
 export interface FoodRepository {
   create(
     data:
@@ -48,8 +87,21 @@ export interface FoodRepository {
       NutritionFoodId,
   ): Promise<NutritionFood | null>;
 
+  update(
+    data:
+      UpdateFoodData,
+  ): Promise<NutritionFood | null>;
+
+  archive(
+    foodId:
+      NutritionFoodId,
+  ): Promise<boolean>;
+
   searchActive(
     query:
       string,
+
+    category:
+      NutritionFoodCategory | null,
   ): Promise<NutritionFood[]>;
 }
