@@ -1,0 +1,557 @@
+.backdrop {
+  position: fixed;
+  z-index: 100;
+
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  padding: 20px;
+
+  background:
+    rgba(
+      24,
+      22,
+      18,
+      0.28
+    );
+
+  backdrop-filter:
+    blur(
+      7px
+    );
+}
+
+.modal {
+  width: min(
+    520px,
+    100%
+  );
+
+  max-height:
+    min(
+      720px,
+      calc(
+        100vh -
+        40px
+      )
+    );
+
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+
+  border:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.09
+    );
+
+  border-radius: 20px;
+
+  background:
+    rgb(
+      255,
+      252,
+      247
+    );
+
+  box-shadow:
+    0 24px 70px
+    rgba(
+      49,
+      39,
+      29,
+      0.2
+    );
+}
+
+.header {
+  padding:
+    18px
+    18px
+    14px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  border-bottom:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.06
+    );
+}
+
+.headerIcon {
+  width: 38px;
+  height: 38px;
+
+  flex:
+    0 0 38px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 12px;
+
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.11
+    );
+
+  color:
+    rgb(
+      77,
+      112,
+      69
+    );
+}
+
+.headerIcon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.headerText {
+  min-width: 0;
+  flex: 1;
+}
+
+.headerText h2 {
+  margin: 0;
+
+  font-size: 1rem;
+}
+
+.headerText p {
+  margin:
+    3px
+    0
+    0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.76rem;
+  opacity: 0.48;
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+  color: inherit;
+
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.07
+    );
+}
+
+.closeButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.form {
+  min-height: 0;
+
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.search {
+  min-height: 40px;
+
+  padding:
+    0
+    11px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  border:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.09
+    );
+
+  border-radius: 11px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.58
+    );
+}
+
+.search svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.4;
+}
+
+.search input {
+  min-width: 0;
+  flex: 1;
+
+  border: 0;
+  outline: none;
+
+  background: transparent;
+  color: inherit;
+
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.foodList {
+  min-height: 80px;
+  max-height: 230px;
+
+  overflow-y: auto;
+
+  display: grid;
+  gap: 4px;
+}
+
+.foodOption {
+  width: 100%;
+
+  padding:
+    9px
+    10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+  color: inherit;
+
+  text-align: left;
+  cursor: pointer;
+}
+
+.foodOption:hover {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.055
+    );
+}
+
+.foodOptionSelected {
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.1
+    );
+}
+
+.foodOption strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.81rem;
+}
+
+.foodOption span {
+  flex:
+    0
+    0
+    auto;
+
+  font-size: 0.68rem;
+  opacity: 0.4;
+}
+
+.empty {
+  padding: 20px;
+
+  text-align: center;
+
+  font-size: 0.76rem;
+  opacity: 0.45;
+}
+
+.selected {
+  padding: 12px;
+
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.07
+    );
+}
+
+.selected > div:first-child {
+  min-width: 0;
+
+  display: grid;
+  gap: 3px;
+}
+
+.selected > div:first-child span,
+.quantityField > span,
+.notes > span {
+  font-size: 0.66rem;
+  font-weight: 650;
+  opacity: 0.43;
+}
+
+.selected strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.82rem;
+}
+
+.quantityField {
+  display: grid;
+  gap: 4px;
+}
+
+.quantityField > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.quantityField input {
+  width: 76px;
+
+  padding:
+    7px
+    8px;
+
+  border:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.1
+    );
+
+  border-radius: 8px;
+  outline: none;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.75
+    );
+
+  color: inherit;
+  font: inherit;
+}
+
+.quantityField > div > span {
+  font-size: 0.72rem;
+  opacity: 0.48;
+}
+
+.notes {
+  display: grid;
+  gap: 5px;
+}
+
+.notes textarea {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding:
+    9px
+    10px;
+
+  resize: vertical;
+
+  border:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.09
+    );
+
+  border-radius: 10px;
+  outline: none;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.6
+    );
+
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.error {
+  color:
+    rgb(
+      155,
+      51,
+      51
+    );
+
+  font-size: 0.72rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.secondaryButton,
+.primaryButton {
+  min-height: 36px;
+
+  padding:
+    0
+    13px;
+
+  border: 0;
+  border-radius: 9px;
+
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 680;
+
+  cursor: pointer;
+}
+
+.secondaryButton {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.07
+    );
+
+  color: inherit;
+}
+
+.primaryButton {
+  background:
+    rgb(
+      81,
+      117,
+      74
+    );
+
+  color: white;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.closeButton:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+@media (
+  max-width: 700px
+) {
+
+  .backdrop {
+    padding: 10px;
+    align-items: end;
+  }
+
+  .modal {
+    max-height:
+      calc(
+        100vh -
+        20px
+      );
+
+    border-radius:
+      18px
+      18px
+      14px
+      14px;
+  }
+
+  .selected {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quantityField input {
+    flex: 1;
+    width: auto;
+  }
+
+  .footer {
+    display: grid;
+    grid-template-columns:
+      1fr
+      1fr;
+  }
+}

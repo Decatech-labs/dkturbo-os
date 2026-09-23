@@ -5,6 +5,7 @@ import type {
   NutritionMealItemDetail,
   NutritionMealItemId,
   NutritionFoodId,
+  NutritionFoodSnapshot,
 } from '../domain/index.js';
 
 export interface AddNutritionMealItemData {
@@ -13,6 +14,9 @@ export interface AddNutritionMealItemData {
 
   foodId:
     NutritionFoodId;
+
+  foodSnapshot:
+    NutritionFoodSnapshot;
 
   position:
     number;

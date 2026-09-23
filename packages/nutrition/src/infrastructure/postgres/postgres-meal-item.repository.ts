@@ -14,6 +14,7 @@ import type {
   NutritionMealItemQuantityId,
   NutritionUnit,
   NutritionFoodCategory,
+  NutritionFoodSnapshot,
 } from '../../domain/index.js';
 
 import type {
@@ -39,6 +40,9 @@ const mapMealItem =
       food_id:
         string;
 
+      food_snapshot:
+        NutritionFoodSnapshot;
+
       position:
         number;
 
@@ -63,6 +67,9 @@ const mapMealItem =
     foodId:
       row.food_id as
         NutritionFoodId,
+
+    foodSnapshot:
+      row.food_snapshot,
 
     position:
       row.position,
@@ -215,6 +222,9 @@ implements MealItemRepository {
 
           food_id:
             data.foodId,
+
+          food_snapshot:
+            data.foodSnapshot,
 
           position:
             data.position,
@@ -392,6 +402,7 @@ implements MealItemRepository {
           'item.id as item_id',
           'item.meal_id as item_meal_id',
           'item.food_id as item_food_id',
+          'item.food_snapshot as item_food_snapshot',
           'item.position as item_position',
           'item.notes as item_notes',
           'item.created_at as item_created_at',
@@ -461,6 +472,9 @@ implements MealItemRepository {
             food_id:
               row.item_food_id,
 
+            food_snapshot:
+              row.item_food_snapshot,
+
             position:
               row.item_position,
 
@@ -522,6 +536,40 @@ implements MealItemRepository {
               row.food_updated_at,
           });
 
+        const historicalFood: NutritionFood = {
+          ...food,
+
+          name:
+            item.foodSnapshot.name,
+
+          brand:
+            item.foodSnapshot.brand,
+
+          category:
+            item.foodSnapshot.category,
+
+          referenceAmount:
+            item.foodSnapshot.referenceAmount,
+
+          referenceUnit:
+            item.foodSnapshot.referenceUnit,
+
+          caloriesKcal:
+            item.foodSnapshot.caloriesKcal,
+
+          proteinG:
+            item.foodSnapshot.proteinG,
+
+          carbohydratesG:
+            item.foodSnapshot.carbohydratesG,
+
+          fatG:
+            item.foodSnapshot.fatG,
+
+          fiberG:
+            item.foodSnapshot.fiberG,
+        };
+
         const itemQuantities:
           NutritionMealItemQuantity[] =
             quantities
@@ -559,7 +607,8 @@ implements MealItemRepository {
 
         return {
           item,
-          food,
+          food:
+            historicalFood,
           quantities:
             itemQuantities,
         };

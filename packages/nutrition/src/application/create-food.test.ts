@@ -162,6 +162,31 @@ const createUnitOfWork =
                 [],
           },
 
+          mealItemActuals: {
+            save:
+              async () => {
+                throw new Error(
+                  'Not implemented',
+                );
+              },
+
+            findForItemAndUser:
+              async () =>
+                null,
+
+            deleteForItemAndUser:
+              async () =>
+                false,
+
+            listForDayAndUser:
+              async () =>
+                [],
+
+            listForDay:
+              async () =>
+                [],
+          },
+
           plans: {
             create:
               async () => {

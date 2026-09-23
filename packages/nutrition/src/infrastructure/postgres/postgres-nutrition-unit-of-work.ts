@@ -35,6 +35,10 @@ import {
   PostgresMealRepository,
 } from './postgres-meal.repository.js';
 
+import {
+  PostgresMealItemActualRepository,
+} from './postgres-meal-item-actual.repository.js';
+
 export class PostgresNutritionUnitOfWork
 implements NutritionUnitOfWork {
 
@@ -74,6 +78,11 @@ implements NutritionUnitOfWork {
 
             mealItems:
               new PostgresMealItemRepository(
+                transaction,
+              ),
+
+            mealItemActuals:
+              new PostgresMealItemActualRepository(
                 transaction,
               ),
 

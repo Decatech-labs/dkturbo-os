@@ -22,6 +22,10 @@ import type {
   PlanTargetRepository,
 } from './plan-target-repository.port.js';
 
+import type {
+  MealItemActualRepository,
+} from './meal-item-actual-repository.port.js';
+
 export interface NutritionRepositories {
   days:
     DayRepository;
@@ -34,6 +38,9 @@ export interface NutritionRepositories {
 
   mealItems:
     MealItemRepository;
+
+  mealItemActuals:
+    MealItemActualRepository;
 
   plans:
     PlanRepository;

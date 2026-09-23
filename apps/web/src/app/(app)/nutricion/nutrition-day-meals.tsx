@@ -35,6 +35,10 @@ import {
   Nut,
   Trash2,
   Wheat,
+  ArrowRightLeft,
+  Ban,
+  Check,
+  RotateCcw,
 } from 'lucide-react';
 
 import {
@@ -54,6 +58,7 @@ import type {
   NutritionMealDetailResponse,
   NutritionMealItemDetailResponse,
   NutritionPersonResponse,
+  NutritionMealItemActualResponse,
 } from '../../../lib/nutrition-api';
 
 import {
@@ -69,12 +74,23 @@ import {
   type FoodVisualCategory,
 } from './food-visual-profile';
 
+import {
+  ReplaceFoodModal,
+} from './replace-food-modal';
+
+import {
+  createPortal,
+} from 'react-dom';
+
 import styles from './nutrition-day-meals.module.css';
 
 interface PersonalMealItem
 extends NutritionMealItemDetailResponse {
   personalQuantity:
     number;
+
+  actual:
+    NutritionMealItemActualResponse | null;
 }
 
 export interface PersonalNutritionMeal
@@ -103,7 +119,10 @@ interface NutritionDayMealsProps {
 const unitLabel =
   (
     food:
-      NutritionFoodResponse,
+      Pick<
+        NutritionFoodResponse,
+        'referenceUnit'
+      >,
   ): string => {
 
     switch (
@@ -247,9 +266,172 @@ function SortableFoodRow({
       false,
     );
 
+  const setActual =
+    async (
+      body:
+        | {
+            status:
+              'EATEN';
+          }
+        | {
+            status:
+              'SKIPPED';
+
+            notes:
+              string | null;
+          },
+    ) => {
+
+      if (
+        actualSaving
+      ) {
+        return;
+      }
+
+      setActualSaving(
+        true,
+      );
+
+      setError(
+        null,
+      );
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/nutrition/meal-items/${encodeURIComponent(
+              detail.item.id,
+            )}/actuals/${encodeURIComponent(
+              userId,
+            )}`,
+            {
+              method:
+                'PUT',
+
+              headers: {
+                'content-type':
+                  'application/json',
+              },
+
+              body:
+                JSON.stringify(
+                  body,
+                ),
+            },
+          );
+
+        if (
+          !response.ok
+        ) {
+          setError(
+            'No se ha podido registrar el consumo.',
+          );
+
+          return;
+        }
+
+        setMenuOpen(
+          false,
+        );
+
+        router.refresh();
+
+      } catch {
+
+        setError(
+          'No se ha podido conectar.',
+        );
+
+      } finally {
+
+        setActualSaving(
+          false,
+        );
+      }
+    };
+
+  const resetActual =
+    async () => {
+
+      if (
+        actualSaving
+      ) {
+        return;
+      }
+
+      setActualSaving(
+        true,
+      );
+
+      setError(
+        null,
+      );
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/nutrition/meal-items/${encodeURIComponent(
+              detail.item.id,
+            )}/actuals/${encodeURIComponent(
+              userId,
+            )}`,
+            {
+              method:
+                'DELETE',
+            },
+          );
+
+        if (
+          !response.ok
+        ) {
+          setError(
+            'No se ha podido restablecer.',
+          );
+
+          return;
+        }
+
+        setMenuOpen(
+          false,
+        );
+
+        router.refresh();
+
+      } catch {
+
+        setError(
+          'No se ha podido conectar.',
+        );
+
+      } finally {
+
+        setActualSaving(
+          false,
+        );
+      }
+    };
+
   const [
     removing,
     setRemoving,
+  ] =
+    useState(
+      false,
+    );
+
+  const [
+    actualSaving,
+    setActualSaving,
+  ] =
+    useState(
+      false,
+    );
+
+  const [
+    replaceOpen,
+    setReplaceOpen,
   ] =
     useState(
       false,
@@ -272,6 +454,30 @@ function SortableFoodRow({
 
   const menuRef =
     useRef<HTMLDivElement>(
+      null,
+    );
+
+  const menuButtonRef =
+    useRef<HTMLButtonElement>(
+      null,
+    );
+
+  const menuPopoverRef =
+    useRef<HTMLDivElement>(
+      null,
+    );
+
+  const [
+    menuPosition,
+    setMenuPosition,
+  ] =
+    useState<{
+      top:
+        number;
+
+      left:
+        number;
+    } | null>(
       null,
     );
 
@@ -303,11 +509,26 @@ function SortableFoodRow({
             PointerEvent,
         ) => {
 
+          const target =
+            event.target as Node;
+
+          const insideTrigger =
+            menuRef.current
+              ?.contains(
+                target,
+              ) ??
+            false;
+
+          const insidePopover =
+            menuPopoverRef.current
+              ?.contains(
+                target,
+              ) ??
+            false;
+
           if (
-            menuRef.current &&
-            !menuRef.current.contains(
-              event.target as Node,
-            )
+            !insideTrigger &&
+            !insidePopover
           ) {
             setMenuOpen(
               false,
@@ -323,7 +544,7 @@ function SortableFoodRow({
 
           if (
             event.key ===
-            'Escape'
+              'Escape'
           ) {
             setMenuOpen(
               false,
@@ -353,7 +574,141 @@ function SortableFoodRow({
           handleKeyDown,
         );
       };
+    },
+    [
+      menuOpen,
+    ],
+  );
 
+  useEffect(
+    () => {
+
+      if (
+        !menuOpen ||
+        !menuButtonRef.current
+      ) {
+        setMenuPosition(
+          null,
+        );
+
+        return;
+      }
+
+      const updatePosition =
+        () => {
+
+          const button =
+            menuButtonRef.current;
+
+          if (!button) {
+            return;
+          }
+
+          const rect =
+            button.getBoundingClientRect();
+
+          const menuWidth =
+            210;
+
+          const menuHeight =
+            menuPopoverRef.current
+              ?.getBoundingClientRect()
+              .height ??
+            230;
+
+          const margin =
+            10;
+
+          const gap =
+            6;
+
+          const availableBelow =
+            window.innerHeight -
+            rect.bottom -
+            margin;
+
+          const availableAbove =
+            rect.top -
+            margin;
+
+          const openAbove =
+            availableBelow <
+              menuHeight &&
+            availableAbove >
+              availableBelow;
+
+          const unclampedTop =
+            openAbove
+              ? rect.top -
+                menuHeight -
+                gap
+              : rect.bottom +
+                gap;
+
+          const top =
+            Math.max(
+              margin,
+              Math.min(
+                unclampedTop,
+                window.innerHeight -
+                  menuHeight -
+                  margin,
+              ),
+            );
+
+          const left =
+            Math.max(
+              margin,
+              Math.min(
+                rect.right -
+                  menuWidth,
+                window.innerWidth -
+                  menuWidth -
+                  margin,
+              ),
+            );
+
+          setMenuPosition({
+            top,
+            left,
+          });
+        };
+
+      updatePosition();
+
+      const frame =
+        requestAnimationFrame(
+          updatePosition,
+        );
+
+      window.addEventListener(
+        'resize',
+        updatePosition,
+      );
+
+      window.addEventListener(
+        'scroll',
+        updatePosition,
+        true,
+      );
+
+      return () => {
+
+        cancelAnimationFrame(
+          frame,
+        );
+
+        window.removeEventListener(
+          'resize',
+          updatePosition,
+        );
+
+        window.removeEventListener(
+          'scroll',
+          updatePosition,
+          true,
+        );
+      };
     },
     [
       menuOpen,
@@ -570,13 +925,60 @@ function SortableFoodRow({
       detail.food,
     );
 
+  const actualStatus =
+    detail.actual?.status ??
+    'PENDING';
+
+  const actualStatusLabel =
+    actualStatus ===
+      'EATEN'
+      ? 'Comido'
+      : actualStatus ===
+          'SKIPPED'
+        ? 'Omitido'
+        : actualStatus ===
+            'REPLACED'
+          ? 'Sustituido'
+          : 'Pendiente';
+
+  const replacementSnapshot =
+    actualStatus ===
+      'REPLACED'
+      ? detail.actual
+          ?.actualFoodSnapshot ??
+        null
+      : null;
+
+  const replacementQuantity =
+    actualStatus ===
+      'REPLACED'
+      ? detail.actual
+          ?.actualQuantity ??
+        null
+      : null;
+
+  const replacementLabel =
+    replacementSnapshot &&
+    replacementQuantity !==
+      null
+      ? `${replacementSnapshot.name} · ${formatNumber(
+          replacementQuantity,
+        )} ${unitLabel(
+          replacementSnapshot,
+        )}`
+      : null;
+
   return (
+    <>
     <div
       ref={
         setNodeRef
       }
       className={[
         styles.foodRow,
+        styles[
+          `foodRow_${actualStatus}`
+        ],
         isDragging
           ? styles.dragging
           : '',
@@ -659,6 +1061,26 @@ function SortableFoodRow({
               visualProfile.label
             }
           </span>
+
+          {replacementLabel && (
+            <span
+              className={
+                styles.actualReplacement
+              }
+            >
+              <ArrowRightLeft
+                aria-hidden="true"
+              />
+
+              <span>
+                Real:
+              </span>
+
+              <strong>
+                {replacementLabel}
+              </strong>
+            </span>
+          )}
         </div>
       </div>
 
@@ -667,6 +1089,63 @@ function SortableFoodRow({
           styles.rowControls
         }
       >
+                {actualStatus ===
+        'PENDING' ? (
+          <button
+            type="button"
+            className={
+              styles.quickEatenButton
+            }
+            onClick={
+              () =>
+                void setActual({
+                  status:
+                    'EATEN',
+                })
+            }
+            disabled={
+              actualSaving
+            }
+            title="Marcar como comido"
+            aria-label={`Marcar ${detail.food.name} como comido`}
+          >
+            <Check />
+          </button>
+        ) : (
+          <span
+            className={[
+              styles.statusBadge,
+
+              styles[
+                `statusBadge_${actualStatus}`
+              ],
+            ].join(
+              ' ',
+            )}
+            title={
+              actualStatusLabel
+            }
+          >
+          {actualStatus ===
+              'EATEN' && (
+                <Check />
+              )}
+
+            {actualStatus ===
+              'SKIPPED' && (
+                <Ban />
+              )}
+
+            {actualStatus ===
+              'REPLACED' && (
+                <ArrowRightLeft />
+              )}
+
+            <span>
+              {actualStatusLabel}
+            </span>
+          </span>
+        )}
         {editingQuantity ? (
           <div
             className={
@@ -768,6 +1247,9 @@ function SortableFoodRow({
           }
         >
           <button
+            ref={
+              menuButtonRef
+            }
             type="button"
             className={
               styles.menuButton
@@ -787,33 +1269,149 @@ function SortableFoodRow({
             <MoreHorizontal />
           </button>
 
-          {menuOpen && (
-            <div
-              className={
-                styles.menuPopover
-              }
-            >
-              <button
-                type="button"
+                    {menuOpen &&
+            menuPosition &&
+            createPortal(
+              <div
+                ref={
+                  menuPopoverRef
+                }
                 className={
-                  styles.deleteButton
+                  styles.menuPopover
                 }
-                onClick={
-                  () =>
-                    void remove()
-                }
-                disabled={
-                  removing
-                }
-              >
-                <Trash2 />
+                style={{
+                  top:
+                    menuPosition.top,
 
-                {removing
-                  ? 'Quitando…'
-                  : 'Quitar de esta comida'}
-              </button>
-            </div>
-          )}
+                  left:
+                    menuPosition.left,
+                }}
+              >
+                {actualStatus !==
+                  'EATEN' && (
+                  <button
+                    type="button"
+                    className={
+                      styles.actionButton
+                    }
+                    onClick={
+                      () =>
+                        void setActual({
+                          status:
+                            'EATEN',
+                        })
+                    }
+                    disabled={
+                      actualSaving
+                    }
+                  >
+                    <Check />
+
+                    Marcar como comido
+                  </button>
+                )}
+
+                {actualStatus !==
+                  'SKIPPED' && (
+                  <button
+                    type="button"
+                    className={
+                      styles.actionButton
+                    }
+                    onClick={
+                      () =>
+                        void setActual({
+                          status:
+                            'SKIPPED',
+
+                          notes:
+                            null,
+                        })
+                    }
+                    disabled={
+                      actualSaving
+                    }
+                  >
+                    <Ban />
+
+                    Marcar como no comido
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className={
+                    styles.actionButton
+                  }
+                  onClick={
+                    () => {
+
+                      setMenuOpen(
+                        false,
+                      );
+
+                      setReplaceOpen(
+                        true,
+                      );
+                    }
+                  }
+                  disabled={
+                    actualSaving
+                  }
+                >
+                  <ArrowRightLeft />
+
+                  Sustituir alimento
+                </button>
+
+                {detail.actual && (
+                  <button
+                    type="button"
+                    className={
+                      styles.actionButton
+                    }
+                    onClick={
+                      () =>
+                        void resetActual()
+                    }
+                    disabled={
+                      actualSaving
+                    }
+                  >
+                    <RotateCcw />
+
+                    Restablecer
+                  </button>
+                )}
+
+                <div
+                  className={
+                    styles.menuSeparator
+                  }
+                />
+
+                <button
+                  type="button"
+                  className={
+                    styles.deleteButton
+                  }
+                  onClick={
+                    () =>
+                      void remove()
+                  }
+                  disabled={
+                    removing
+                  }
+                >
+                  <Trash2 />
+
+                  {removing
+                    ? 'Quitando…'
+                    : 'Quitar de esta comida'}
+                </button>
+              </div>,
+              document.body,
+            )}
         </div>
       </div>
 
@@ -828,6 +1426,32 @@ function SortableFoodRow({
         </span>
       )}
     </div>
+
+      <ReplaceFoodModal
+        mealItemId={
+          detail.item.id
+        }
+        userId={
+          userId
+        }
+        plannedFoodName={
+          detail.food.name
+        }
+        open={
+          replaceOpen
+        }
+        onClose={
+          () =>
+            setReplaceOpen(
+              false,
+            )
+        }
+        onSaved={
+          () =>
+            router.refresh()
+        }
+      />
+    </>
   );
 }
 

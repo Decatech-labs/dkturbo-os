@@ -22,6 +22,7 @@ import {
   getNutritionPlans,
   getNutritionPeople,
   type NutritionNutrientsResponse,
+  type NutritionMealItemActualResponse,
 } from '../../../lib/nutrition-api';
 
 import {
@@ -297,6 +298,91 @@ const emptyNutrients =
       0,
   });
 
+const formatNutrientValue =
+  (
+    value:
+      number,
+  ): string =>
+    new Intl.NumberFormat(
+      'es-ES',
+      {
+        maximumFractionDigits:
+          1,
+      },
+    ).format(
+      value,
+    );
+
+const getConsumptionPercentage =
+  (
+    actual:
+      number,
+
+    planned:
+      number,
+  ): number => {
+
+    if (
+      planned <=
+      0
+    ) {
+      return actual >
+        0
+        ? 100
+        : 0;
+    }
+
+    return Math.min(
+      100,
+      Math.max(
+        0,
+        (
+          actual /
+          planned
+        ) *
+          100,
+      ),
+    );
+  };
+
+const getDifferenceLabel =
+  (
+    actual:
+      number,
+
+    planned:
+      number,
+
+    unit:
+      string,
+  ): string => {
+
+    const difference =
+      actual -
+      planned;
+
+    if (
+      Math.abs(
+        difference,
+      ) <
+      0.05
+    ) {
+      return 'Sin diferencia';
+    }
+
+    const absoluteDifference =
+      formatNutrientValue(
+        Math.abs(
+          difference,
+        ),
+      );
+
+    return difference >
+      0
+      ? `+${absoluteDifference} ${unit} vs plan`
+      : `-${absoluteDifference} ${unit} vs plan`;
+  };
+
 const buildWeekDates =
   (
     startDate:
@@ -545,6 +631,102 @@ export default async function NutritionPage({
       ?.planned ??
     emptyNutrients();
 
+  const actual =
+    personalProgress
+      ?.actual ??
+    emptyNutrients();
+
+  const nutrientSummary = [
+    {
+      key:
+        'protein',
+
+      label:
+        'Proteína',
+
+      planned:
+        planned.proteinG,
+
+      actual:
+        actual.proteinG,
+
+      unit:
+        'g',
+    },
+    {
+      key:
+        'carbohydrates',
+
+      label:
+        'Carbohidratos',
+
+      planned:
+        planned.carbohydratesG,
+
+      actual:
+        actual.carbohydratesG,
+
+      unit:
+        'g',
+    },
+    {
+      key:
+        'fat',
+
+      label:
+        'Grasas',
+
+      planned:
+        planned.fatG,
+
+      actual:
+        actual.fatG,
+
+      unit:
+        'g',
+    },
+    {
+      key:
+        'fiber',
+
+      label:
+        'Fibra',
+
+      planned:
+        planned.fiberG,
+
+      actual:
+        actual.fiberG,
+
+      unit:
+        'g',
+    },
+  ] as const;
+
+  const personalActualByMealItemId =
+    new Map<
+      string,
+      NutritionMealItemActualResponse
+    >();
+
+  for (
+    const actual of
+      selectedDay?.actuals ??
+      []
+  ) {
+    if (
+      actual.userId ===
+        session.user.id &&
+      actual.mealItemId !==
+        null
+    ) {
+      personalActualByMealItemId.set(
+        actual.mealItemId,
+        actual,
+      );
+    }
+  }
+
   const personalMeals =
   selectedDay
     ? [...selectedDay.meals]
@@ -619,6 +801,12 @@ export default async function NutritionPage({
 
                           personalQuantity:
                             quantity.quantity,
+
+                          actual:
+                            personalActualByMealItemId.get(
+                              itemDetail.item.id,
+                            ) ??
+                            null,
                         }
                       : null;
                   },
@@ -938,135 +1126,164 @@ export default async function NutritionPage({
 
       </section>
 
-      <section className="nutrition-day-target">
+      <section className="nutrition-day-summary-card">
 
-        <div className="nutrition-day-target-heading">
+        <header className="nutrition-day-summary-header">
+
           <div>
             <span>
-              Plan del día
+              Consumido real
             </span>
 
             <strong>
-              {planned.caloriesKcal}
-              {' '}
+              {formatNutrientValue(
+                actual.caloriesKcal,
+              )}{' '}
               kcal
             </strong>
           </div>
 
-          {personalProgress
-            ?.target
-            ?.caloriesKcal !==
-          null &&
-            personalProgress
-              ?.target
-              ?.caloriesKcal !==
-              undefined && (
-              <span>
-                de{' '}
-                {
-                  personalProgress
-                    .target
-                    .caloriesKcal
-                }{' '}
-                kcal
-              </span>
+          <div className="nutrition-day-summary-energy-target">
+
+            <span>
+              de{' '}
+              {formatNutrientValue(
+                planned.caloriesKcal,
+              )}{' '}
+              kcal planificadas
+            </span>
+
+            <small>
+              {getDifferenceLabel(
+                actual.caloriesKcal,
+                planned.caloriesKcal,
+                'kcal',
+              )}
+            </small>
+
+          </div>
+
+        </header>
+
+        <div
+          className={[
+            'nutrition-day-summary-energy-progress',
+
+            actual.caloriesKcal >
+              planned.caloriesKcal
+              ? 'nutrition-day-summary-energy-progress-over'
+              : '',
+          ]
+            .filter(
+              Boolean,
+            )
+            .join(
+              ' ',
             )}
+          aria-hidden="true"
+        >
+          <span
+            style={{
+              width:
+                `${getConsumptionPercentage(
+                  actual.caloriesKcal,
+                  planned.caloriesKcal,
+                )}%`,
+            }}
+          />
         </div>
 
-        <div className="nutrition-day-target-macros">
+        <div className="nutrition-day-summary-grid">
 
-          <div>
-            <span>
-              Proteína
-            </span>
+          {nutrientSummary.map(
+            nutrient => {
 
-            <strong>
-              {planned.proteinG}
-              {' g'}
-            </strong>
+              const progress =
+                getConsumptionPercentage(
+                  nutrient.actual,
+                  nutrient.planned,
+                );
 
-            {personalProgress
-              ?.target
-              ?.proteinG !==
-              null &&
-              personalProgress
-                ?.target
-                ?.proteinG !==
-                undefined && (
-                <small>
-                  /{' '}
-                  {
-                    personalProgress
-                      .target
-                      .proteinG
-                  }{' '}
-                  g
-                </small>
-              )}
-          </div>
+              const overPlan =
+                nutrient.actual >
+                nutrient.planned;
 
-          <div>
-            <span>
-              Carbohidratos
-            </span>
+              return (
+                <div
+                  key={
+                    nutrient.key
+                  }
+                  className={[
+                    'nutrition-day-summary-item',
 
-            <strong>
-              {
-                planned
-                  .carbohydratesG
-              }
-              {' g'}
-            </strong>
+                    overPlan
+                      ? 'nutrition-day-summary-item-over'
+                      : '',
+                  ]
+                    .filter(
+                      Boolean,
+                    )
+                    .join(
+                      ' ',
+                    )}
+                >
 
-            {personalProgress
-              ?.target
-              ?.carbohydratesG !==
-              null &&
-              personalProgress
-                ?.target
-                ?.carbohydratesG !==
-                undefined && (
-                <small>
-                  /{' '}
-                  {
-                    personalProgress
-                      .target
-                      .carbohydratesG
-                  }{' '}
-                  g
-                </small>
-              )}
-          </div>
+                  <header>
+                    <span>
+                      {
+                        nutrient.label
+                      }
+                    </span>
 
-          <div>
-            <span>
-              Grasas
-            </span>
+                    <strong>
+                      {formatNutrientValue(
+                        nutrient.actual,
+                      )}{' '}
+                      {
+                        nutrient.unit
+                      }
+                    </strong>
+                  </header>
 
-            <strong>
-              {planned.fatG}
-              {' g'}
-            </strong>
+                  <div className="nutrition-day-summary-item-meta">
 
-            {personalProgress
-              ?.target
-              ?.fatG !==
-              null &&
-              personalProgress
-                ?.target
-                ?.fatG !==
-                undefined && (
-                <small>
-                  /{' '}
-                  {
-                    personalProgress
-                      .target
-                      .fatG
-                  }{' '}
-                  g
-                </small>
-              )}
-          </div>
+                    <span>
+                      de{' '}
+                      {formatNutrientValue(
+                        nutrient.planned,
+                      )}{' '}
+                      {
+                        nutrient.unit
+                      }{' '}
+                      planificados
+                    </span>
+
+                    <small>
+                      {getDifferenceLabel(
+                        nutrient.actual,
+                        nutrient.planned,
+                        nutrient.unit,
+                      )}
+                    </small>
+
+                  </div>
+
+                  <div
+                    className="nutrition-day-summary-item-progress"
+                    aria-hidden="true"
+                  >
+                    <span
+                      style={{
+                        width:
+                          `${progress}%`,
+                      }}
+                    />
+                  </div>
+
+                </div>
+              );
+            },
+          )}
 
         </div>
 

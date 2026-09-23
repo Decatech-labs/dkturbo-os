@@ -172,6 +172,38 @@ const createUnitOfWork =
                     foodId:
                       riceId,
 
+                    foodSnapshot: {
+                      name:
+                        'Arroz basmati',
+
+                      brand:
+                        null,
+
+                      category:
+                        'OTHER',
+
+                      referenceAmount:
+                        100,
+
+                      referenceUnit:
+                        'G',
+
+                      caloriesKcal:
+                        356,
+
+                      proteinG:
+                        7.5,
+
+                      carbohydratesG:
+                        78,
+
+                      fatG:
+                        0.9,
+
+                      fiberG:
+                        1.2,
+                    },
+
                     position:
                       0,
 
@@ -283,6 +315,38 @@ const createUnitOfWork =
                     foodId:
                       chickenId,
 
+                    foodSnapshot: {
+                      name:
+                        'Pechuga de pollo',
+
+                      brand:
+                        null,
+
+                      category:
+                        'OTHER',
+
+                      referenceAmount:
+                        100,
+
+                      referenceUnit:
+                        'G',
+
+                      caloriesKcal:
+                        120,
+
+                      proteinG:
+                        23,
+
+                      carbohydratesG:
+                        0,
+
+                      fatG:
+                        2,
+
+                      fiberG:
+                        null,
+                    },
+
                     position:
                       1,
 
@@ -385,6 +449,31 @@ const createUnitOfWork =
                   ],
                 },
               ],
+          },
+
+          mealItemActuals: {
+            save:
+              async () => {
+                throw new Error(
+                  'Not implemented',
+                );
+              },
+
+            findForItemAndUser:
+              async () =>
+                null,
+
+            deleteForItemAndUser:
+              async () =>
+                false,
+
+            listForDayAndUser:
+              async () =>
+                [],
+
+            listForDay:
+              async () =>
+                [],
           },
 
           plans: {

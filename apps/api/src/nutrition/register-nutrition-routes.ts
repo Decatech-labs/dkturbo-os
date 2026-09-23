@@ -28,6 +28,15 @@ import {
   NutritionMealItemNotFoundError,
   archiveFood,
   updateFood,
+  markMealItemEaten,
+  markMealItemSkipped,
+  replaceMealItemActual,
+  resetMealItemActual,
+  InvalidNutritionMealItemActualQuantityError,
+  ArchivedNutritionReplacementFoodError,
+  NutritionMealItemActualItemNotFoundError,
+  NutritionMealItemActualMealNotFoundError,
+  NutritionMealItemActualPlannedQuantityNotFoundError,
   type DkturboUserId,
   type Nutrition,
   type NutritionPlanId,
@@ -85,6 +94,40 @@ interface MealItemQuantityParams {
   userId:
     string;
 }
+
+interface MealItemActualParams {
+  mealItemId:
+    string;
+
+  userId:
+    string;
+}
+
+type SetMealItemActualBody =
+  | {
+      status:
+        'EATEN';
+    }
+  | {
+      status:
+        'SKIPPED';
+
+      notes:
+        string | null;
+    }
+  | {
+      status:
+        'REPLACED';
+
+      actualFoodId:
+        string;
+
+      actualQuantity:
+        number;
+
+      notes:
+        string | null;
+    };
 
 interface SetMealItemQuantityBody {
   quantity:
@@ -596,6 +639,48 @@ const parseMealItemParams =
     };
   };
 
+const parseMealItemActualParams =
+  (
+    value:
+      unknown,
+  ): MealItemActualParams | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as
+        Record<
+          string,
+          unknown
+        >;
+
+    if (
+      !isUuid(
+        candidate.mealItemId,
+      ) ||
+      !isUuid(
+        candidate.userId,
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      mealItemId:
+        candidate.mealItemId,
+
+      userId:
+        candidate.userId,
+    };
+  };
+
 const parseMealItemQuantityParams =
   (
     value:
@@ -732,6 +817,100 @@ const parseNullableString =
     }
 
     return undefined;
+  };
+
+const parseSetMealItemActualBody =
+  (
+    value:
+      unknown,
+  ): SetMealItemActualBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as
+        Record<
+          string,
+          unknown
+        >;
+
+    if (
+      candidate.status ===
+        'EATEN'
+    ) {
+      return {
+        status:
+          'EATEN',
+      };
+    }
+
+    const notes =
+      candidate.notes ===
+        undefined
+        ? null
+        : parseNullableString(
+            candidate.notes,
+          );
+
+    if (
+      notes ===
+        undefined
+    ) {
+      return null;
+    }
+
+    if (
+      candidate.status ===
+        'SKIPPED'
+    ) {
+      return {
+        status:
+          'SKIPPED',
+
+        notes,
+      };
+    }
+
+    if (
+      candidate.status ===
+        'REPLACED'
+    ) {
+
+      if (
+        !isUuid(
+          candidate.actualFoodId,
+        ) ||
+        typeof candidate.actualQuantity !==
+          'number' ||
+        !Number.isFinite(
+          candidate.actualQuantity,
+        )
+      ) {
+        return null;
+      }
+
+      return {
+        status:
+          'REPLACED',
+
+        actualFoodId:
+          candidate.actualFoodId,
+
+        actualQuantity:
+          candidate.actualQuantity,
+
+        notes,
+      };
+    }
+
+    return null;
   };
 
 const parseCreateMealBody =
@@ -2070,7 +2249,7 @@ export const registerNutritionRoutes =
       },
     );
 
-        app.patch(
+    app.patch(
       '/api/nutrition/meal-items/:mealItemId/quantities/:userId',
 
       async (
@@ -2188,7 +2367,331 @@ export const registerNutritionRoutes =
       },
     );
 
-        app.delete(
+    app.put(
+      '/api/nutrition/meal-items/:mealItemId/actuals/:userId',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+            'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseMealItemActualParams(
+            request.params,
+          );
+
+        const body =
+          parseSetMealItemActualBody(
+            request.body,
+          );
+
+        if (
+          !params ||
+          !body
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          if (
+            body.status ===
+              'EATEN'
+          ) {
+            const actual =
+              await markMealItemEaten(
+                nutrition.unitOfWork,
+                {
+                  mealItemId:
+                    params.mealItemId as
+                      NutritionMealItemId,
+
+                  userId:
+                    params.userId as
+                      DkturboUserId,
+                },
+              );
+
+            return reply
+              .code(200)
+              .send(
+                actual,
+              );
+          }
+
+          if (
+            body.status ===
+              'SKIPPED'
+          ) {
+            const actual =
+              await markMealItemSkipped(
+                nutrition.unitOfWork,
+                {
+                  mealItemId:
+                    params.mealItemId as
+                      NutritionMealItemId,
+
+                  userId:
+                    params.userId as
+                      DkturboUserId,
+
+                  notes:
+                    body.notes,
+                },
+              );
+
+            return reply
+              .code(200)
+              .send(
+                actual,
+              );
+          }
+
+          const actual =
+            await replaceMealItemActual(
+              nutrition.unitOfWork,
+              {
+                mealItemId:
+                  params.mealItemId as
+                    NutritionMealItemId,
+
+                userId:
+                  params.userId as
+                    DkturboUserId,
+
+                actualFoodId:
+                  body.actualFoodId as
+                    NutritionFoodId,
+
+                actualQuantity:
+                  body.actualQuantity,
+
+                notes:
+                  body.notes,
+              },
+            );
+
+          return reply
+            .code(200)
+            .send(
+              actual,
+            );
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+              InvalidNutritionMealItemActualQuantityError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'invalid_nutrition_meal_item_actual_quantity',
+              });
+          }
+
+          if (
+            error instanceof
+              ArchivedNutritionReplacementFoodError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'archived_nutrition_replacement_food',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionMealItemActualItemNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_meal_item_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionMealItemActualMealNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_meal_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionMealItemActualPlannedQuantityNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_meal_item_quantity_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionFoodNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_food_not_found',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to set Nutrition meal item actual',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    app.delete(
+      '/api/nutrition/meal-items/:mealItemId/actuals/:userId',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+            'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseMealItemActualParams(
+            request.params,
+          );
+
+        if (!params) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          await resetMealItemActual(
+            nutrition.unitOfWork,
+            {
+              mealItemId:
+                params.mealItemId as
+                  NutritionMealItemId,
+
+              userId:
+                params.userId as
+                  DkturboUserId,
+            },
+          );
+
+          return reply
+            .code(204)
+            .send();
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+              NutritionMealItemActualItemNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_meal_item_not_found',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to reset Nutrition meal item actual',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    app.delete(
       '/api/nutrition/meal-items/:mealItemId',
 
       async (

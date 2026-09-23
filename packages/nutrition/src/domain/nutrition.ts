@@ -37,14 +37,25 @@ export type DkturboUserId =
 export type NutritionPlanTargetId =
   string & {
     readonly __brand:
-      'NutritionPlanTargetId';
+    'NutritionPlanTargetId';
   };
-
+  
 export type NutritionMealItemQuantityId =
   string & {
     readonly __brand:
-      'NutritionMealItemQuantityId';
+    'NutritionMealItemQuantityId';
   };
+  
+export type NutritionMealItemActualId =
+  string & {
+    readonly __brand:
+      'NutritionMealItemActualId';
+  };
+
+export type NutritionMealItemActualStatus =
+  | 'EATEN'
+  | 'SKIPPED'
+  | 'REPLACED';
 
 export type NutritionPlanStatus =
   | 'DRAFT'
@@ -228,6 +239,38 @@ export interface NutritionFood {
     Date;
 }
 
+export interface NutritionFoodSnapshot {
+  name:
+    string;
+
+  brand:
+    string | null;
+
+  category:
+    NutritionFoodCategory;
+
+  referenceAmount:
+    number;
+
+  referenceUnit:
+    NutritionUnit;
+
+  caloriesKcal:
+    number;
+
+  proteinG:
+    number;
+
+  carbohydratesG:
+    number;
+
+  fatG:
+    number;
+
+  fiberG:
+    number | null;
+}
+
 export interface NutritionMealItem {
   id:
     NutritionMealItemId;
@@ -237,6 +280,9 @@ export interface NutritionMealItem {
 
   foodId:
     NutritionFoodId;
+
+  foodSnapshot:
+    NutritionFoodSnapshot;
 
   position:
     number;
@@ -263,6 +309,50 @@ export interface NutritionMealItemQuantity {
 
   quantity:
     number;
+
+  createdAt:
+    Date;
+
+  updatedAt:
+    Date;
+}
+
+export interface NutritionMealItemActual {
+  id:
+    NutritionMealItemActualId;
+
+  dayId:
+    NutritionDayId;
+
+  mealItemId:
+    NutritionMealItemId | null;
+
+  userId:
+    DkturboUserId;
+
+  status:
+    NutritionMealItemActualStatus;
+
+  plannedFoodId:
+    NutritionFoodId;
+
+  plannedFoodSnapshot:
+    NutritionFoodSnapshot;
+
+  plannedQuantity:
+    number;
+
+  actualFoodId:
+    NutritionFoodId | null;
+  
+  actualFoodSnapshot:
+    NutritionFoodSnapshot | null;
+
+  actualQuantity:
+    number | null;
+
+  notes:
+    string | null;
 
   createdAt:
     Date;

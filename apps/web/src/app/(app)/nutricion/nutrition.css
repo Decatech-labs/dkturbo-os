@@ -2901,3 +2901,409 @@ header strong {
   flex-wrap:
     wrap;
 }
+
+/* =========================================================
+   NUTRITION — DAILY NUTRITION SUMMARY
+   ========================================================= */
+
+.nutrition-day-summary-card {
+  display:
+    grid;
+
+  gap:
+    14px;
+
+  padding:
+    16px 18px;
+
+  border:
+    1px solid
+    rgba(
+      98,
+      84,
+      66,
+      0.08
+    );
+
+  border-radius:
+    20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(
+        255,
+        255,
+        255,
+        0.7
+      ),
+      rgba(
+        255,
+        255,
+        255,
+        0.48
+      )
+    );
+
+  box-shadow:
+    inset
+      0
+      1px
+      0
+      rgba(
+        255,
+        255,
+        255,
+        0.64
+      ),
+    0
+      10px
+      28px
+      rgba(
+        54,
+        44,
+        32,
+        0.05
+      );
+}
+
+.nutrition-day-summary-header {
+  display:
+    flex;
+
+  align-items:
+    flex-end;
+
+  justify-content:
+    space-between;
+
+  gap:
+    20px;
+}
+
+.nutrition-day-summary-header > div:first-child {
+  display:
+    grid;
+
+  gap:
+    2px;
+}
+
+.nutrition-day-summary-header > div:first-child > span {
+  font-size:
+    10px;
+
+  font-weight:
+    650;
+
+  opacity:
+    0.46;
+}
+
+.nutrition-day-summary-header > div:first-child > strong {
+  font-size:
+    25px;
+
+  font-weight:
+    780;
+
+  letter-spacing:
+    -0.04em;
+}
+
+.nutrition-day-summary-energy-target {
+  display:
+    grid;
+
+  gap:
+    2px;
+
+  text-align:
+    right;
+}
+
+.nutrition-day-summary-energy-target span {
+  font-size:
+    11px;
+
+  font-weight:
+    650;
+
+  opacity:
+    0.52;
+}
+
+.nutrition-day-summary-energy-target small {
+  font-size:
+    10px;
+
+  opacity:
+    0.42;
+}
+
+.nutrition-day-summary-energy-progress,
+.nutrition-day-summary-item-progress {
+  overflow:
+    hidden;
+
+  height:
+    5px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.1
+    );
+}
+
+.nutrition-day-summary-energy-progress > span,
+.nutrition-day-summary-item-progress > span {
+  display:
+    block;
+
+  height:
+    100%;
+
+  border-radius:
+    inherit;
+
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.72
+    );
+
+  transition:
+    width
+      180ms
+      ease;
+}
+
+.nutrition-day-summary-energy-progress {
+  height:
+    6px;
+}
+
+.nutrition-day-summary-grid {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    8px;
+}
+
+.nutrition-day-summary-item {
+  min-width:
+    0;
+
+  padding:
+    11px 12px;
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  border:
+    1px solid
+    rgba(
+      98,
+      84,
+      66,
+      0.05
+    );
+
+  border-radius:
+    13px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(
+        248,
+        246,
+        242,
+        0.94
+      ),
+      rgba(
+        241,
+        236,
+        229,
+        0.72
+      )
+    );
+}
+
+.nutrition-day-summary-item > header {
+  display:
+    flex;
+
+  align-items:
+    baseline;
+
+  justify-content:
+    space-between;
+
+  gap:
+    8px;
+}
+
+.nutrition-day-summary-item > header span {
+  min-width:
+    0;
+
+  overflow:
+    hidden;
+
+  font-size:
+    10px;
+
+  font-weight:
+    680;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+
+  opacity:
+    0.48;
+}
+
+.nutrition-day-summary-item > header strong {
+  flex:
+    0 0 auto;
+
+  font-size:
+    14px;
+
+  font-weight:
+    760;
+
+  letter-spacing:
+    -0.025em;
+}
+
+.nutrition-day-summary-item-meta {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  gap:
+    8px;
+}
+
+.nutrition-day-summary-item-meta span,
+.nutrition-day-summary-item-meta small,
+.nutrition-day-summary-no-target {
+  font-size:
+    9px;
+
+  opacity:
+    0.42;
+}
+
+.nutrition-day-summary-item-meta small {
+  text-align:
+    right;
+}
+
+.nutrition-day-summary-energy-progress-over > span,
+.nutrition-day-summary-item-over
+.nutrition-day-summary-item-progress > span {
+  background:
+    rgba(
+      184,
+      126,
+      72,
+      0.72
+    );
+}
+
+.nutrition-day-summary-item-over
+.nutrition-day-summary-item-meta small {
+  color:
+    rgba(
+      151,
+      91,
+      43,
+      0.9
+    );
+
+  opacity:
+    0.82;
+}
+
+@media (
+  max-width: 760px
+) {
+
+  .nutrition-day-summary-card {
+    padding:
+      14px;
+  }
+
+  .nutrition-day-summary-header {
+    align-items:
+      flex-start;
+  }
+
+  .nutrition-day-summary-header > div:first-child > strong {
+    font-size:
+      22px;
+  }
+
+  .nutrition-day-summary-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(
+          0,
+          1fr
+        )
+      );
+  }
+
+}
+
+@media (
+  max-width: 430px
+) {
+
+  .nutrition-day-summary-header {
+    flex-direction:
+      column;
+
+    gap:
+      6px;
+  }
+
+  .nutrition-day-summary-energy-target {
+    text-align:
+      left;
+  }
+
+}

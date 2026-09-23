@@ -235,6 +235,67 @@ export interface NutritionMealItemQuantityResponse {
     string;
 }
 
+export type NutritionFoodSnapshotResponse =
+  Pick<
+    NutritionFoodResponse,
+    | 'name'
+    | 'brand'
+    | 'category'
+    | 'referenceAmount'
+    | 'referenceUnit'
+    | 'caloriesKcal'
+    | 'proteinG'
+    | 'carbohydratesG'
+    | 'fatG'
+    | 'fiberG'
+  >;
+
+export interface NutritionMealItemActualResponse {
+  id:
+    string;
+
+  dayId:
+    string;
+
+  mealItemId:
+    string | null;
+
+  userId:
+    string;
+
+  status:
+    | 'EATEN'
+    | 'SKIPPED'
+    | 'REPLACED';
+
+  plannedFoodId:
+    string;
+
+  plannedFoodSnapshot:
+    NutritionFoodSnapshotResponse;
+
+  plannedQuantity:
+    number;
+
+  actualFoodId:
+    string | null;
+
+  actualFoodSnapshot:
+    NutritionFoodSnapshotResponse | null;
+
+  actualQuantity:
+    number | null;
+
+  notes:
+    string | null;
+
+  createdAt:
+    string;
+
+  updatedAt:
+    string;
+}
+
 export interface NutritionMealItemDetailResponse {
   item:
     NutritionMealItemResponse;
@@ -263,6 +324,23 @@ export interface NutritionNutrientsResponse {
     number;
 }
 
+export interface NutritionTargetRemainingResponse {
+  caloriesKcal:
+    number | null;
+
+  proteinG:
+    number | null;
+
+  carbohydratesG:
+    number | null;
+
+  fatG:
+    number | null;
+
+  fiberG:
+    number | null;
+}
+
 export interface NutritionMealUserTotalsResponse {
   userId:
     string;
@@ -289,11 +367,14 @@ export interface NutritionDailyProgressResponse {
   planned:
     NutritionNutrientsResponse;
 
+  actual:
+    NutritionNutrientsResponse;
+
   target:
     NutritionPlanTargetResponse | null;
 
   remaining:
-    NutritionNutrientsResponse | null;
+    NutritionTargetRemainingResponse;
 }
 
 export interface NutritionWeekDayDetailResponse {
@@ -302,6 +383,9 @@ export interface NutritionWeekDayDetailResponse {
 
   meals:
     NutritionMealDetailResponse[];
+
+  actuals:
+    NutritionMealItemActualResponse[];
 
   dailyTotalsByUser:
     NutritionMealUserTotalsResponse[];

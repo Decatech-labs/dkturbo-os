@@ -3,6 +3,10 @@ import type {
   Generated,
 } from 'kysely';
 
+import type {
+  NutritionFoodSnapshot,
+} from '../../domain/index.js';
+
 export interface NutritionPlanTable {
   id:
     Generated<string>;
@@ -155,6 +159,58 @@ export interface NutritionMealTable {
     >;
 }
 
+export interface NutritionMealItemActualTable {
+  id:
+    Generated<string>;
+
+  day_id:
+    string;
+
+  meal_item_id:
+    string | null;
+
+  user_id:
+    string;
+
+  status:
+    string;
+
+  planned_food_id:
+    string;
+
+  planned_food_snapshot:
+    NutritionFoodSnapshot;
+
+  planned_quantity:
+    string;
+
+  actual_food_id:
+    string | null;
+
+  actual_food_snapshot:
+    NutritionFoodSnapshot | null;
+
+  actual_quantity:
+    string | null;
+
+  notes:
+    string | null;
+
+  created_at:
+    ColumnType<
+      Date,
+      Date | undefined,
+      never
+    >;
+
+  updated_at:
+    ColumnType<
+      Date,
+      Date | undefined,
+      Date
+    >;
+}
+
 export interface NutritionFoodTable {
   id:
     Generated<string>;
@@ -219,6 +275,9 @@ export interface NutritionMealItemTable {
 
   food_id:
     string;
+
+  food_snapshot:
+    NutritionFoodSnapshot;
 
   position:
     number;
@@ -290,4 +349,7 @@ export interface NutritionDatabase {
 
   'nutrition.meal_item_quantities':
     NutritionMealItemQuantityTable;
+
+  'nutrition.meal_item_actuals':
+    NutritionMealItemActualTable;
 }

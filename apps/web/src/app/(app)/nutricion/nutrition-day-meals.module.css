@@ -319,6 +319,53 @@
   opacity: 0.38;
 }
 
+.actualReplacement {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  overflow: hidden;
+
+  color:
+    rgb(
+      94,
+      79,
+      135
+    );
+
+  font-size: 0.66rem;
+  line-height: 1.25;
+}
+
+.actualReplacement svg {
+  width: 11px;
+  height: 11px;
+
+  flex:
+    0 0 auto;
+
+  stroke-width: 2;
+}
+
+.actualReplacement > span {
+  flex:
+    0 0 auto;
+
+  opacity: 0.62;
+}
+
+.actualReplacement strong {
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-weight: 680;
+}
+
 .rowControls {
   display: flex;
   align-items: center;
@@ -449,13 +496,12 @@
 }
 
 .menuPopover {
-  position: absolute;
-  z-index: 30;
+  position: fixed;
+  z-index: 1000;
 
-  top: calc(100% + 5px);
-  right: 0;
+  width: 210px;
 
-  width: 190px;
+  box-sizing: border-box;
 
   padding: 5px;
 
@@ -465,31 +511,25 @@
       47,
       41,
       34,
-      0.08
+      0.09
     );
 
   border-radius: 12px;
 
   background:
-    rgba(
+    rgb(
       255,
       252,
-      247,
-      0.98
+      247
     );
 
   box-shadow:
-    0 14px 38px
+    0 16px 42px
     rgba(
       49,
       39,
       29,
-      0.12
-    );
-
-  backdrop-filter:
-    blur(
-      16px
+      0.16
     );
 }
 
@@ -570,6 +610,252 @@
   font-size: 11px;
 }
 
+.foodRow_PENDING {
+}
+
+.foodRow_EATEN {
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.045
+    );
+}
+
+.foodRow_SKIPPED {
+}
+
+.foodRow_SKIPPED .dragHandle,
+.foodRow_SKIPPED .foodIdentity,
+.foodRow_SKIPPED .quantityButton {
+  opacity: 0.52;
+}
+
+.foodRow_SKIPPED .foodName {
+  text-decoration:
+    line-through;
+
+  text-decoration-thickness:
+    1px;
+}
+
+.foodRow_REPLACED {
+  background:
+    rgba(
+      112,
+      96,
+      155,
+      0.045
+    );
+}
+
+.quickEatenButton {
+  width: 29px;
+  height: 29px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(
+      94,
+      132,
+      85,
+      0.16
+    );
+
+  border-radius: 9px;
+
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.055
+    );
+
+  color:
+    rgb(
+      77,
+      112,
+      69
+    );
+
+  cursor: pointer;
+
+  transition:
+    background 120ms ease,
+    transform 120ms ease;
+}
+
+.quickEatenButton:hover {
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.12
+    );
+
+  transform:
+    scale(
+      1.04
+    );
+}
+
+.quickEatenButton:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.quickEatenButton svg {
+  width: 14px;
+  height: 14px;
+
+  stroke-width: 2.2;
+}
+
+.statusBadge {
+  min-height: 27px;
+
+  padding:
+    0
+    7px;
+
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  border-radius: 8px;
+
+  font-size: 0.65rem;
+  font-weight: 680;
+  white-space: nowrap;
+}
+
+.statusBadge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.statusBadge_EATEN {
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.1
+    );
+
+  color:
+    rgb(
+      77,
+      112,
+      69
+    );
+}
+
+.statusBadge_SKIPPED {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.08
+    );
+
+  color:
+    rgba(
+      55,
+      51,
+      47,
+      0.66
+    );
+}
+
+.statusBadge_REPLACED {
+  background:
+    rgba(
+      112,
+      96,
+      155,
+      0.09
+    );
+
+  color:
+    rgb(
+      94,
+      79,
+      135
+    );
+}
+
+.actionButton {
+  width: 100%;
+  min-height: 34px;
+
+  padding:
+    0
+    9px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: inherit;
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 620;
+
+  cursor: pointer;
+}
+
+.actionButton:hover {
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.06
+    );
+}
+
+.actionButton:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+.actionButton svg {
+  width: 13px;
+  height: 13px;
+
+  opacity: 0.65;
+}
+
+.menuSeparator {
+  height: 1px;
+
+  margin:
+    4px
+    5px;
+
+  background:
+    rgba(
+      47,
+      41,
+      34,
+      0.07
+    );
+}
+
 @media (
   max-width: 700px
 ) {
@@ -624,5 +910,9 @@
 
   .foodMeta {
     font-size: 0.64rem;
+  }
+
+  .actualReplacement {
+    font-size: 0.62rem;
   }
 }

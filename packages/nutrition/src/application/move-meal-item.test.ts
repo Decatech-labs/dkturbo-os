@@ -167,6 +167,37 @@ const createDetail =
               'id'
             ],
 
+        foodSnapshot: {
+          name,
+
+          brand:
+            null,
+
+          category:
+            'OTHER',
+
+          referenceAmount:
+            100,
+
+          referenceUnit:
+            'G',
+
+          caloriesKcal:
+            100,
+
+          proteinG:
+            10,
+
+          carbohydratesG:
+            10,
+
+          fatG:
+            1,
+
+          fiberG:
+            null,
+        },
+
         position,
 
         notes:
@@ -417,6 +448,31 @@ const createRepositories =
 
           return [];
         },
+    },
+
+    mealItemActuals: {
+      save:
+        async () => {
+          throw new Error(
+            'Not implemented',
+          );
+        },
+
+      findForItemAndUser:
+        async () =>
+          null,
+
+      deleteForItemAndUser:
+        async () =>
+          false,
+
+      listForDayAndUser:
+        async () =>
+          [],
+
+      listForDay:
+        async () =>
+          [],
     },
 
     plans: {

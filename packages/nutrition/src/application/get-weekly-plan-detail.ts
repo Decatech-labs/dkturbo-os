@@ -7,6 +7,7 @@ import type {
   NutritionPlan,
   NutritionPlanId,
   NutritionPlanTarget,
+  NutritionMealItemActual,
 } from '../domain/index.js';
 
 import type {
@@ -18,6 +19,7 @@ import {
   calculateMealTotalsByUser,
   emptyNutrients,
   roundNutrients,
+  calculateFoodNutrients,
 } from './nutrition-calculations.js';
 
 export interface NutritionTargetRemaining {
@@ -44,6 +46,9 @@ export interface NutritionDailyUserProgress {
   planned:
     NutritionNutrients;
 
+  actual:
+    NutritionNutrients;
+
   target:
     NutritionPlanTarget | null;
 
@@ -57,6 +62,9 @@ export interface NutritionWeeklyDayDetail {
 
   meals:
     NutritionMealDetail[];
+
+  actuals:
+    NutritionMealItemActual[];
 
   dailyTotalsByUser:
     NutritionMealUserTotals[];
@@ -188,6 +196,7 @@ export const getWeeklyPlanDetail =
         days,
         meals,
         mealItems,
+        mealItemActuals,
       }) => {
 
         const plan =
@@ -233,6 +242,12 @@ export const getWeeklyPlanDetail =
               'Nutrition day does not belong to plan',
             );
           }
+
+          const actuals =
+            await mealItemActuals
+              .listForDay(
+                day.id,
+              );
 
           const dayMeals =
             await meals.listForDay(
@@ -340,6 +355,58 @@ export const getWeeklyPlanDetail =
               }),
             );
 
+          const actualTotals =
+            new Map<
+              DkturboUserId,
+              NutritionNutrients
+            >();
+
+          for (
+            const actual of
+              actuals
+          ) {
+
+            /*
+             * SKIPPED contributes no consumed
+             * nutrients. PENDING has no persisted
+             * actual row, so it never enters here.
+             */
+            if (
+              actual.status ===
+                'SKIPPED'
+            ) {
+              continue;
+            }
+
+            if (
+              actual.actualFoodSnapshot ===
+                null ||
+              actual.actualQuantity ===
+                null
+            ) {
+              throw new Error(
+                'Nutrition actual consumption is missing food or quantity',
+              );
+            }
+
+            const current =
+              actualTotals.get(
+                actual.userId,
+              ) ??
+              emptyNutrients();
+
+            actualTotals.set(
+              actual.userId,
+              addNutrients(
+                current,
+                calculateFoodNutrients(
+                  actual.actualFoodSnapshot,
+                  actual.actualQuantity,
+                ),
+              ),
+            );
+          }
+
           for (
             const total of
               dailyTotalsByUser
@@ -387,6 +454,15 @@ export const getWeeklyPlanDetail =
             );
           }
 
+          for (
+            const actual of
+              actuals
+          ) {
+            relevantUserIds.add(
+              actual.userId,
+            );
+          }
+
           const progressByUser =
             Array.from(
               relevantUserIds,
@@ -398,6 +474,14 @@ export const getWeeklyPlanDetail =
                     userId,
                   ) ??
                   emptyNutrients();
+
+                const actual =
+                  roundNutrients(
+                    actualTotals.get(
+                      userId,
+                    ) ??
+                    emptyNutrients(),
+                  );
 
                 const target =
                   targets.find(
@@ -411,6 +495,8 @@ export const getWeeklyPlanDetail =
                   userId,
 
                   planned,
+
+                  actual,
 
                   target,
 
@@ -445,6 +531,8 @@ export const getWeeklyPlanDetail =
 
             meals:
               detailedMeals,
+
+            actuals,
 
             dailyTotalsByUser,
 

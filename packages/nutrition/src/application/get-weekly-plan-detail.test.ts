@@ -18,6 +18,8 @@ import type {
   NutritionPlanTargetId,
   NutritionRepositories,
   NutritionUnitOfWork,
+  NutritionMealItemActual,
+  NutritionMealItemActualId,
 } from '../index.js';
 
 import {
@@ -52,6 +54,10 @@ const riceId =
 const riceItemId =
   '60000000-0000-4000-8000-000000000001' as
     NutritionMealItemId;
+
+const riceActualId =
+  '90000000-0000-4000-8000-000000000001' as
+    NutritionMealItemActualId;
 
 const plan:
   NutritionPlan = {
@@ -179,6 +185,86 @@ const lunch:
       new Date(),
   };
 
+const riceSnapshot = {
+  name:
+    'Arroz',
+
+  brand:
+    null,
+
+  category:
+    'OTHER' as const,
+
+  referenceAmount:
+    100,
+
+  referenceUnit:
+    'G' as const,
+
+  caloriesKcal:
+    350,
+
+  proteinG:
+    7,
+
+  carbohydratesG:
+    78,
+
+  fatG:
+    1,
+
+  fiberG:
+    1,
+};
+
+const riceActual:
+  NutritionMealItemActual = {
+    id:
+      riceActualId,
+
+    dayId:
+      mondayId,
+
+    mealItemId:
+      riceItemId,
+
+    userId,
+
+    status:
+      'EATEN',
+
+    plannedFoodId:
+      riceId,
+
+    plannedFoodSnapshot:
+      riceSnapshot,
+
+    actualFoodSnapshot:
+      riceSnapshot,
+
+    plannedQuantity:
+      200,
+
+    actualFoodId:
+      riceId,
+
+    actualQuantity:
+      200,
+
+    notes:
+      null,
+
+    createdAt:
+      new Date(
+        '2026-09-22T12:00:00.000Z',
+      ),
+
+    updatedAt:
+      new Date(
+        '2026-09-22T12:00:00.000Z',
+      ),
+  };
+
 const createUnitOfWork =
   (
     overrides:
@@ -273,8 +359,56 @@ const createUnitOfWork =
               },
 
             findById:
-              async () =>
-                null,
+              async foodId =>
+                foodId ===
+                  riceId
+                  ? {
+                      id:
+                        riceId,
+
+                      name:
+                        'Arroz',
+
+                      brand:
+                        null,
+
+                      category:
+                        'OTHER',
+
+                      referenceAmount:
+                        100,
+
+                      referenceUnit:
+                        'G',
+
+                      caloriesKcal:
+                        350,
+
+                      proteinG:
+                        7,
+
+                      carbohydratesG:
+                        78,
+
+                      fatG:
+                        1,
+
+                      fiberG:
+                        1,
+
+                      createdByUserId:
+                        userId,
+
+                      archivedAt:
+                        null,
+
+                      createdAt:
+                        new Date(),
+
+                      updatedAt:
+                        new Date(),
+                    }
+                  : null,
 
             update:
               async () =>
@@ -326,6 +460,9 @@ const createUnitOfWork =
 
                           foodId:
                             riceId,
+
+                          foodSnapshot:
+                            riceSnapshot,
 
                           position:
                             0,
@@ -412,6 +549,36 @@ const createUnitOfWork =
                   : [],
           },
 
+          mealItemActuals: {
+            save:
+              async () => {
+                throw new Error(
+                  'Not implemented',
+                );
+              },
+
+            findForItemAndUser:
+              async () =>
+                null,
+
+            deleteForItemAndUser:
+              async () =>
+                false,
+
+            listForDay:
+              async dayId =>
+                dayId ===
+                  mondayId
+                  ? [
+                      riceActual,
+                    ]
+                  : [],
+
+            listForDayAndUser:
+              async () =>
+                [],
+          },
+
           ...overrides,
         }),
   });
@@ -470,6 +637,12 @@ describe(
         );
 
         expect(
+          mondayDetail.actuals,
+        ).toEqual([
+          riceActual,
+        ]);
+
+        expect(
           mondayDetail.dailyTotalsByUser,
         ).toEqual([
           {
@@ -501,6 +674,23 @@ describe(
             userId,
 
             planned: {
+              caloriesKcal:
+                700,
+
+              proteinG:
+                14,
+
+              carbohydratesG:
+                156,
+
+              fatG:
+                2,
+
+              fiberG:
+                2,
+            },
+
+            actual: {
               caloriesKcal:
                 700,
 
@@ -559,6 +749,12 @@ describe(
           [],
         );
 
+        expect(
+          tuesdayDetail.actuals,
+        ).toEqual(
+          [],
+        );
+
         /*
          * A target still appears in progress,
          * even if the day has no planned food.
@@ -570,6 +766,23 @@ describe(
             userId,
 
             planned: {
+              caloriesKcal:
+                0,
+
+              proteinG:
+                0,
+
+              carbohydratesG:
+                0,
+
+              fatG:
+                0,
+
+              fiberG:
+                0,
+            },
+
+            actual: {
               caloriesKcal:
                 0,
 
@@ -662,6 +875,145 @@ describe(
           ),
         ).rejects.toBeInstanceOf(
           NutritionPlanNotFoundForDetailError,
+        );
+      },
+    );
+
+    it(
+      'calculates actual nutrients from the stored snapshot rather than the current food catalog',
+      async () => {
+
+        const historicalSnapshot = {
+          ...riceSnapshot,
+
+          caloriesKcal:
+            350,
+        };
+
+        const currentCatalogFood = {
+          id:
+            riceId,
+
+          name:
+            'Arroz',
+
+          brand:
+            null,
+
+          category:
+            'OTHER' as const,
+
+          referenceAmount:
+            100,
+
+          referenceUnit:
+            'G' as const,
+
+          caloriesKcal:
+            999,
+
+          proteinG:
+            7,
+
+          carbohydratesG:
+            78,
+
+          fatG:
+            1,
+
+          fiberG:
+            1,
+
+          createdByUserId:
+            userId,
+
+          archivedAt:
+            null,
+
+          createdAt:
+            new Date(),
+
+          updatedAt:
+            new Date(),
+        };
+
+        const historicalActual = {
+          ...riceActual,
+
+          plannedFoodSnapshot:
+            historicalSnapshot,
+
+          actualFoodSnapshot:
+            historicalSnapshot,
+        };
+
+        const result =
+          await getWeeklyPlanDetail(
+            createUnitOfWork({
+              foods: {
+                create:
+                  async () => {
+                    throw new Error(
+                      'Not implemented',
+                    );
+                  },
+
+                findById:
+                  async () =>
+                    currentCatalogFood,
+
+                update:
+                  async () =>
+                    null,
+
+                archive:
+                  async () =>
+                    false,
+
+                searchActive:
+                  async () =>
+                    [],
+              },
+
+              mealItemActuals: {
+                save:
+                  async () => {
+                    throw new Error(
+                      'Not implemented',
+                    );
+                  },
+
+                findForItemAndUser:
+                  async () =>
+                    null,
+
+                deleteForItemAndUser:
+                  async () =>
+                    false,
+
+                listForDay:
+                  async dayId =>
+                    dayId ===
+                      mondayId
+                      ? [
+                          historicalActual,
+                        ]
+                      : [],
+
+                listForDayAndUser:
+                  async () =>
+                    [],
+              },
+            }),
+            planId,
+          );
+
+        expect(
+          result.days[0]
+            ?.progressByUser[0]
+            ?.actual.caloriesKcal,
+        ).toBe(
+          700,
         );
       },
     );

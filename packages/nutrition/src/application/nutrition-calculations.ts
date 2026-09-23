@@ -1,5 +1,6 @@
 import type {
   DkturboUserId,
+  NutritionFoodSnapshot,
   NutritionMealItemDetail,
   NutritionMealUserTotals,
   NutritionNutrients,
@@ -94,6 +95,45 @@ export const addNutrients =
       current.fiberG +
       addition.fiberG,
   });
+
+export const calculateFoodNutrients =
+  (
+    food:
+      NutritionFoodSnapshot,
+
+    quantity:
+      number,
+  ): NutritionNutrients => {
+
+    const factor =
+      quantity /
+      food.referenceAmount;
+
+    return roundNutrients({
+      caloriesKcal:
+        food.caloriesKcal *
+        factor,
+
+      proteinG:
+        food.proteinG *
+        factor,
+
+      carbohydratesG:
+        food.carbohydratesG *
+        factor,
+
+      fatG:
+        food.fatG *
+        factor,
+
+      fiberG:
+        (
+          food.fiberG ??
+          0
+        ) *
+        factor,
+    });
+  };
 
 export const calculateMealTotalsByUser =
   (

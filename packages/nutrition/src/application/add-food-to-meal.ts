@@ -9,6 +9,10 @@ import type {
   NutritionUnitOfWork,
 } from '../ports/index.js';
 
+import {
+  snapshotNutritionFood,
+} from './food-snapshot.js';
+
 export interface MealFoodQuantityInput {
   userId:
     DkturboUserId;
@@ -138,6 +142,11 @@ export const addFoodToMeal =
 
             foodId:
               input.foodId,
+
+            foodSnapshot:
+              snapshotNutritionFood(
+                food,
+              ),
 
             position:
               input.position,
