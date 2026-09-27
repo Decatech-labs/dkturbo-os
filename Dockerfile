@@ -18,6 +18,8 @@ COPY apps/worker/package.json apps/worker/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/control-plane/package.json packages/control-plane/package.json
 COPY packages/design-system/package.json packages/design-system/package.json
+COPY packages/nutrition/package.json packages/nutrition/package.json
+COPY packages/training/package.json packages/training/package.json
 
 RUN pnpm install --frozen-lockfile
 
