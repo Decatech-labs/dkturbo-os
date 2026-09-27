@@ -7,6 +7,10 @@ import type {
 } from './food-repository.port.js';
 
 import type {
+  FoodPreparationConversionRepository,
+} from './food-preparation-conversion-repository.port.js';
+
+import type {
   MealItemRepository,
 } from './meal-item-repository.port.js';
 
@@ -26,12 +30,19 @@ import type {
   MealItemActualRepository,
 } from './meal-item-actual-repository.port.js';
 
+import type {
+  PersonAccessRepository,
+} from './person-access-repository.port.js';
+
 export interface NutritionRepositories {
   days:
     DayRepository;
 
   foods:
     FoodRepository;
+
+  foodPreparationConversions:
+    FoodPreparationConversionRepository;
 
   meals:
     MealRepository;
@@ -41,6 +52,9 @@ export interface NutritionRepositories {
 
   mealItemActuals:
     MealItemActualRepository;
+
+  personAccess:
+    PersonAccessRepository;
 
   plans:
     PlanRepository;

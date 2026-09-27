@@ -154,6 +154,17 @@ describe(
           )
           .execute();
 
+        await nutritionDatabase
+          .deleteFrom(
+            'nutrition.person_access',
+          )
+          .where(
+            'grantee_user_id',
+            '=',
+            ownerUserId,
+          )
+          .execute();
+
         await controlDatabase
           .deleteFrom(
             'identity.users',
@@ -206,6 +217,28 @@ describe(
                 new Date(),
             },
           ])
+          .execute();
+
+        await nutritionDatabase
+          .insertInto(
+            'nutrition.person_access',
+          )
+          .values({
+            grantee_user_id:
+              ownerUserId,
+
+            subject_user_id:
+              secondUserId,
+
+            role:
+              'MANAGER',
+
+            created_at:
+              new Date(),
+
+            updated_at:
+              new Date(),
+          })
           .execute();
       },
     );
@@ -767,6 +800,9 @@ describe(
 
               name:
                 'Nutrition API Owner',
+
+              accessRole:
+                'SELF',
             },
             {
               id:
@@ -774,13 +810,16 @@ describe(
 
               name:
                 'Nutrition API Second User',
+
+              accessRole:
+                'MANAGER',
             },
           ]),
         );
       },
     );
 
-        it(
+    it(
       'creates a meal inside a Nutrition day',
       async () => {
 

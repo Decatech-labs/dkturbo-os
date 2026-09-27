@@ -6,6 +6,7 @@ import type {
   NutritionMealItemId,
   NutritionFoodId,
   NutritionFoodSnapshot,
+  NutritionFoodPreparationConversionId,
 } from '../domain/index.js';
 
 export interface AddNutritionMealItemData {
@@ -14,6 +15,9 @@ export interface AddNutritionMealItemData {
 
   foodId:
     NutritionFoodId;
+
+  preparationConversionId:
+    NutritionFoodPreparationConversionId | null;
 
   foodSnapshot:
     NutritionFoodSnapshot;
@@ -52,6 +56,14 @@ export interface MealItemRepository {
       SetMealItemLocationData[],
   ): Promise<void>;
 
+  setPreparationConversion(
+    mealItemId:
+      NutritionMealItemId,
+
+    preparationConversionId:
+      NutritionFoodPreparationConversionId | null,
+  ): Promise<boolean>;
+
   delete(
     mealItemId:
       NutritionMealItemId,
@@ -61,6 +73,14 @@ export interface MealItemRepository {
     data:
       SaveMealItemQuantityData[],
   ): Promise<void>;
+
+  deleteQuantity(
+    mealItemId:
+      NutritionMealItemId,
+
+    userId:
+      DkturboUserId,
+  ): Promise<boolean>;
 
   listDetailsForMeal(
     mealId:

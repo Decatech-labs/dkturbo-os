@@ -22,6 +22,14 @@ import {
   InvalidWeeklyNutritionPlanError,
 } from './create-weekly-plan.js';
 
+import {
+  createTestPersonAccessRepository,
+} from './test-person-access-repository.js';
+
+import {
+  createTestFoodPreparationConversionRepository,
+} from './test-food-preparation-conversion-repository.js';
+
 const userId =
   '10000000-0000-4000-8000-000000000001' as
     DkturboUserId;
@@ -194,12 +202,20 @@ const createUnitOfWork =
             setLocations:
               async () => {},
 
+            setPreparationConversion:
+              async () =>
+                false,
+
             delete:
               async () =>
                 false,
 
             saveQuantities:
               async () => {},
+
+            deleteQuantity:
+              async () =>
+                false,
 
             listDetailsForMeal:
               async () =>
@@ -230,6 +246,12 @@ const createUnitOfWork =
               async () =>
                 [],
           },
+
+          personAccess:
+            createTestPersonAccessRepository(),
+
+          foodPreparationConversions:
+            createTestFoodPreparationConversionRepository(),
 
           planTargets: {
             save:

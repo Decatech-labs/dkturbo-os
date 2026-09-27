@@ -26,6 +26,14 @@ import {
   updateMeal,
 } from './update-meal.js';
 
+import {
+  createTestPersonAccessRepository,
+} from './test-person-access-repository.js';
+
+import {
+  createTestFoodPreparationConversionRepository,
+} from './test-food-preparation-conversion-repository.js';
+
 const mealId =
   'meal-1' as
     NutritionMealId;
@@ -145,12 +153,20 @@ const createRepositories =
       setLocations:
         async () => {},
 
+      setPreparationConversion:
+        async () =>
+          false,
+
       delete:
         async () =>
           false,
 
       saveQuantities:
         async () => {},
+
+      deleteQuantity:
+        async () =>
+          false,
 
       listDetailsForMeal:
         async () =>
@@ -181,6 +197,12 @@ const createRepositories =
         async () =>
           [],
     },
+
+    personAccess:
+      createTestPersonAccessRepository(),
+
+    foodPreparationConversions:
+      createTestFoodPreparationConversionRepository(),
 
     plans: {
       create:

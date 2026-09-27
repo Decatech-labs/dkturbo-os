@@ -148,6 +148,9 @@ export const addFoodToMeal =
                 food,
               ),
 
+            preparationConversionId:
+              null,
+
             position:
               input.position,
 

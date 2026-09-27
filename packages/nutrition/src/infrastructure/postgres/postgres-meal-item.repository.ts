@@ -15,6 +15,8 @@ import type {
   NutritionUnit,
   NutritionFoodCategory,
   NutritionFoodSnapshot,
+  NutritionFoodPreparationConversion,
+  NutritionFoodPreparationConversionId,
 } from '../../domain/index.js';
 
 import type {
@@ -43,6 +45,9 @@ const mapMealItem =
       food_snapshot:
         NutritionFoodSnapshot;
 
+      preparation_conversion_id:
+        string | null;
+
       position:
         number;
 
@@ -70,6 +75,13 @@ const mapMealItem =
 
     foodSnapshot:
       row.food_snapshot,
+
+    preparationConversionId:
+      row.preparation_conversion_id ===
+        null
+        ? null
+        : row.preparation_conversion_id as
+            NutritionFoodPreparationConversionId,
 
     position:
       row.position,
@@ -144,7 +156,7 @@ const mapFood =
       row.brand,
 
     category:
-      row.category as 
+      row.category as
         NutritionFoodCategory,
 
     referenceAmount:
@@ -225,6 +237,9 @@ implements MealItemRepository {
 
           food_snapshot:
             data.foodSnapshot,
+
+          preparation_conversion_id:
+            data.preparationConversionId,
 
           position:
             data.position,
@@ -323,6 +338,74 @@ implements MealItemRepository {
     }
   }
 
+  public async setPreparationConversion(
+    mealItemId:
+      NutritionMealItemId,
+
+    preparationConversionId:
+      NutritionFoodPreparationConversionId | null,
+  ): Promise<boolean> {
+
+    const updated =
+      await this.db
+        .updateTable(
+          'nutrition.meal_items',
+        )
+        .set({
+          preparation_conversion_id:
+            preparationConversionId,
+
+          updated_at:
+            new Date(),
+        })
+        .where(
+          'id',
+          '=',
+          mealItemId,
+        )
+        .returning(
+          'id',
+        )
+        .executeTakeFirst();
+
+    return Boolean(
+      updated,
+    );
+  }
+
+  public async deleteQuantity(
+    mealItemId:
+      NutritionMealItemId,
+
+    userId:
+      DkturboUserId,
+  ): Promise<boolean> {
+
+    const deleted =
+      await this.db
+        .deleteFrom(
+          'nutrition.meal_item_quantities',
+        )
+        .where(
+          'meal_item_id',
+          '=',
+          mealItemId,
+        )
+        .where(
+          'user_id',
+          '=',
+          userId,
+        )
+        .returning(
+          'id',
+        )
+        .executeTakeFirst();
+
+    return Boolean(
+      deleted,
+    );
+  }
+
     public async setLocations(
     data:
       SetMealItemLocationData[],
@@ -403,6 +486,7 @@ implements MealItemRepository {
           'item.meal_id as item_meal_id',
           'item.food_id as item_food_id',
           'item.food_snapshot as item_food_snapshot',
+          'item.preparation_conversion_id as item_preparation_conversion_id',
           'item.position as item_position',
           'item.notes as item_notes',
           'item.created_at as item_created_at',
@@ -458,6 +542,72 @@ implements MealItemRepository {
         )
         .execute();
 
+      const foodIds =
+        [
+          ...new Set(
+            rows.map(
+              row =>
+                row.item_food_id,
+            ),
+          ),
+        ];
+
+      const preparationConversions =
+        foodIds.length ===
+          0
+          ? []
+          : await this.db
+              .selectFrom(
+                'nutrition.food_preparation_conversions',
+              )
+              .selectAll()
+              .where(
+                'food_id',
+                'in',
+                foodIds,
+              )
+              .execute();
+
+      const mapPreparationConversion =
+        (
+          row:
+            typeof preparationConversions[number],
+        ): NutritionFoodPreparationConversion => ({
+          id:
+            row.id as
+              NutritionFoodPreparationConversionId,
+
+          foodId:
+            row.food_id as
+              NutritionFoodId,
+
+          name:
+            row.name,
+
+          rawAmount:
+            Number(
+              row.raw_amount,
+            ),
+
+          preparedAmount:
+            Number(
+              row.prepared_amount,
+            ),
+
+          preparedUnit:
+            row.prepared_unit as
+              NutritionUnit,
+
+          isDefault:
+            row.is_default,
+
+          createdAt:
+            row.created_at,
+
+          updatedAt:
+            row.updated_at,
+        });
+
     return rows.map(
       row => {
 
@@ -474,6 +624,9 @@ implements MealItemRepository {
 
             food_snapshot:
               row.item_food_snapshot,
+
+            preparation_conversion_id:
+              row.item_preparation_conversion_id,
 
             position:
               row.item_position,
@@ -605,12 +758,60 @@ implements MealItemRepository {
                 }),
               );
 
+        const explicitPreparation =
+          item.preparationConversionId ===
+            null
+            ? null
+            : preparationConversions.find(
+                conversion =>
+                  conversion.id ===
+                  item.preparationConversionId,
+              ) ??
+              null;
+
+        const defaultPreparation =
+          preparationConversions.find(
+            conversion =>
+              conversion.food_id ===
+                item.foodId &&
+              conversion.is_default,
+          ) ??
+          null;
+
+        const resolvedPreparation =
+          explicitPreparation
+            ? {
+                conversion:
+                  mapPreparationConversion(
+                    explicitPreparation,
+                  ),
+
+                source:
+                  'EXPLICIT' as const,
+              }
+            : defaultPreparation
+              ? {
+                  conversion:
+                    mapPreparationConversion(
+                      defaultPreparation,
+                    ),
+
+                  source:
+                    'DEFAULT' as const,
+                }
+              : null;
+
         return {
           item,
+
           food:
             historicalFood,
+
           quantities:
             itemQuantities,
+
+          preparation:
+            resolvedPreparation,
         };
       },
     );

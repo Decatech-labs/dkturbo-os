@@ -33,6 +33,8 @@ export interface AthleteRepository {
     athleteId: AthleteId,
   ): Promise<Athlete | null>;
 
+  listAll(): Promise<Athlete[]>;
+
   listForUser(
     userId: DkturboUserId,
   ): Promise<AthleteForUser[]>;
@@ -45,4 +47,9 @@ export interface AthleteRepository {
     athleteId: AthleteId,
     userId: DkturboUserId,
   ): Promise<AthleteAccess | null>;
+
+  revokeAccess(
+    athleteId: AthleteId,
+    userId: DkturboUserId,
+  ): Promise<boolean>;
 }

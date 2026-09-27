@@ -190,6 +190,113 @@ export interface TrainingWeekDetailResponse {
     TrainingWeekDetailDayResponse[];
 }
 
+export type TrainingWellnessScore =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5;
+
+export interface TrainingDailyCheckinResponse {
+  id:
+    string;
+
+  athleteId:
+    string;
+
+  date:
+    string;
+
+  weightKg:
+    number | null;
+
+  sleepQuality:
+    TrainingWellnessScore | null;
+
+  fatigue:
+    TrainingWellnessScore | null;
+
+  soreness:
+    TrainingWellnessScore | null;
+
+  stress:
+    TrainingWellnessScore | null;
+
+  motivation:
+    TrainingWellnessScore | null;
+
+  notes:
+    string | null;
+
+  recordedByUserId:
+    string;
+
+  createdAt:
+    string;
+
+  updatedAt:
+    string;
+}
+
+export interface TrainingDailyCheckinWeightSummary {
+  first:
+    number | null;
+
+  last:
+    number | null;
+
+  average:
+    number | null;
+
+  difference:
+    number | null;
+}
+
+export interface TrainingDailyCheckinAverages {
+  sleepQuality:
+    number | null;
+
+  fatigue:
+    number | null;
+
+  soreness:
+    number | null;
+
+  stress:
+    number | null;
+
+  motivation:
+    number | null;
+}
+
+export interface TrainingDailyCheckinRangeSummary {
+  from:
+    string;
+
+  to:
+    string;
+
+  recordedDays:
+    number;
+
+  periodDays:
+    number;
+
+  weight:
+    TrainingDailyCheckinWeightSummary;
+
+  averages:
+    TrainingDailyCheckinAverages;
+}
+
+export interface TrainingDailyCheckinRangeResponse {
+  checkins:
+    TrainingDailyCheckinResponse[];
+
+  summary:
+    TrainingDailyCheckinRangeSummary;
+}
+
 export class TrainingApiError
 extends Error {
 
@@ -296,6 +403,29 @@ export const getTrainingWeekDetail =
         athleteId,
       )}/weeks/${encodeURIComponent(
         weekId,
+      )}`,
+    );
+
+export const getTrainingDailyCheckinRange =
+  (
+    athleteId:
+      string,
+
+    from:
+      string,
+
+    to:
+      string,
+  ): Promise<
+    TrainingDailyCheckinRangeResponse
+  > =>
+    getTrainingJson(
+      `/api/training/athletes/${encodeURIComponent(
+        athleteId,
+      )}/daily-checkins?from=${encodeURIComponent(
+        from,
+      )}&to=${encodeURIComponent(
+        to,
       )}`,
     );
 

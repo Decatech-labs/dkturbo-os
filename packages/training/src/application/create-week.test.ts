@@ -82,10 +82,16 @@ const athleteRepository:
     findById:
       vi.fn(),
 
+    listAll:
+      vi.fn(),
+
     listForUser:
       vi.fn(),
 
     grantAccess:
+      vi.fn(),
+
+    revokeAccess:
       vi.fn(),
 
     findAccess:
@@ -214,6 +220,9 @@ const createUnitOfWork =
 
           sessionStructure:
             sessionStructureRepository,
+
+          dailyCheckins:
+            {} as never,
         }),
   });
 

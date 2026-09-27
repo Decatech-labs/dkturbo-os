@@ -34,6 +34,7 @@ export {
   type RegisterHttpRoutes,
   type RequireAccessPermission,
   type RequireAuthenticatedActor,
+  type RequireOwnerActor,
 } from './transport/http/index.js';
 
 export {

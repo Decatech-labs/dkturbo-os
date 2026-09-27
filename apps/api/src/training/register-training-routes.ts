@@ -3,9 +3,20 @@ import type {
 } from '@dkturbo/control-plane';
 
 import {
+  buildTrainingWeekPdf,
+} from './build-training-week-pdf.js';
+
+import {
+  buildPdfContentDisposition,
+  normalizePdfFilename,
+} from '../pdf/report-pdf.js';
+
+import {
   AthleteAccessDeniedError,
   AthleteReadAccessDeniedError,
   createPlannedSession,
+  updatePlannedSession,
+  deleteTrainingSession,
   createWeek,
   getSessionDetail,
   getWeekDetail,
@@ -18,9 +29,20 @@ import {
   reorderSessionBlocks,
   addExerciseToSession,
   addPerformanceEntry,
+  recordPerformanceEntryActual,
   updatePerformanceEntryPlanned,
   deletePerformanceEntry,
   reorderPerformanceEntries,
+  updateSessionExercisePlanned,
+  deleteSessionExercise,
+  applySessionExerciseLayout,
+  listAthleteAccessAdministration,
+  setAthleteAccessAdministration,
+  getDailyCheckin,
+  saveDailyCheckin,
+  listDailyCheckins,
+  InvalidDailyCheckinError,
+  InvalidDailyCheckinRangeError,
   type AthleteId,
   type DkturboUserId,
   type Training,
@@ -33,6 +55,9 @@ import {
   type SessionBlockId,
   type SessionExerciseId,
   type PerformanceEntryId,
+  type SessionExerciseLayoutBlock,
+  type AthleteAccessRole,
+  type WellnessScore,
 } from '@dkturbo/training';
 
 export interface RegisterTrainingRoutesOptions {
@@ -71,6 +96,31 @@ interface CreatePlannedSessionBody {
     number | null;
 }
 
+interface UpdatePlannedSessionBody {
+
+  dayId:
+    string;
+
+  type:
+    TrainingSessionType;
+
+  title:
+    string;
+
+  plannedStartTime:
+    string | null;
+
+  plannedDurationMinutes:
+    number | null;
+
+  plannedNotes:
+    string | null;
+
+  plannedRpe:
+    number | null;
+
+}
+
 interface CreateSessionBlockBody {
 
   position:
@@ -101,9 +151,88 @@ interface ReorderSessionBlocksBody {
 
 }
 
+interface UpdateSessionExerciseBody {
+
+  plannedNotes:
+    string | null;
+
+}
+
+interface SessionExerciseLayoutBody {
+
+  blocks:
+    Array<{
+
+      blockId:
+        string;
+
+      orderedIds:
+        string[];
+
+    }>;
+
+}
+
 interface AthleteParams {
   athleteId:
     string;
+}
+
+interface DailyCheckinParams {
+  athleteId:
+    string;
+
+  date:
+    string;
+}
+
+interface DailyCheckinRangeQuery {
+  from:
+    string;
+
+  to:
+    string;
+}
+
+interface SaveDailyCheckinBody {
+  weightKg:
+    number | null;
+
+  sleepQuality:
+    WellnessScore | null;
+
+  fatigue:
+    WellnessScore | null;
+
+  soreness:
+    WellnessScore | null;
+
+  stress:
+    WellnessScore | null;
+
+  motivation:
+    WellnessScore | null;
+
+  notes:
+    string | null;
+}
+
+interface AdminUserParams {
+  userId:
+    string;
+}
+
+interface AdminAthleteAccessParams {
+  userId:
+    string;
+
+  athleteId:
+    string;
+}
+
+interface SetAthleteAccessBody {
+  role:
+    AthleteAccessRole | null;
 }
 
 interface WeekParams {
@@ -260,39 +389,69 @@ interface ReorderPerformanceEntriesBody {
     string[];
 }
 
-interface UpdatePerformanceEntryBody {
-  planned: {
-    reps:
-      number | null;
+interface PerformanceEntryValueBody {
+  reps:
+    number | null;
 
-    loadKg:
-      number | null;
+  loadKg:
+    number | null;
 
-    distanceM:
-      number | null;
+  distanceM:
+    number | null;
 
-    durationMs:
-      number | null;
+  durationMs:
+    number | null;
 
-    resultM:
-      number | null;
+  resultM:
+    number | null;
 
-    heightM:
-      number | null;
+  heightM:
+    number | null;
 
-    rpe:
-      number | null;
+  rpe:
+    number | null;
 
-    rir:
-      number | null;
+  rir:
+    number | null;
 
-    restSeconds:
-      number | null;
+  restSeconds:
+    number | null;
 
-    notes:
-      string | null;
-  };
+  notes:
+    string | null;
 }
+
+interface PerformanceEntryActualBody
+  extends PerformanceEntryValueBody {
+
+  success:
+    boolean | null;
+
+  isFoul:
+    boolean | null;
+
+  metrics:
+    Record<
+      string,
+      unknown
+    >;
+}
+
+type UpdatePerformanceEntryBody =
+  | {
+      planned:
+        PerformanceEntryValueBody;
+
+      actual?:
+        never;
+    }
+  | {
+      planned?:
+        never;
+
+      actual:
+        PerformanceEntryActualBody;
+    };
 
 type AddExerciseBody =
   | AddExistingExerciseBody
@@ -311,6 +470,352 @@ const isUuid =
     uuidPattern.test(
       value,
     );
+
+const isCalendarDate =
+  (
+    value:
+      unknown,
+  ): value is string => {
+
+    if (
+      typeof value !==
+        'string' ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(
+        value,
+      )
+    ) {
+      return false;
+    }
+
+    const [
+      year,
+      month,
+      day,
+    ] =
+      value
+        .split('-')
+        .map(Number);
+
+    const date =
+      new Date(
+        Date.UTC(
+          year!,
+          month! - 1,
+          day!,
+        ),
+      );
+
+    return (
+      date.getUTCFullYear() ===
+        year &&
+      date.getUTCMonth() ===
+        month! - 1 &&
+      date.getUTCDate() ===
+        day
+    );
+  };
+
+const parseDailyCheckinParams =
+  (
+    value:
+      unknown,
+  ): DailyCheckinParams | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      !isUuid(
+        candidate.athleteId,
+      ) ||
+      !isCalendarDate(
+        candidate.date,
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      athleteId:
+        candidate.athleteId,
+
+      date:
+        candidate.date,
+    };
+  };
+
+const parseDailyCheckinRangeQuery =
+  (
+    value:
+      unknown,
+  ): DailyCheckinRangeQuery | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      !isCalendarDate(
+        candidate.from,
+      ) ||
+      !isCalendarDate(
+        candidate.to,
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      from:
+        candidate.from,
+
+      to:
+        candidate.to,
+    };
+  };
+
+const isWellnessScoreOrNull =
+  (
+    value:
+      unknown,
+  ): value is WellnessScore | null =>
+    value ===
+      null ||
+    (
+      typeof value ===
+        'number' &&
+      Number.isInteger(
+        value,
+      ) &&
+      value >=
+        1 &&
+      value <=
+        5
+    );
+
+const parseSaveDailyCheckinBody =
+  (
+    value:
+      unknown,
+  ): SaveDailyCheckinBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      candidate.weightKg !==
+        null &&
+      (
+        typeof candidate.weightKg !==
+          'number' ||
+        !Number.isFinite(
+          candidate.weightKg,
+        )
+      )
+    ) {
+      return null;
+    }
+
+    if (
+      !isWellnessScoreOrNull(
+        candidate.sleepQuality,
+      ) ||
+      !isWellnessScoreOrNull(
+        candidate.fatigue,
+      ) ||
+      !isWellnessScoreOrNull(
+        candidate.soreness,
+      ) ||
+      !isWellnessScoreOrNull(
+        candidate.stress,
+      ) ||
+      !isWellnessScoreOrNull(
+        candidate.motivation,
+      )
+    ) {
+      return null;
+    }
+
+    if (
+      candidate.notes !==
+        null &&
+      typeof candidate.notes !==
+        'string'
+    ) {
+      return null;
+    }
+
+    return {
+      weightKg:
+        candidate.weightKg,
+
+      sleepQuality:
+        candidate.sleepQuality,
+
+      fatigue:
+        candidate.fatigue,
+
+      soreness:
+        candidate.soreness,
+
+      stress:
+        candidate.stress,
+
+      motivation:
+        candidate.motivation,
+
+      notes:
+        candidate.notes,
+    };
+  };
+
+const parseAdminUserParams =
+  (
+    value:
+      unknown,
+  ): AdminUserParams | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value === null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      !isUuid(
+        candidate.userId,
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      userId:
+        candidate.userId,
+    };
+  };
+
+const parseAdminAthleteAccessParams =
+  (
+    value:
+      unknown,
+  ): AdminAthleteAccessParams | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value === null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      !isUuid(
+        candidate.userId,
+      ) ||
+      !isUuid(
+        candidate.athleteId,
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      userId:
+        candidate.userId,
+
+      athleteId:
+        candidate.athleteId,
+    };
+  };
+
+const parseSetAthleteAccessBody =
+  (
+    value:
+      unknown,
+  ): SetAthleteAccessBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value === null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      candidate.role !==
+        null &&
+      candidate.role !==
+        'SELF' &&
+      candidate.role !==
+        'COACH' &&
+      candidate.role !==
+        'VIEWER'
+    ) {
+      return null;
+    }
+
+    return {
+      role:
+        candidate.role,
+    };
+  };
 
 const parseUpdateSessionBlockBody =
 
@@ -437,6 +942,185 @@ const parseReorderSessionBlocksBody =
 
       orderedIds:
         candidate.orderedIds,
+
+    };
+
+  };
+
+const parseUpdateSessionExerciseBody =
+
+  (
+
+    value:
+      unknown,
+
+  ): UpdateSessionExerciseBody | null => {
+
+    if (
+
+      typeof value !==
+        'object' ||
+
+      value ===
+        null
+
+    ) {
+
+      return null;
+
+    }
+
+    const candidate =
+
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+
+      candidate.plannedNotes !==
+        null &&
+
+      typeof candidate.plannedNotes !==
+        'string'
+
+    ) {
+
+      return null;
+
+    }
+
+    return {
+
+      plannedNotes:
+        candidate.plannedNotes,
+
+    };
+
+  };
+
+const parseSessionExerciseLayoutBody =
+
+  (
+
+    value:
+      unknown,
+
+  ): SessionExerciseLayoutBody | null => {
+
+    if (
+
+      typeof value !==
+        'object' ||
+
+      value ===
+        null
+
+    ) {
+
+      return null;
+
+    }
+
+    const candidate =
+
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+
+      !Array.isArray(
+        candidate.blocks,
+      )
+
+    ) {
+
+      return null;
+
+    }
+
+    const blocks =
+
+      candidate.blocks.map(
+
+        block => {
+
+          if (
+
+            typeof block !==
+              'object' ||
+
+            block ===
+              null
+
+          ) {
+
+            return null;
+
+          }
+
+          const blockCandidate =
+
+            block as Record<
+              string,
+              unknown
+            >;
+
+          if (
+
+            !isUuid(
+              blockCandidate.blockId,
+            ) ||
+
+            !Array.isArray(
+              blockCandidate.orderedIds,
+            ) ||
+
+            !blockCandidate.orderedIds.every(
+              isUuid,
+            )
+
+          ) {
+
+            return null;
+
+          }
+
+          return {
+
+            blockId:
+              blockCandidate.blockId,
+
+            orderedIds:
+              blockCandidate.orderedIds,
+
+          };
+
+        },
+
+      );
+
+    if (
+
+      blocks.some(
+        block =>
+          block ===
+          null,
+      )
+
+    ) {
+
+      return null;
+
+    }
+
+    return {
+
+      blocks:
+        blocks as SessionExerciseLayoutBody['blocks'],
 
     };
 
@@ -846,11 +1530,11 @@ const parseReorderPerformanceEntriesBody =
     };
   };
 
-const parseUpdatePerformanceEntryBody =
+const parsePerformanceEntryValueBody =
   (
     value:
       unknown,
-  ): UpdatePerformanceEntryBody | null => {
+  ): PerformanceEntryValueBody | null => {
 
     if (
       typeof value !==
@@ -862,20 +1546,6 @@ const parseUpdatePerformanceEntryBody =
 
     const candidate =
       value as Record<
-        string,
-        unknown
-      >;
-
-    if (
-      typeof candidate.planned !==
-        'object' ||
-      candidate.planned === null
-    ) {
-      return null;
-    }
-
-    const planned =
-      candidate.planned as Record<
         string,
         unknown
       >;
@@ -897,9 +1567,9 @@ const parseUpdatePerformanceEntryBody =
       numericFields
     ) {
       if (
-        planned[field] !==
+        candidate[field] !==
           null &&
-        typeof planned[field] !==
+        typeof candidate[field] !==
           'number'
       ) {
         return null;
@@ -907,55 +1577,179 @@ const parseUpdatePerformanceEntryBody =
     }
 
     if (
-      planned.notes !==
+      candidate.notes !==
         null &&
-      typeof planned.notes !==
+      typeof candidate.notes !==
         'string'
     ) {
       return null;
     }
 
     return {
-      planned: {
-        reps:
-          planned.reps as
-            number | null,
+      reps:
+        candidate.reps as
+          number | null,
 
-        loadKg:
-          planned.loadKg as
-            number | null,
+      loadKg:
+        candidate.loadKg as
+          number | null,
 
-        distanceM:
-          planned.distanceM as
-            number | null,
+      distanceM:
+        candidate.distanceM as
+          number | null,
 
-        durationMs:
-          planned.durationMs as
-            number | null,
+      durationMs:
+        candidate.durationMs as
+          number | null,
 
-        resultM:
-          planned.resultM as
-            number | null,
+      resultM:
+        candidate.resultM as
+          number | null,
 
-        heightM:
-          planned.heightM as
-            number | null,
+      heightM:
+        candidate.heightM as
+          number | null,
 
-        rpe:
-          planned.rpe as
-            number | null,
+      rpe:
+        candidate.rpe as
+          number | null,
 
-        rir:
-          planned.rir as
-            number | null,
+      rir:
+        candidate.rir as
+          number | null,
 
-        restSeconds:
-          planned.restSeconds as
-            number | null,
+      restSeconds:
+        candidate.restSeconds as
+          number | null,
 
-        notes:
-          planned.notes as
-            string | null,
+      notes:
+        candidate.notes as
+          string | null,
+    };
+  };
+
+const parseUpdatePerformanceEntryBody =
+  (
+    value:
+      unknown,
+  ): UpdatePerformanceEntryBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value === null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as Record<
+        string,
+        unknown
+      >;
+
+    const hasPlanned =
+      candidate.planned !==
+        undefined;
+
+    const hasActual =
+      candidate.actual !==
+        undefined;
+
+    if (
+      hasPlanned ===
+      hasActual
+    ) {
+      return null;
+    }
+
+    if (hasPlanned) {
+      const planned =
+        parsePerformanceEntryValueBody(
+          candidate.planned,
+        );
+
+      if (!planned) {
+        return null;
+      }
+
+      return {
+        planned,
+      };
+    }
+
+    if (
+      typeof candidate.actual !==
+        'object' ||
+      candidate.actual ===
+        null
+    ) {
+      return null;
+    }
+
+    const actualCandidate =
+      candidate.actual as Record<
+        string,
+        unknown
+      >;
+
+    const actualValues =
+      parsePerformanceEntryValueBody(
+        actualCandidate,
+      );
+
+    if (!actualValues) {
+      return null;
+    }
+
+    if (
+      actualCandidate.success !==
+        null &&
+      typeof actualCandidate.success !==
+        'boolean'
+    ) {
+      return null;
+    }
+
+    if (
+      actualCandidate.isFoul !==
+        null &&
+      typeof actualCandidate.isFoul !==
+        'boolean'
+    ) {
+      return null;
+    }
+
+    if (
+      typeof actualCandidate.metrics !==
+        'object' ||
+      actualCandidate.metrics ===
+        null ||
+      Array.isArray(
+        actualCandidate.metrics,
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      actual: {
+        ...actualValues,
+
+        success:
+          actualCandidate.success as
+            boolean | null,
+
+        isFoul:
+          actualCandidate.isFoul as
+            boolean | null,
+
+        metrics:
+          actualCandidate.metrics as
+            Record<
+              string,
+              unknown
+            >,
       },
     };
   };
@@ -1525,6 +2319,51 @@ const parseCreatePlannedSessionBody =
     };
   };
 
+const parseUpdatePlannedSessionBody =
+  (
+    value:
+      unknown,
+  ): UpdatePlannedSessionBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value === null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      !isUuid(
+        candidate.dayId,
+      )
+    ) {
+      return null;
+    }
+
+    const planned =
+      parseCreatePlannedSessionBody(
+        value,
+      );
+
+    if (!planned) {
+      return null;
+    }
+
+    return {
+      dayId:
+        candidate.dayId,
+
+      ...planned,
+    };
+  };
+
 const isoDatePattern =
   /^\d{4}-\d{2}-\d{2}$/;
 
@@ -1605,8 +2444,180 @@ export const registerTrainingRoutes =
 
     const {
       app,
+      requireOwnerActor,
       requireAccessPermission,
     } = http;
+
+        /*
+     * Owner-only Training access administration.
+     *
+     * Important:
+     * being able to administer athlete_access
+     * does NOT grant read/write access to the
+     * athlete's private Training data.
+     */
+    app.get(
+      '/api/training/admin/users/:userId/athlete-access',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireOwnerActor(
+            request,
+            reply,
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        const params =
+          parseAdminUserParams(
+            request.params,
+          );
+
+        if (!params) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        const entries =
+          await listAthleteAccessAdministration(
+            training.unitOfWork,
+            {
+              userId:
+                params.userId as
+                  DkturboUserId,
+            },
+          );
+
+        return entries.map(
+          ({
+            athlete,
+            role,
+          }) => ({
+            athleteId:
+              athlete.id,
+
+            displayName:
+              athlete.displayName,
+
+            role,
+          }),
+        );
+      },
+    );
+
+    app.put(
+      '/api/training/admin/users/:userId/athletes/:athleteId/access',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireOwnerActor(
+            request,
+            reply,
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        const params =
+          parseAdminAthleteAccessParams(
+            request.params,
+          );
+
+        const body =
+          parseSetAthleteAccessBody(
+            request.body,
+          );
+
+        if (
+          !params ||
+          !body
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          const result =
+            await setAthleteAccessAdministration(
+              training.unitOfWork,
+              {
+                athleteId:
+                  params.athleteId as
+                    AthleteId,
+
+                userId:
+                  params.userId as
+                    DkturboUserId,
+
+                role:
+                  body.role,
+              },
+            );
+
+          return {
+            athleteId:
+              params.athleteId,
+
+            userId:
+              params.userId,
+
+            role:
+              result.access?.role ??
+              null,
+          };
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+              Error &&
+            error.message ===
+              'Training athlete not found'
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'training_athlete_not_found',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to administer Training athlete access',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
 
     /*
      * List only athletes for which the
@@ -1746,6 +2757,356 @@ export const registerTrainingRoutes =
                   },
                 )
           );
+      },
+    );
+
+    /*
+     * List athlete daily check-ins
+     * inside one inclusive date range.
+     */
+    app.get(
+      '/api/training/athletes/:athleteId/daily-checkins',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.training.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+            'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseAthleteParams(
+            request.params,
+          );
+
+        const query =
+          parseDailyCheckinRangeQuery(
+            request.query,
+          );
+
+        if (
+          !params ||
+          !query
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          return await listDailyCheckins(
+            training.unitOfWork,
+            {
+              athleteId:
+                params.athleteId as
+                  AthleteId,
+
+              userId:
+                actor.id as
+                  DkturboUserId,
+
+              from:
+                query.from,
+
+              to:
+                query.to,
+            },
+          );
+
+        } catch (error) {
+
+          if (
+            error instanceof
+              AthleteReadAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'athlete_access_denied',
+              });
+          }
+
+          if (
+            error instanceof
+              InvalidDailyCheckinRangeError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'invalid_daily_checkin_range',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to list Training daily check-ins',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    /*
+    * Read one athlete daily check-in.
+    */
+    app.get(
+      '/api/training/athletes/:athleteId/daily-checkins/:date',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.training.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseDailyCheckinParams(
+            request.params,
+          );
+
+        if (!params) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          return await getDailyCheckin(
+            training.unitOfWork,
+            {
+              athleteId:
+                params.athleteId as
+                  AthleteId,
+
+              userId:
+                actor.id as
+                  DkturboUserId,
+
+              date:
+                params.date,
+            },
+          );
+
+        } catch (error) {
+
+          if (
+            error instanceof
+            AthleteReadAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'athlete_access_denied',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to get Training daily check-in',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    /*
+    * Create or replace one athlete daily check-in.
+    */
+    app.put(
+      '/api/training/athletes/:athleteId/daily-checkins/:date',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.training.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseDailyCheckinParams(
+            request.params,
+          );
+
+        const body =
+          parseSaveDailyCheckinBody(
+            request.body,
+          );
+
+        if (
+          !params ||
+          !body
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          return await saveDailyCheckin(
+            training.unitOfWork,
+            {
+              athleteId:
+                params.athleteId as
+                  AthleteId,
+
+              userId:
+                actor.id as
+                  DkturboUserId,
+
+              date:
+                params.date,
+
+              weightKg:
+                body.weightKg,
+
+              sleepQuality:
+                body.sleepQuality,
+
+              fatigue:
+                body.fatigue,
+
+              soreness:
+                body.soreness,
+
+              stress:
+                body.stress,
+
+              motivation:
+                body.motivation,
+
+              notes:
+                body.notes,
+            },
+          );
+
+        } catch (error) {
+
+          if (
+            error instanceof
+            AthleteAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'athlete_access_denied',
+              });
+          }
+
+          if (
+            error instanceof
+            InvalidDailyCheckinError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'invalid_daily_checkin',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to save Training daily check-in',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
       },
     );
 
@@ -2271,6 +3632,303 @@ export const registerTrainingRoutes =
       },
     );
 
+    app.patch(
+      '/api/training/athletes/:athleteId/sessions/:sessionId',
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.training.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseSessionParams(
+            request.params,
+          );
+
+        const body =
+          parseUpdatePlannedSessionBody(
+            request.body,
+          );
+
+        if (
+          !params ||
+          !body
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          const session =
+            await updatePlannedSession(
+              training.unitOfWork,
+              {
+                athleteId:
+                  params.athleteId as
+                    AthleteId,
+
+                sessionId:
+                  params.sessionId as
+                    TrainingSessionId,
+
+                dayId:
+                  body.dayId as
+                    TrainingDayId,
+
+                type:
+                  body.type,
+
+                title:
+                  body.title,
+
+                plannedStartTime:
+                  body.plannedStartTime,
+
+                plannedDurationMinutes:
+                  body.plannedDurationMinutes,
+
+                plannedNotes:
+                  body.plannedNotes,
+
+                plannedRpe:
+                  body.plannedRpe,
+
+                updatedByUserId:
+                  actor.id as
+                    DkturboUserId,
+              },
+            );
+
+          return reply
+            .code(200)
+            .send(
+              session,
+            );
+
+        } catch (error) {
+
+          if (
+            error instanceof
+            AthleteAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'athlete_access_denied',
+              });
+          }
+
+          if (
+            error instanceof Error &&
+            (
+              error.message ===
+                'Training session not found' ||
+              error.message ===
+                'Training session does not belong to athlete'
+            )
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'training_session_not_found',
+              });
+          }
+
+          if (
+            error instanceof Error &&
+            (
+              error.message ===
+                'Training day not found' ||
+              error.message ===
+                'Training day does not belong to athlete'
+            )
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'training_day_not_found',
+              });
+          }
+
+          if (
+            error instanceof Error &&
+            (
+              error.message ===
+                'Session title is required' ||
+              error.message ===
+                'plannedStartTime must use HH:MM format' ||
+              error.message ===
+                'plannedDurationMinutes must be a non-negative integer' ||
+              error.message ===
+                'plannedRpe must be between 0 and 10'
+            )
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'invalid_session',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to update Training session',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    app.delete(
+      '/api/training/athletes/:athleteId/sessions/:sessionId',
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.training.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseSessionParams(
+            request.params,
+          );
+
+        if (!params) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          await deleteTrainingSession(
+            training.unitOfWork,
+            {
+              athleteId:
+                params.athleteId as
+                  AthleteId,
+
+              sessionId:
+                params.sessionId as
+                  TrainingSessionId,
+
+              deletedByUserId:
+                actor.id as
+                  DkturboUserId,
+            },
+          );
+
+          return reply
+            .code(204)
+            .send();
+
+        } catch (error) {
+
+          if (
+            error instanceof
+            AthleteAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'athlete_access_denied',
+              });
+          }
+
+          if (
+            error instanceof Error &&
+            (
+              error.message ===
+                'Training session not found' ||
+              error.message ===
+                'Training session does not belong to athlete'
+            )
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'training_session_not_found',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to delete Training session',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
     /*
      * Complete week navigation:
      *
@@ -2379,6 +4037,232 @@ export const registerTrainingRoutes =
           request.log.error(
             error,
             'Failed to get Training week detail',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    app.get(
+      '/api/training/athletes/:athleteId/weeks/:weekId/export',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.training.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseWeekParams(
+            request.params,
+          );
+
+        if (!params) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        const query =
+          request.query as
+            Record<
+              string,
+              unknown
+            >;
+
+        const requestedFilename =
+          typeof query.filename ===
+            'string'
+            ? query.filename
+            : null;
+
+        try {
+
+          const week =
+            await getWeekDetail(
+              training.unitOfWork,
+              {
+                athleteId:
+                  params.athleteId as
+                    AthleteId,
+
+                weekId:
+                  params.weekId as
+                    TrainingWeekId,
+
+                userId:
+                  actor.id as
+                    DkturboUserId,
+              },
+            );
+
+          const athlete =
+            await training
+              .unitOfWork
+              .execute(
+                ({
+                  athletes,
+                }) =>
+                  athletes.findById(
+                    params.athleteId as
+                      AthleteId,
+                  ),
+              );
+
+          if (!athlete) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'training_athlete_not_found',
+              });
+          }
+
+          const sessions =
+            await Promise.all(
+              week.days
+                .flatMap(
+                  day =>
+                    day.sessions,
+                )
+                .map(
+                  session =>
+                    getSessionDetail(
+                      training.unitOfWork,
+                      {
+                        athleteId:
+                          params.athleteId as
+                            AthleteId,
+
+                        sessionId:
+                          session.id,
+
+                        userId:
+                          actor.id as
+                            DkturboUserId,
+                      },
+                    ),
+                ),
+            );
+
+          const pdf =
+            await buildTrainingWeekPdf({
+              athleteName:
+                athlete.displayName,
+
+              week,
+
+              sessions,
+            });
+
+          const filename =
+            normalizePdfFilename(
+              requestedFilename ??
+                `Entrenamiento semanal - ${athlete.displayName} - ${week.week.weekStart}`,
+            );
+
+          reply
+            .header(
+              'Content-Type',
+              'application/pdf',
+            )
+            .header(
+              'Content-Disposition',
+              buildPdfContentDisposition(
+                filename,
+              ),
+            )
+            .header(
+              'Cache-Control',
+              'private, no-store',
+            )
+            .header(
+              'Content-Length',
+              String(
+                pdf.length,
+              ),
+            );
+
+          return reply
+            .code(200)
+            .send(
+              Buffer.from(
+                pdf,
+              ),
+            );
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+            AthleteReadAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'athlete_access_denied',
+              });
+          }
+
+          if (
+            error instanceof
+              Error &&
+            (
+              error.message ===
+                'Training week not found' ||
+              error.message ===
+                'Training week does not belong to athlete' ||
+              error.message ===
+                'Training session not found' ||
+              error.message ===
+                'Training session does not belong to athlete'
+            )
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'training_export_not_found',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to export Training week PDF',
           );
 
           return reply
@@ -3359,6 +5243,634 @@ export const registerTrainingRoutes =
       },
     );
 
+        app.patch(
+
+      '/api/training/athletes/:athleteId/session-exercises/:sessionExerciseId',
+
+      async (
+
+        request,
+
+        reply,
+
+      ) => {
+
+        const actor =
+
+          await requireAccessPermission(
+
+            request,
+
+            reply,
+
+            'app.training.access',
+
+          );
+
+        if (!actor) {
+
+          return;
+
+        }
+
+        if (
+
+          actor.kind !==
+          'user'
+
+        ) {
+
+          return reply
+
+            .code(403)
+
+            .send({
+
+              error:
+                'authorization_denied',
+
+            });
+
+        }
+
+        const params =
+
+          parseSessionExerciseParams(
+
+            request.params,
+
+          );
+
+        const body =
+
+          parseUpdateSessionExerciseBody(
+
+            request.body,
+
+          );
+
+        if (
+
+          !params ||
+
+          !body
+
+        ) {
+
+          return reply
+
+            .code(400)
+
+            .send({
+
+              error:
+                'invalid_request',
+
+            });
+
+        }
+
+        try {
+
+          const sessionExercise =
+
+            await updateSessionExercisePlanned(
+
+              training.unitOfWork,
+
+              {
+
+                athleteId:
+
+                  params.athleteId as
+                    AthleteId,
+
+                sessionExerciseId:
+
+                  params.sessionExerciseId as
+                    SessionExerciseId,
+
+                plannedNotes:
+
+                  body.plannedNotes,
+
+                updatedByUserId:
+
+                  actor.id as
+                    DkturboUserId,
+
+              },
+
+            );
+
+          return reply
+
+            .code(200)
+
+            .send(
+              sessionExercise,
+            );
+
+        } catch (error) {
+
+          if (
+
+            error instanceof
+            AthleteAccessDeniedError
+
+          ) {
+
+            return reply
+
+              .code(403)
+
+              .send({
+
+                error:
+                  'athlete_access_denied',
+
+              });
+
+          }
+
+          if (
+
+            error instanceof Error &&
+
+            (
+
+              error.message ===
+                'Session exercise not found' ||
+
+              error.message ===
+                'Session exercise does not belong to athlete'
+
+            )
+
+          ) {
+
+            return reply
+
+              .code(404)
+
+              .send({
+
+                error:
+                  'training_session_exercise_not_found',
+
+              });
+
+          }
+
+          request.log.error(
+
+            error,
+
+            'Failed to update Training session exercise',
+
+          );
+
+          return reply
+
+            .code(500)
+
+            .send({
+
+              error:
+                'internal_error',
+
+            });
+
+        }
+
+      },
+
+    );
+
+    app.delete(
+
+      '/api/training/athletes/:athleteId/session-exercises/:sessionExerciseId',
+
+      async (
+
+        request,
+
+        reply,
+
+      ) => {
+
+        const actor =
+
+          await requireAccessPermission(
+
+            request,
+
+            reply,
+
+            'app.training.access',
+
+          );
+
+        if (!actor) {
+
+          return;
+
+        }
+
+        if (
+
+          actor.kind !==
+          'user'
+
+        ) {
+
+          return reply
+
+            .code(403)
+
+            .send({
+
+              error:
+                'authorization_denied',
+
+            });
+
+        }
+
+        const params =
+
+          parseSessionExerciseParams(
+
+            request.params,
+
+          );
+
+        if (!params) {
+
+          return reply
+
+            .code(400)
+
+            .send({
+
+              error:
+                'invalid_request',
+
+            });
+
+        }
+
+        try {
+
+          await deleteSessionExercise(
+
+            training.unitOfWork,
+
+            {
+
+              athleteId:
+
+                params.athleteId as
+                  AthleteId,
+
+              sessionExerciseId:
+
+                params.sessionExerciseId as
+                  SessionExerciseId,
+
+              deletedByUserId:
+
+                actor.id as
+                  DkturboUserId,
+
+            },
+
+          );
+
+          return reply
+
+            .code(204)
+
+            .send();
+
+        } catch (error) {
+
+          if (
+
+            error instanceof
+            AthleteAccessDeniedError
+
+          ) {
+
+            return reply
+
+              .code(403)
+
+              .send({
+
+                error:
+                  'athlete_access_denied',
+
+              });
+
+          }
+
+          if (
+
+            error instanceof Error &&
+
+            (
+
+              error.message ===
+                'Session exercise not found' ||
+
+              error.message ===
+                'Session exercise does not belong to athlete'
+
+            )
+
+          ) {
+
+            return reply
+
+              .code(404)
+
+              .send({
+
+                error:
+                  'training_session_exercise_not_found',
+
+              });
+
+          }
+
+          request.log.error(
+
+            error,
+
+            'Failed to delete Training session exercise',
+
+          );
+
+          return reply
+
+            .code(500)
+
+            .send({
+
+              error:
+                'internal_error',
+
+            });
+
+        }
+
+      },
+
+    );
+
+    app.put(
+
+      '/api/training/athletes/:athleteId/sessions/:sessionId/exercises/layout',
+
+      async (
+
+        request,
+
+        reply,
+
+      ) => {
+
+        const actor =
+
+          await requireAccessPermission(
+
+            request,
+
+            reply,
+
+            'app.training.access',
+
+          );
+
+        if (!actor) {
+
+          return;
+
+        }
+
+        if (
+
+          actor.kind !==
+          'user'
+
+        ) {
+
+          return reply
+
+            .code(403)
+
+            .send({
+
+              error:
+                'authorization_denied',
+
+            });
+
+        }
+
+        const params =
+
+          parseSessionParams(
+
+            request.params,
+
+          );
+
+        const body =
+
+          parseSessionExerciseLayoutBody(
+
+            request.body,
+
+          );
+
+        if (
+
+          !params ||
+
+          !body
+
+        ) {
+
+          return reply
+
+            .code(400)
+
+            .send({
+
+              error:
+                'invalid_request',
+
+            });
+
+        }
+
+        try {
+
+          const exercises =
+
+            await applySessionExerciseLayout(
+
+              training.unitOfWork,
+
+              {
+
+                athleteId:
+
+                  params.athleteId as
+                    AthleteId,
+
+                sessionId:
+
+                  params.sessionId as
+                    TrainingSessionId,
+
+                blocks:
+
+                  body.blocks as unknown as
+                    readonly SessionExerciseLayoutBlock[],
+
+                updatedByUserId:
+
+                  actor.id as
+                    DkturboUserId,
+
+              },
+
+            );
+
+          return reply
+
+            .code(200)
+
+            .send({
+
+              exercises,
+
+            });
+
+        } catch (error) {
+
+          if (
+
+            error instanceof
+            AthleteAccessDeniedError
+
+          ) {
+
+            return reply
+
+              .code(403)
+
+              .send({
+
+                error:
+                  'athlete_access_denied',
+
+              });
+
+          }
+
+          if (
+
+            error instanceof Error &&
+
+            (
+
+              error.message ===
+                'Training session not found' ||
+
+              error.message ===
+                'Training session does not belong to athlete'
+
+            )
+
+          ) {
+
+            return reply
+
+              .code(404)
+
+              .send({
+
+                error:
+                  'training_session_not_found',
+
+              });
+
+          }
+
+          if (
+
+            error instanceof Error &&
+
+            (
+
+              error.message ===
+                'Session exercise layout contains duplicate block ids' ||
+
+              error.message ===
+                'Session exercise layout contains duplicate exercise ids' ||
+
+              error.message ===
+                'Session exercise layout must contain every block exactly once' ||
+
+              error.message ===
+                'Session exercise layout must contain every exercise exactly once'
+
+            )
+
+          ) {
+
+            return reply
+
+              .code(400)
+
+              .send({
+
+                error:
+                  'invalid_session_exercise_layout',
+
+              });
+
+          }
+
+          request.log.error(
+
+            error,
+
+            'Failed to apply Training session exercise layout',
+
+          );
+
+          return reply
+
+            .code(500)
+
+            .send({
+
+              error:
+                'internal_error',
+
+            });
+
+        }
+
+      },
+
+    );
+
     app.post(
       '/api/training/athletes/:athleteId/session-exercises/:sessionExerciseId/performance-entries',
 
@@ -3733,56 +6245,116 @@ export const registerTrainingRoutes =
         }
 
         try {
+
           const entry =
-            await updatePerformanceEntryPlanned(
-              training.unitOfWork,
-              {
-                athleteId:
-                  params.athleteId as
-                    AthleteId,
+            'planned' in
+              body
+              ? await updatePerformanceEntryPlanned(
+                  training.unitOfWork,
+                  {
+                    athleteId:
+                      params.athleteId as
+                        AthleteId,
 
-                performanceEntryId:
-                  params.performanceEntryId as
-                    PerformanceEntryId,
+                    performanceEntryId:
+                      params.performanceEntryId as
+                        PerformanceEntryId,
 
-                reps:
-                  body.planned.reps,
+                    reps:
+                      body.planned.reps,
 
-                loadKg:
-                  body.planned.loadKg,
+                    loadKg:
+                      body.planned.loadKg,
 
-                distanceM:
-                  body.planned.distanceM,
+                    distanceM:
+                      body.planned.distanceM,
 
-                durationMs:
-                  body.planned.durationMs,
+                    durationMs:
+                      body.planned.durationMs,
 
-                resultM:
-                  body.planned.resultM,
+                    resultM:
+                      body.planned.resultM,
 
-                heightM:
-                  body.planned.heightM,
+                    heightM:
+                      body.planned.heightM,
 
-                rpe:
-                  body.planned.rpe,
+                    rpe:
+                      body.planned.rpe,
 
-                rir:
-                  body.planned.rir,
+                    rir:
+                      body.planned.rir,
 
-                restSeconds:
-                  body.planned.restSeconds,
+                    restSeconds:
+                      body.planned.restSeconds,
 
-                notes:
-                  body.planned.notes,
+                    notes:
+                      body.planned.notes,
 
-                updatedByUserId:
-                  actor.id as
-                    DkturboUserId,
-              },
-            );
+                    updatedByUserId:
+                      actor.id as
+                        DkturboUserId,
+                  },
+                )
+              : await recordPerformanceEntryActual(
+                  training.unitOfWork,
+                  {
+                    athleteId:
+                      params.athleteId as
+                        AthleteId,
+
+                    performanceEntryId:
+                      params.performanceEntryId as
+                        PerformanceEntryId,
+
+                    reps:
+                      body.actual.reps,
+
+                    loadKg:
+                      body.actual.loadKg,
+
+                    distanceM:
+                      body.actual.distanceM,
+
+                    durationMs:
+                      body.actual.durationMs,
+
+                    resultM:
+                      body.actual.resultM,
+
+                    heightM:
+                      body.actual.heightM,
+
+                    rpe:
+                      body.actual.rpe,
+
+                    rir:
+                      body.actual.rir,
+
+                    restSeconds:
+                      body.actual.restSeconds,
+
+                    success:
+                      body.actual.success,
+
+                    isFoul:
+                      body.actual.isFoul,
+
+                    metrics:
+                      body.actual.metrics,
+
+                    notes:
+                      body.actual.notes,
+
+                    updatedByUserId:
+                      actor.id as
+                        DkturboUserId,
+                  },
+                );
 
           return reply
-            .code(200)
+            .code(
+              200,
+            )
             .send(
               entry,
             );

@@ -82,6 +82,9 @@ const createRepository =
           athlete,
         ),
 
+    listAll:
+      vi.fn(),
+
     listForUser:
       vi.fn()
         .mockResolvedValue([
@@ -93,6 +96,9 @@ const createRepository =
         .mockResolvedValue(
           access,
         ),
+
+    revokeAccess:
+      vi.fn(),
 
     findAccess:
       vi.fn()
@@ -126,6 +132,9 @@ const createUnitOfWork =
 
           sessionStructure:
             sessionStructureRepository,
+
+          dailyCheckins:
+            {} as never,
         }),
   });
 

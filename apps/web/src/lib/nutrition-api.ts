@@ -17,6 +17,11 @@ export interface NutritionPersonResponse {
 
   name:
     string;
+
+  accessRole:
+    | 'SELF'
+    | 'VIEWER'
+    | 'MANAGER';
 }
 
 export interface NutritionPlanResponse {
@@ -192,6 +197,39 @@ export interface NutritionFoodResponse {
     string;
 }
 
+export interface NutritionFoodPreparationConversionResponse {
+  id:
+    string;
+
+  foodId:
+    string;
+
+  name:
+    string;
+
+  rawAmount:
+    number;
+
+  preparedAmount:
+    number;
+
+  preparedUnit:
+    | 'G'
+    | 'KG'
+    | 'ML'
+    | 'L'
+    | 'UNIT';
+
+  isDefault:
+    boolean;
+
+  createdAt:
+    string;
+
+  updatedAt:
+    string;
+}
+
 export interface NutritionMealItemResponse {
   id:
     string;
@@ -201,6 +239,9 @@ export interface NutritionMealItemResponse {
 
   foodId:
     string;
+
+  preparationConversionId:
+    string | null;
 
   position:
     number;
@@ -296,12 +337,24 @@ export interface NutritionMealItemActualResponse {
     string;
 }
 
+export interface NutritionMealItemPreparationResponse {
+  conversion:
+    NutritionFoodPreparationConversionResponse;
+
+  source:
+    | 'DEFAULT'
+    | 'EXPLICIT';
+}
+
 export interface NutritionMealItemDetailResponse {
   item:
     NutritionMealItemResponse;
 
   food:
     NutritionFoodResponse;
+
+  preparation:
+    NutritionMealItemPreparationResponse | null;
 
   quantities:
     NutritionMealItemQuantityResponse[];

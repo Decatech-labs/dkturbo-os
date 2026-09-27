@@ -28,6 +28,14 @@ import {
   PersonPermissions,
 } from './person-permissions';
 
+import {
+  TrainingAthleteAccess,
+} from './training-athlete-access';
+
+import {
+  NutritionPersonAccess,
+} from './nutrition-person-access';
+
 interface PersonManagementProps {
   user:
     FamilyUserResponse;
@@ -388,9 +396,41 @@ export function PersonManagement({
       </div>
 
       {isOwner ? (
-        <div className="family-management-owner">
-          El owner se gestiona fuera de este panel.
-        </div>
+        <>
+          <div className="family-management-owner">
+            Los permisos generales del owner son implícitos. El acceso a perfiles privados de Entrenamientos sigue siendo explícito.
+          </div>
+
+          {canManagePermissions && (
+            <>
+              <section className="family-management-block family-owner-training-access">
+                <h4>
+                  Entrenamientos
+                </h4>
+
+                <TrainingAthleteAccess
+                  userId={
+                    user.id
+                  }
+                  appEnabled
+                />
+              </section>
+
+              <section className="family-management-block family-owner-training-access">
+                <h4>
+                  Nutrición
+                </h4>
+
+                <NutritionPersonAccess
+                  userId={
+                    user.id
+                  }
+                  appEnabled
+                />
+              </section>
+            </>
+          )}
+        </>
       ) : (
         <>
           {canManageUsers && (

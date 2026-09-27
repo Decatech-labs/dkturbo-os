@@ -96,6 +96,29 @@ export interface AddSessionExerciseData {
     string | null;
 }
 
+export interface UpdateSessionExercisePlannedData {
+
+  sessionExerciseId:
+    SessionExerciseId;
+
+  athleteId:
+    AthleteId;
+
+  plannedNotes:
+    string | null;
+
+}
+
+export interface SessionExerciseLayoutBlock {
+
+  blockId:
+    SessionBlockId;
+
+  orderedIds:
+    readonly SessionExerciseId[];
+
+}
+
 export interface CreatePerformanceEntryData {
   sessionExerciseId:
     SessionExerciseId;
@@ -352,6 +375,30 @@ export interface SessionStructureRepository {
     data:
       AddSessionExerciseData,
   ): Promise<SessionExercise>;
+
+  updateSessionExercisePlanned(
+    data:
+      UpdateSessionExercisePlannedData,
+  ): Promise<SessionExercise>;
+
+  deleteSessionExercise(
+    sessionExerciseId:
+      SessionExerciseId,
+
+    athleteId:
+      AthleteId,
+  ): Promise<boolean>;
+
+  applySessionExerciseLayout(
+    sessionId:
+      TrainingSessionId,
+
+    athleteId:
+      AthleteId,
+
+    blocks:
+      readonly SessionExerciseLayoutBlock[],
+  ): Promise<SessionExercise[]>;
 
   findSessionExerciseById(
     sessionExerciseId:

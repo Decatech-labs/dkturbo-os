@@ -45,6 +45,9 @@ interface NutritionPageProps {
     Promise<{
       date?:
         string;
+
+      user?:
+        string;
     }>;
 }
 
@@ -504,6 +507,74 @@ export default async function NutritionPage({
   const today =
     getTodayDate();
 
+  const accessiblePeople =
+    people;
+
+  const activePerson =
+    accessiblePeople.find(
+      person =>
+        person.id ===
+        query.user,
+    ) ??
+    accessiblePeople.find(
+      person =>
+        person.id ===
+        session.user.id,
+    ) ??
+    accessiblePeople[0] ??
+    null;
+
+  const activeUserId =
+    activePerson?.id ??
+    session.user.id;
+
+  const canManageActivePerson =
+    activePerson?.accessRole ===
+      'SELF' ||
+    activePerson?.accessRole ===
+      'MANAGER';
+
+  const readOnly =
+    !canManageActivePerson;
+
+  const buildTodayHref =
+    (
+      date?:
+        string,
+    ): string => {
+
+      const params =
+        new URLSearchParams();
+
+      if (
+        date &&
+        date !==
+          today
+      ) {
+        params.set(
+          'date',
+          date,
+        );
+      }
+
+      if (
+        activeUserId !==
+        session.user.id
+      ) {
+        params.set(
+          'user',
+          activeUserId,
+        );
+      }
+
+      const queryString =
+        params.toString();
+
+      return queryString
+        ? `/nutricion?${queryString}`
+        : '/nutricion';
+    };
+
   const requestedDate =
     query.date &&
     parseDate(
@@ -590,6 +661,14 @@ export default async function NutritionPage({
     );
   }
 
+  const weekHref =
+    activeUserId ===
+    session.user.id
+      ? `/nutricion/semanas/${currentPlan.id}`
+      : `/nutricion/semanas/${currentPlan.id}?user=${encodeURIComponent(
+          activeUserId,
+        )}`;
+
   const detail =
     await getNutritionPlanDetail(
       currentPlan.id,
@@ -622,7 +701,7 @@ export default async function NutritionPage({
           userId,
         }) =>
           userId ===
-          session.user.id,
+          activeUserId
       ) ??
     null;
 
@@ -716,7 +795,7 @@ export default async function NutritionPage({
   ) {
     if (
       actual.userId ===
-        session.user.id &&
+        activeUserId &&
       actual.mealItemId !==
         null
     ) {
@@ -790,9 +869,7 @@ export default async function NutritionPage({
                             userId,
                           }) =>
                             userId ===
-                            session
-                              .user
-                              .id,
+                            activeUserId
                         );
 
                     return quantity
@@ -916,14 +993,18 @@ export default async function NutritionPage({
       >
 
         <Link
-          href="/nutricion"
+          href={
+            buildTodayHref()
+          }
           className="nutrition-primary-nav-active"
         >
           Hoy
         </Link>
 
         <Link
-          href={`/nutricion/semanas/${currentPlan.id}`}
+          href={
+            weekHref
+          }
         >
           Semana
         </Link>
@@ -945,13 +1026,110 @@ export default async function NutritionPage({
 
       </nav>
 
+      {accessiblePeople.length >
+        1 && (
+        <nav
+          className="nutrition-person-switcher"
+          aria-label="Persona cuya nutrición estás gestionando"
+        >
+          {accessiblePeople.map(
+            person => {
+
+              const selected =
+                person.id ===
+                activeUserId;
+
+              const buildPersonHref =
+              (
+                userId:
+                  string,
+              ): string => {
+
+                const params =
+                  new URLSearchParams();
+
+                if (
+                  selectedDate !==
+                  today
+                ) {
+                  params.set(
+                    'date',
+                    selectedDate,
+                  );
+                }
+
+                if (
+                  userId !==
+                  session.user.id
+                ) {
+                  params.set(
+                    'user',
+                    userId,
+                  );
+                }
+
+                const queryString =
+                  params.toString();
+
+                return queryString
+                  ? `/nutricion?${queryString}`
+                  : '/nutricion';
+              };
+
+              return (
+                <Link
+                  key={
+                    person.id
+                  }
+                  href={
+                    buildPersonHref(
+                      person.id,
+                    )
+                  }
+                  className={
+                    selected
+                      ? 'nutrition-person-option nutrition-person-option-active'
+                      : 'nutrition-person-option'
+                  }
+                  aria-current={
+                    selected
+                      ? 'page'
+                      : undefined
+                  }
+                >
+                  {
+                    person.id ===
+                    session.user.id
+                      ? 'Yo'
+                      : person.name
+                  }
+                </Link>
+              );
+            },
+          )}
+        </nav>
+      )}
+
+      {readOnly && (
+        <div
+          className="nutrition-read-only-notice"
+          role="status"
+        >
+          Solo lectura · Puedes consultar esta planificación, pero no modificarla.
+        </div>
+      )}
+
       <section className="nutrition-week-strip">
 
         <div className="nutrition-week-strip-heading">
 
           {previousDate ? (
             <Link
-              href={`/nutricion?date=${previousDate}`}
+              href={
+                buildTodayHref(
+                  previousDate,
+                )
+              }
               aria-label="Día anterior"
             >
               <ChevronLeft />
@@ -973,7 +1151,11 @@ export default async function NutritionPage({
 
           {nextDate ? (
             <Link
-              href={`/nutricion?date=${nextDate}`}
+              href={
+                buildTodayHref(
+                  nextDate,
+                )
+              }
               aria-label="Día siguiente"
             >
               <ChevronRight />
@@ -1007,10 +1189,9 @@ export default async function NutritionPage({
                     date
                   }
                   href={
-                    date ===
-                    today
-                      ? '/nutricion'
-                      : `/nutricion?date=${date}`
+                    buildTodayHref(
+                      date,
+                    )
                   }
                   className={[
                     'nutrition-week-day-button',
@@ -1072,7 +1253,8 @@ export default async function NutritionPage({
             </h2>
           </div>
 
-          {selectedDay && (
+          {selectedDay &&
+            !readOnly && (
             <AddMealForm
               dayId={
                 selectedDay.day.id
@@ -1098,10 +1280,13 @@ export default async function NutritionPage({
                 personalMeals
               }
               people={
-                people
+                accessiblePeople
               }
               userId={
-                session.user.id
+                activeUserId
+              }
+              readOnly={
+                readOnly
               }
             />
           ) : (

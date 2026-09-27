@@ -2034,6 +2034,936 @@ describe(
       },
     );
 
+        it(
+      'updates and moves a planned session for SELF access',
+      async () => {
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        const movableSessionId =
+          'd5000000-0000-4000-8000-000000000091';
+
+        const destinationDayId =
+          'd4000000-0000-4000-8000-000000000091';
+
+        try {
+
+          await trainingDatabase
+            .insertInto(
+              'training.days',
+            )
+            .values({
+              id:
+                destinationDayId,
+
+              week_id:
+                weekId,
+
+              athlete_id:
+                athleteId,
+
+              date:
+                '2026-09-10',
+
+              notes:
+                null,
+            })
+            .execute();
+
+          await trainingDatabase
+            .insertInto(
+              'training.sessions',
+            )
+            .values({
+              id:
+                movableSessionId,
+
+              day_id:
+                dayId,
+
+              athlete_id:
+                athleteId,
+
+              type:
+                'STRENGTH',
+
+              title:
+                'Before update',
+
+              planned_start_time:
+                '10:00',
+
+              planned_duration_minutes:
+                60,
+
+              actual_start_time:
+                null,
+
+              actual_duration_minutes:
+                null,
+
+              planned_notes:
+                null,
+
+              actual_notes:
+                null,
+
+              planned_rpe:
+                '6',
+
+              actual_rpe:
+                null,
+
+              external_id:
+                null,
+
+              created_by_user_id:
+                ownerUserId,
+            })
+            .execute();
+
+          const response =
+            await app.inject({
+              method:
+                'PATCH',
+
+              url:
+                `/api/training/athletes/${athleteId}/sessions/${movableSessionId}`,
+
+              payload: {
+                dayId:
+                  destinationDayId,
+
+                type:
+                  'RUNNING',
+
+                title:
+                  '  Series 6x200  ',
+
+                plannedStartTime:
+                  '18:30',
+
+                plannedDurationMinutes:
+                  75,
+
+                plannedNotes:
+                  'Recuperación completa',
+
+                plannedRpe:
+                  8,
+              },
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            200,
+          );
+
+          expect(
+            response.json(),
+          ).toMatchObject({
+            id:
+              movableSessionId,
+
+            athleteId,
+
+            dayId:
+              destinationDayId,
+
+            type:
+              'RUNNING',
+
+            title:
+              'Series 6x200',
+
+            plannedStartTime:
+              '18:30',
+
+            plannedDurationMinutes:
+              75,
+
+            plannedNotes:
+              'Recuperación completa',
+
+            plannedRpe:
+              8,
+          });
+
+          const persisted =
+            await trainingDatabase
+              .selectFrom(
+                'training.sessions',
+              )
+              .selectAll()
+              .where(
+                'id',
+                '=',
+                movableSessionId,
+              )
+              .executeTakeFirstOrThrow();
+
+          expect(
+            persisted.day_id,
+          ).toBe(
+            destinationDayId,
+          );
+
+          expect(
+            persisted.type,
+          ).toBe(
+            'RUNNING',
+          );
+
+          expect(
+            persisted.title,
+          ).toBe(
+            'Series 6x200',
+          );
+
+          expect(
+            persisted.planned_start_time
+              ?.slice(
+                0,
+                5,
+              ),
+          ).toBe(
+            '18:30',
+          );
+
+        } finally {
+
+          await trainingDatabase
+            .deleteFrom(
+              'training.sessions',
+            )
+            .where(
+              'id',
+              '=',
+              movableSessionId,
+            )
+            .execute();
+
+          await trainingDatabase
+            .deleteFrom(
+              'training.days',
+            )
+            .where(
+              'id',
+              '=',
+              destinationDayId,
+            )
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'allows COACH to update a planned session',
+      async () => {
+
+        await setAthleteAccessRole(
+          'COACH',
+        );
+
+        const coachSessionId =
+          'd5000000-0000-4000-8000-000000000092';
+
+        try {
+
+          await trainingDatabase
+            .insertInto(
+              'training.sessions',
+            )
+            .values({
+              id:
+                coachSessionId,
+
+              day_id:
+                dayId,
+
+              athlete_id:
+                athleteId,
+
+              type:
+                'STRENGTH',
+
+              title:
+                'Coach original',
+
+              planned_start_time:
+                '12:00',
+
+              planned_duration_minutes:
+                45,
+
+              actual_start_time:
+                null,
+
+              actual_duration_minutes:
+                null,
+
+              planned_notes:
+                null,
+
+              actual_notes:
+                null,
+
+              planned_rpe:
+                '5',
+
+              actual_rpe:
+                null,
+
+              external_id:
+                null,
+
+              created_by_user_id:
+                ownerUserId,
+            })
+            .execute();
+
+          const response =
+            await app.inject({
+              method:
+                'PATCH',
+
+              url:
+                `/api/training/athletes/${athleteId}/sessions/${coachSessionId}`,
+
+              payload: {
+                dayId,
+
+                type:
+                  'REHAB',
+
+                title:
+                  'Coach update',
+
+                plannedStartTime:
+                  '13:15',
+
+                plannedDurationMinutes:
+                  35,
+
+                plannedNotes:
+                  'Controlado',
+
+                plannedRpe:
+                  4,
+              },
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            200,
+          );
+
+          expect(
+            response.json(),
+          ).toMatchObject({
+            id:
+              coachSessionId,
+
+            type:
+              'REHAB',
+
+            title:
+              'Coach update',
+
+            plannedStartTime:
+              '13:15',
+
+            plannedDurationMinutes:
+              35,
+
+            plannedRpe:
+              4,
+          });
+
+        } finally {
+
+          await trainingDatabase
+            .deleteFrom(
+              'training.sessions',
+            )
+            .where(
+              'id',
+              '=',
+              coachSessionId,
+            )
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'denies planned session update to VIEWER access',
+      async () => {
+
+        await setAthleteAccessRole(
+          'VIEWER',
+        );
+
+        const response =
+          await app.inject({
+            method:
+              'PATCH',
+
+            url:
+              `/api/training/athletes/${athleteId}/sessions/${sessionId}`,
+
+            payload: {
+              dayId,
+
+              type:
+                'STRENGTH',
+
+              title:
+                'Viewer must not edit',
+
+              plannedStartTime:
+                '10:00',
+
+              plannedDurationMinutes:
+                60,
+
+              plannedNotes:
+                null,
+
+              plannedRpe:
+                8,
+            },
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          403,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+          error:
+            'athlete_access_denied',
+        });
+
+      },
+    );
+
+    it(
+      'rejects invalid planned session update',
+      async () => {
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        try {
+
+          const response =
+            await app.inject({
+              method:
+                'PATCH',
+
+              url:
+                `/api/training/athletes/${athleteId}/sessions/${sessionId}`,
+
+              payload: {
+                dayId,
+
+                type:
+                  'STRENGTH',
+
+                title:
+                  'Invalid time',
+
+                plannedStartTime:
+                  '27:95',
+
+                plannedDurationMinutes:
+                  60,
+
+                plannedNotes:
+                  null,
+
+                plannedRpe:
+                  8,
+              },
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            400,
+          );
+
+          expect(
+            response.json(),
+          ).toEqual({
+            error:
+              'invalid_session',
+          });
+
+        } finally {
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'hides a destination day belonging to another athlete when moving a session',
+      async () => {
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        const privateDayId =
+          'd4000000-0000-4000-8000-000000000093';
+
+        try {
+
+          await trainingDatabase
+            .insertInto(
+              'training.days',
+            )
+            .values({
+              id:
+                privateDayId,
+
+              week_id:
+                otherWeekId,
+
+              athlete_id:
+                otherAthleteId,
+
+              date:
+                '2026-09-15',
+
+              notes:
+                null,
+            })
+            .execute();
+
+          const response =
+            await app.inject({
+              method:
+                'PATCH',
+
+              url:
+                `/api/training/athletes/${athleteId}/sessions/${sessionId}`,
+
+              payload: {
+                dayId:
+                  privateDayId,
+
+                type:
+                  'STRENGTH',
+
+                title:
+                  'Must remain private',
+
+                plannedStartTime:
+                  '10:00',
+
+                plannedDurationMinutes:
+                  60,
+
+                plannedNotes:
+                  null,
+
+                plannedRpe:
+                  8,
+              },
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            404,
+          );
+
+          expect(
+            response.json(),
+          ).toEqual({
+            error:
+              'training_day_not_found',
+          });
+
+        } finally {
+
+          await trainingDatabase
+            .deleteFrom(
+              'training.days',
+            )
+            .where(
+              'id',
+              '=',
+              privateDayId,
+            )
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'deletes a planned session and cascades its structure for SELF access',
+      async () => {
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        const deletedSessionId =
+          'd5000000-0000-4000-8000-000000000094';
+
+        const deletedBlockId =
+          'd6000000-0000-4000-8000-000000000094';
+
+        const deletedSessionExerciseId =
+          'd8000000-0000-4000-8000-000000000094';
+
+        const deletedPerformanceEntryId =
+          'd9000000-0000-4000-8000-000000000094';
+
+        try {
+
+          await trainingDatabase
+            .insertInto(
+              'training.sessions',
+            )
+            .values({
+              id:
+                deletedSessionId,
+
+              day_id:
+                dayId,
+
+              athlete_id:
+                athleteId,
+
+              type:
+                'STRENGTH',
+
+              title:
+                'Delete cascade',
+
+              planned_start_time:
+                '16:00',
+
+              planned_duration_minutes:
+                45,
+
+              actual_start_time:
+                null,
+
+              actual_duration_minutes:
+                null,
+
+              planned_notes:
+                null,
+
+              actual_notes:
+                null,
+
+              planned_rpe:
+                '7',
+
+              actual_rpe:
+                null,
+
+              external_id:
+                null,
+
+              created_by_user_id:
+                ownerUserId,
+            })
+            .execute();
+
+          await trainingDatabase
+            .insertInto(
+              'training.session_blocks',
+            )
+            .values({
+              id:
+                deletedBlockId,
+
+              session_id:
+                deletedSessionId,
+
+              athlete_id:
+                athleteId,
+
+              position:
+                0,
+
+              title:
+                'Cascade block',
+
+              notes:
+                null,
+            })
+            .execute();
+
+          await trainingDatabase
+            .insertInto(
+              'training.session_exercises',
+            )
+            .values({
+              id:
+                deletedSessionExerciseId,
+
+              block_id:
+                deletedBlockId,
+
+              session_id:
+                deletedSessionId,
+
+              athlete_id:
+                athleteId,
+
+              exercise_id:
+                exerciseId,
+
+              position:
+                0,
+
+              planned_notes:
+                null,
+
+              actual_notes:
+                null,
+            })
+            .execute();
+
+          await trainingDatabase
+            .insertInto(
+              'training.performance_entries',
+            )
+            .values({
+              id:
+                deletedPerformanceEntryId,
+
+              session_exercise_id:
+                deletedSessionExerciseId,
+
+              athlete_id:
+                athleteId,
+
+              position:
+                0,
+
+              planned_reps:
+                5,
+
+              actual_reps:
+                null,
+
+              planned_load_kg:
+                '70',
+
+              actual_load_kg:
+                null,
+
+              planned_distance_m:
+                null,
+
+              actual_distance_m:
+                null,
+
+              planned_duration_ms:
+                null,
+
+              actual_duration_ms:
+                null,
+
+              planned_result_m:
+                null,
+
+              actual_result_m:
+                null,
+
+              planned_height_m:
+                null,
+
+              actual_height_m:
+                null,
+
+              planned_rpe:
+                '7',
+
+              actual_rpe:
+                null,
+
+              planned_rir:
+                null,
+
+              actual_rir:
+                null,
+
+              planned_rest_seconds:
+                null,
+
+              actual_rest_seconds:
+                null,
+
+              actual_success:
+                null,
+
+              actual_is_foul:
+                null,
+
+              planned_metrics:
+                {},
+
+              actual_metrics:
+                {},
+
+              planned_notes:
+                null,
+
+              actual_notes:
+                null,
+            })
+            .execute();
+
+          const response =
+            await app.inject({
+              method:
+                'DELETE',
+
+              url:
+                `/api/training/athletes/${athleteId}/sessions/${deletedSessionId}`,
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            204,
+          );
+
+          const persistedSession =
+            await trainingDatabase
+              .selectFrom(
+                'training.sessions',
+              )
+              .select('id')
+              .where(
+                'id',
+                '=',
+                deletedSessionId,
+              )
+              .executeTakeFirst();
+
+          const persistedBlock =
+            await trainingDatabase
+              .selectFrom(
+                'training.session_blocks',
+              )
+              .select('id')
+              .where(
+                'id',
+                '=',
+                deletedBlockId,
+              )
+              .executeTakeFirst();
+
+          const persistedExercise =
+            await trainingDatabase
+              .selectFrom(
+                'training.session_exercises',
+              )
+              .select('id')
+              .where(
+                'id',
+                '=',
+                deletedSessionExerciseId,
+              )
+              .executeTakeFirst();
+
+          const persistedEntry =
+            await trainingDatabase
+              .selectFrom(
+                'training.performance_entries',
+              )
+              .select('id')
+              .where(
+                'id',
+                '=',
+                deletedPerformanceEntryId,
+              )
+              .executeTakeFirst();
+
+          expect(
+            persistedSession,
+          ).toBeUndefined();
+
+          expect(
+            persistedBlock,
+          ).toBeUndefined();
+
+          expect(
+            persistedExercise,
+          ).toBeUndefined();
+
+          expect(
+            persistedEntry,
+          ).toBeUndefined();
+
+        } finally {
+
+          /*
+           * Defensive cleanup if an assertion fails before
+           * the DELETE route removes the temporary session.
+           */
+          await trainingDatabase
+            .deleteFrom(
+              'training.sessions',
+            )
+            .where(
+              'id',
+              '=',
+              deletedSessionId,
+            )
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
     it(
       'denies session block creation to a VIEWER',
       async () => {
@@ -6789,5 +7719,2168 @@ describe(
       },
 
     );
+
+
+    it(
+      'updates session exercise planned notes for SELF access',
+      async () => {
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        try {
+
+          const response =
+            await app.inject({
+
+              method:
+                'PATCH',
+
+              url:
+                `/api/training/athletes/${athleteId}/session-exercises/${sessionExerciseId}`,
+
+              payload: {
+
+                plannedNotes:
+                  '  Técnica estricta  ',
+
+              },
+
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            200,
+          );
+
+          expect(
+            response.json(),
+          ).toMatchObject({
+
+            id:
+              sessionExerciseId,
+
+            athleteId,
+
+            sessionId,
+
+            blockId,
+
+            plannedNotes:
+              'Técnica estricta',
+
+          });
+
+          const persisted =
+            await trainingDatabase
+
+              .selectFrom(
+                'training.session_exercises',
+              )
+
+              .select(
+                'planned_notes',
+              )
+
+              .where(
+                'id',
+                '=',
+                sessionExerciseId,
+              )
+
+              .executeTakeFirst();
+
+          expect(
+            persisted?.planned_notes,
+          ).toBe(
+            'Técnica estricta',
+          );
+
+        } finally {
+
+          await trainingDatabase
+
+            .updateTable(
+              'training.session_exercises',
+            )
+
+            .set({
+
+              planned_notes:
+                null,
+
+            })
+
+            .where(
+              'id',
+              '=',
+              sessionExerciseId,
+            )
+
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'allows COACH to update session exercise planned notes',
+      async () => {
+
+        await setAthleteAccessRole(
+          'COACH',
+        );
+
+        try {
+
+          const response =
+            await app.inject({
+
+              method:
+                'PATCH',
+
+              url:
+                `/api/training/athletes/${athleteId}/session-exercises/${sessionExerciseId}`,
+
+              payload: {
+
+                plannedNotes:
+                  'Nota del entrenador',
+
+              },
+
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            200,
+          );
+
+          expect(
+            response.json(),
+          ).toMatchObject({
+
+            id:
+              sessionExerciseId,
+
+            plannedNotes:
+              'Nota del entrenador',
+
+          });
+
+        } finally {
+
+          await trainingDatabase
+
+            .updateTable(
+              'training.session_exercises',
+            )
+
+            .set({
+
+              planned_notes:
+                null,
+
+            })
+
+            .where(
+              'id',
+              '=',
+              sessionExerciseId,
+            )
+
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'denies session exercise update to VIEWER access',
+      async () => {
+
+        await setAthleteAccessRole(
+          'VIEWER',
+        );
+
+        const response =
+          await app.inject({
+
+            method:
+              'PATCH',
+
+            url:
+              `/api/training/athletes/${athleteId}/session-exercises/${sessionExerciseId}`,
+
+            payload: {
+
+              plannedNotes:
+                'No permitido',
+
+            },
+
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          403,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+
+          error:
+            'athlete_access_denied',
+
+        });
+
+      },
+    );
+
+    it(
+      'deletes a session exercise for SELF access and cascades performance entries',
+      async () => {
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        const temporarySessionExerciseId =
+          randomUUID();
+
+        const temporaryPerformanceEntryId =
+          randomUUID();
+
+        await trainingDatabase
+
+          .insertInto(
+            'training.session_exercises',
+          )
+
+          .values({
+
+            id:
+              temporarySessionExerciseId,
+
+            block_id:
+              blockId,
+
+            session_id:
+              sessionId,
+
+            athlete_id:
+              athleteId,
+
+            exercise_id:
+              exerciseId,
+
+            position:
+              90,
+
+            planned_notes:
+              'Temporal',
+
+            actual_notes:
+              null,
+
+          })
+
+          .execute();
+
+        await trainingDatabase
+
+          .insertInto(
+            'training.performance_entries',
+          )
+
+          .values({
+
+            id:
+              temporaryPerformanceEntryId,
+
+            session_exercise_id:
+              temporarySessionExerciseId,
+
+            athlete_id:
+              athleteId,
+
+            position:
+              0,
+
+            planned_reps:
+              5,
+
+            actual_reps:
+              null,
+
+            planned_load_kg:
+              null,
+
+            actual_load_kg:
+              null,
+
+            planned_distance_m:
+              null,
+
+            actual_distance_m:
+              null,
+
+            planned_duration_ms:
+              null,
+
+            actual_duration_ms:
+              null,
+
+            planned_result_m:
+              null,
+
+            actual_result_m:
+              null,
+
+            planned_height_m:
+              null,
+
+            actual_height_m:
+              null,
+
+            planned_rpe:
+              null,
+
+            actual_rpe:
+              null,
+
+            planned_rir:
+              null,
+
+            actual_rir:
+              null,
+
+            planned_rest_seconds:
+              null,
+
+            actual_rest_seconds:
+              null,
+
+            actual_success:
+              null,
+
+            actual_is_foul:
+              null,
+
+            planned_metrics:
+              {},
+
+            actual_metrics:
+              {},
+
+            planned_notes:
+              null,
+
+            actual_notes:
+              null,
+
+          })
+
+          .execute();
+
+        try {
+
+          const response =
+            await app.inject({
+
+              method:
+                'DELETE',
+
+              url:
+                `/api/training/athletes/${athleteId}/session-exercises/${temporarySessionExerciseId}`,
+
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            204,
+          );
+
+          const persistedExercise =
+            await trainingDatabase
+
+              .selectFrom(
+                'training.session_exercises',
+              )
+
+              .select(
+                'id',
+              )
+
+              .where(
+                'id',
+                '=',
+                temporarySessionExerciseId,
+              )
+
+              .executeTakeFirst();
+
+          expect(
+            persistedExercise,
+          ).toBeUndefined();
+
+          const persistedEntry =
+            await trainingDatabase
+
+              .selectFrom(
+                'training.performance_entries',
+              )
+
+              .select(
+                'id',
+              )
+
+              .where(
+                'id',
+                '=',
+                temporaryPerformanceEntryId,
+              )
+
+              .executeTakeFirst();
+
+          expect(
+            persistedEntry,
+          ).toBeUndefined();
+
+        } finally {
+
+          await trainingDatabase
+
+            .deleteFrom(
+              'training.performance_entries',
+            )
+
+            .where(
+              'id',
+              '=',
+              temporaryPerformanceEntryId,
+            )
+
+            .execute();
+
+          await trainingDatabase
+
+            .deleteFrom(
+              'training.session_exercises',
+            )
+
+            .where(
+              'id',
+              '=',
+              temporarySessionExerciseId,
+            )
+
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'allows COACH to delete a session exercise',
+      async () => {
+
+        await setAthleteAccessRole(
+          'COACH',
+        );
+
+        const temporarySessionExerciseId =
+          randomUUID();
+
+        await trainingDatabase
+
+          .insertInto(
+            'training.session_exercises',
+          )
+
+          .values({
+
+            id:
+              temporarySessionExerciseId,
+
+            block_id:
+              blockId,
+
+            session_id:
+              sessionId,
+
+            athlete_id:
+              athleteId,
+
+            exercise_id:
+              exerciseId,
+
+            position:
+              91,
+
+            planned_notes:
+              null,
+
+            actual_notes:
+              null,
+
+          })
+
+          .execute();
+
+        try {
+
+          const response =
+            await app.inject({
+
+              method:
+                'DELETE',
+
+              url:
+                `/api/training/athletes/${athleteId}/session-exercises/${temporarySessionExerciseId}`,
+
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            204,
+          );
+
+        } finally {
+
+          await trainingDatabase
+
+            .deleteFrom(
+              'training.session_exercises',
+            )
+
+            .where(
+              'id',
+              '=',
+              temporarySessionExerciseId,
+            )
+
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'denies session exercise deletion to VIEWER access',
+      async () => {
+
+        await setAthleteAccessRole(
+          'VIEWER',
+        );
+
+        const response =
+          await app.inject({
+
+            method:
+              'DELETE',
+
+            url:
+              `/api/training/athletes/${athleteId}/session-exercises/${sessionExerciseId}`,
+
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          403,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+
+          error:
+            'athlete_access_denied',
+
+        });
+
+      },
+    );
+
+    it(
+      'moves and reorders session exercises across blocks for SELF access',
+      async () => {
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        const targetBlockId =
+          randomUUID();
+
+        const secondExerciseId =
+          randomUUID();
+
+        await trainingDatabase
+
+          .insertInto(
+            'training.session_blocks',
+          )
+
+          .values({
+
+            id:
+              targetBlockId,
+
+            session_id:
+              sessionId,
+
+            athlete_id:
+              athleteId,
+
+            position:
+              90,
+
+            title:
+              'Bloque destino',
+
+            notes:
+              null,
+
+          })
+
+          .execute();
+
+        await trainingDatabase
+
+          .insertInto(
+            'training.session_exercises',
+          )
+
+          .values({
+
+            id:
+              secondExerciseId,
+
+            block_id:
+              blockId,
+
+            session_id:
+              sessionId,
+
+            athlete_id:
+              athleteId,
+
+            exercise_id:
+              exerciseId,
+
+            position:
+              90,
+
+            planned_notes:
+              null,
+
+            actual_notes:
+              null,
+
+          })
+
+          .execute();
+
+        try {
+
+          const currentBlocks =
+            await trainingDatabase
+
+              .selectFrom(
+                'training.session_blocks',
+              )
+
+              .select([
+                'id',
+                'position',
+              ])
+
+              .where(
+                'session_id',
+                '=',
+                sessionId,
+              )
+
+              .orderBy(
+                'position',
+                'asc',
+              )
+
+              .execute();
+
+          const currentExercises =
+            await trainingDatabase
+
+              .selectFrom(
+                'training.session_exercises',
+              )
+
+              .select([
+                'id',
+                'block_id',
+                'position',
+              ])
+
+              .where(
+                'session_id',
+                '=',
+                sessionId,
+              )
+
+              .orderBy(
+                'position',
+                'asc',
+              )
+
+              .execute();
+
+          const layout =
+            currentBlocks.map(
+              block => ({
+
+                blockId:
+                  block.id,
+
+                orderedIds:
+                  currentExercises
+
+                    .filter(
+                      exercise =>
+                        exercise.block_id ===
+                        block.id,
+                    )
+
+                    .map(
+                      exercise =>
+                        exercise.id,
+                    ),
+
+              }),
+            );
+
+          const sourceBlock =
+            layout.find(
+              block =>
+                block.blockId ===
+                blockId,
+            );
+
+          const targetBlock =
+            layout.find(
+              block =>
+                block.blockId ===
+                targetBlockId,
+            );
+
+          if (
+            !sourceBlock ||
+            !targetBlock
+          ) {
+
+            throw new Error(
+              'Integration test layout setup failed',
+            );
+
+          }
+
+          sourceBlock.orderedIds =
+            sourceBlock.orderedIds.filter(
+              id =>
+                id !==
+                secondExerciseId,
+            );
+
+          targetBlock.orderedIds = [
+            secondExerciseId,
+            ...targetBlock.orderedIds,
+          ];
+
+          const response =
+            await app.inject({
+
+              method:
+                'PUT',
+
+              url:
+                `/api/training/athletes/${athleteId}/sessions/${sessionId}/exercises/layout`,
+
+              payload: {
+
+                blocks:
+                  layout,
+
+              },
+
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            200,
+          );
+
+          const persisted =
+            await trainingDatabase
+
+              .selectFrom(
+                'training.session_exercises',
+              )
+
+              .select([
+                'block_id',
+                'position',
+              ])
+
+              .where(
+                'id',
+                '=',
+                secondExerciseId,
+              )
+
+              .executeTakeFirst();
+
+          expect(
+            persisted,
+          ).toEqual({
+
+            block_id:
+              targetBlockId,
+
+            position:
+              0,
+
+          });
+
+        } finally {
+
+          await trainingDatabase
+
+            .deleteFrom(
+              'training.session_exercises',
+            )
+
+            .where(
+              'id',
+              '=',
+              secondExerciseId,
+            )
+
+            .execute();
+
+          await trainingDatabase
+
+            .deleteFrom(
+              'training.session_blocks',
+            )
+
+            .where(
+              'id',
+              '=',
+              targetBlockId,
+            )
+
+            .execute();
+
+          /*
+           * Restore baseline exercise position because the
+           * layout operation normalizes every block.
+           */
+          await trainingDatabase
+
+            .updateTable(
+              'training.session_exercises',
+            )
+
+            .set({
+
+              block_id:
+                blockId,
+
+              position:
+                0,
+
+            })
+
+            .where(
+              'id',
+              '=',
+              sessionExerciseId,
+            )
+
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'denies session exercise layout changes to VIEWER access',
+      async () => {
+
+        await setAthleteAccessRole(
+          'VIEWER',
+        );
+
+        const currentBlocks =
+          await trainingDatabase
+
+            .selectFrom(
+              'training.session_blocks',
+            )
+
+            .select(
+              'id',
+            )
+
+            .where(
+              'session_id',
+              '=',
+              sessionId,
+            )
+
+            .orderBy(
+              'position',
+              'asc',
+            )
+
+            .execute();
+
+        const currentExercises =
+          await trainingDatabase
+
+            .selectFrom(
+              'training.session_exercises',
+            )
+
+            .select([
+              'id',
+              'block_id',
+              'position',
+            ])
+
+            .where(
+              'session_id',
+              '=',
+              sessionId,
+            )
+
+            .orderBy(
+              'position',
+              'asc',
+            )
+
+            .execute();
+
+        const response =
+          await app.inject({
+
+            method:
+              'PUT',
+
+            url:
+              `/api/training/athletes/${athleteId}/sessions/${sessionId}/exercises/layout`,
+
+            payload: {
+
+              blocks:
+                currentBlocks.map(
+                  block => ({
+
+                    blockId:
+                      block.id,
+
+                    orderedIds:
+                      currentExercises
+
+                        .filter(
+                          exercise =>
+                            exercise.block_id ===
+                            block.id,
+                        )
+
+                        .map(
+                          exercise =>
+                            exercise.id,
+                        ),
+
+                  }),
+                ),
+
+            },
+
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          403,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+
+          error:
+            'athlete_access_denied',
+
+        });
+
+      },
+    );
+
+    it(
+      'rejects duplicate exercise ids in a session exercise layout',
+      async () => {
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        try {
+
+          const currentBlocks =
+            await trainingDatabase
+
+              .selectFrom(
+                'training.session_blocks',
+              )
+
+              .select(
+                'id',
+              )
+
+              .where(
+                'session_id',
+                '=',
+                sessionId,
+              )
+
+              .orderBy(
+                'position',
+                'asc',
+              )
+
+              .execute();
+
+          const layout =
+            currentBlocks.map(
+              block => ({
+
+                blockId:
+                  block.id,
+
+                orderedIds:
+                  block.id ===
+                  blockId
+                    ? [
+                        sessionExerciseId,
+                        sessionExerciseId,
+                      ]
+                    : [],
+
+              }),
+            );
+
+          const response =
+            await app.inject({
+
+              method:
+                'PUT',
+
+              url:
+                `/api/training/athletes/${athleteId}/sessions/${sessionId}/exercises/layout`,
+
+              payload: {
+
+                blocks:
+                  layout,
+
+              },
+
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            400,
+          );
+
+          expect(
+            response.json(),
+          ).toEqual({
+
+            error:
+              'invalid_session_exercise_layout',
+
+          });
+
+        } finally {
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+    it(
+      'rejects an incomplete session exercise layout',
+      async () => {
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        const temporarySessionExerciseId =
+          randomUUID();
+
+        await trainingDatabase
+
+          .insertInto(
+            'training.session_exercises',
+          )
+
+          .values({
+
+            id:
+              temporarySessionExerciseId,
+
+            block_id:
+              blockId,
+
+            session_id:
+              sessionId,
+
+            athlete_id:
+              athleteId,
+
+            exercise_id:
+              exerciseId,
+
+            position:
+              90,
+
+            planned_notes:
+              null,
+
+            actual_notes:
+              null,
+
+          })
+
+          .execute();
+
+        try {
+
+          const currentBlocks =
+            await trainingDatabase
+
+              .selectFrom(
+                'training.session_blocks',
+              )
+
+              .select(
+                'id',
+              )
+
+              .where(
+                'session_id',
+                '=',
+                sessionId,
+              )
+
+              .orderBy(
+                'position',
+                'asc',
+              )
+
+              .execute();
+
+          const response =
+            await app.inject({
+
+              method:
+                'PUT',
+
+              url:
+                `/api/training/athletes/${athleteId}/sessions/${sessionId}/exercises/layout`,
+
+              payload: {
+
+                blocks:
+                  currentBlocks.map(
+                    block => ({
+
+                      blockId:
+                        block.id,
+
+                      orderedIds:
+                        block.id ===
+                        blockId
+                          ? [
+                              sessionExerciseId,
+                            ]
+                          : [],
+
+                    }),
+                  ),
+
+              },
+
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            400,
+          );
+
+          expect(
+            response.json(),
+          ).toEqual({
+
+            error:
+              'invalid_session_exercise_layout',
+
+          });
+
+        } finally {
+
+          await trainingDatabase
+
+            .deleteFrom(
+              'training.session_exercises',
+            )
+
+            .where(
+              'id',
+              '=',
+              temporarySessionExerciseId,
+            )
+
+            .execute();
+
+          await setAthleteAccessRole(
+            'VIEWER',
+          );
+
+        }
+
+      },
+    );
+
+        it(
+      'allows owner to list Training athlete access administration',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        const targetUserId =
+          randomUUID();
+
+        await controlDatabase
+          .insertInto(
+            'identity.users',
+          )
+          .values({
+            id:
+              targetUserId,
+
+            name:
+              'Training Admin Target',
+
+            role:
+              'member',
+
+            created_at:
+              new Date(),
+          })
+          .execute();
+
+        try {
+
+          const response =
+            await app.inject({
+              method:
+                'GET',
+
+              url:
+                `/api/training/admin/users/${targetUserId}/athlete-access`,
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            200,
+          );
+
+          const body =
+            response.json() as Array<{
+              athleteId:
+                string;
+
+              displayName:
+                string;
+
+              role:
+                string | null;
+            }>;
+
+          expect(
+            body.some(
+              entry =>
+                entry.athleteId ===
+                  athleteId &&
+                entry.role ===
+                  null,
+            ),
+          ).toBe(
+            true,
+          );
+
+        } finally {
+
+          await controlDatabase
+            .deleteFrom(
+              'identity.users',
+            )
+            .where(
+              'id',
+              '=',
+              targetUserId,
+            )
+            .execute();
+
+        }
+      },
+    );
+
+    it(
+      'allows owner to set and revoke Training athlete access',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        const targetUserId =
+          randomUUID();
+
+        await controlDatabase
+          .insertInto(
+            'identity.users',
+          )
+          .values({
+            id:
+              targetUserId,
+
+            name:
+              'Training Access Target',
+
+            role:
+              'member',
+
+            created_at:
+              new Date(),
+          })
+          .execute();
+
+        try {
+
+          const grantResponse =
+            await app.inject({
+              method:
+                'PUT',
+
+              url:
+                `/api/training/admin/users/${targetUserId}/athletes/${athleteId}/access`,
+
+              payload: {
+                role:
+                  'COACH',
+              },
+            });
+
+          expect(
+            grantResponse.statusCode,
+          ).toBe(
+            200,
+          );
+
+          expect(
+            grantResponse.json(),
+          ).toEqual({
+            athleteId,
+
+            userId:
+              targetUserId,
+
+            role:
+              'COACH',
+          });
+
+          const persisted =
+            await trainingDatabase
+              .selectFrom(
+                'training.athlete_access',
+              )
+              .select(
+                'role',
+              )
+              .where(
+                'athlete_id',
+                '=',
+                athleteId,
+              )
+              .where(
+                'user_id',
+                '=',
+                targetUserId,
+              )
+              .executeTakeFirst();
+
+          expect(
+            persisted?.role,
+          ).toBe(
+            'COACH',
+          );
+
+          const updateResponse =
+            await app.inject({
+              method:
+                'PUT',
+
+              url:
+                `/api/training/admin/users/${targetUserId}/athletes/${athleteId}/access`,
+
+              payload: {
+                role:
+                  'VIEWER',
+              },
+            });
+
+          expect(
+            updateResponse.statusCode,
+          ).toBe(
+            200,
+          );
+
+          expect(
+            updateResponse.json(),
+          ).toEqual({
+            athleteId,
+
+            userId:
+              targetUserId,
+
+            role:
+              'VIEWER',
+          });
+
+          const revokeResponse =
+            await app.inject({
+              method:
+                'PUT',
+
+              url:
+                `/api/training/admin/users/${targetUserId}/athletes/${athleteId}/access`,
+
+              payload: {
+                role:
+                  null,
+              },
+            });
+
+          expect(
+            revokeResponse.statusCode,
+          ).toBe(
+            200,
+          );
+
+          expect(
+            revokeResponse.json(),
+          ).toEqual({
+            athleteId,
+
+            userId:
+              targetUserId,
+
+            role:
+              null,
+          });
+
+          const removed =
+            await trainingDatabase
+              .selectFrom(
+                'training.athlete_access',
+              )
+              .select(
+                'id',
+              )
+              .where(
+                'athlete_id',
+                '=',
+                athleteId,
+              )
+              .where(
+                'user_id',
+                '=',
+                targetUserId,
+              )
+              .executeTakeFirst();
+
+          expect(
+            removed,
+          ).toBeUndefined();
+
+        } finally {
+
+          await trainingDatabase
+            .deleteFrom(
+              'training.athlete_access',
+            )
+            .where(
+              'user_id',
+              '=',
+              targetUserId,
+            )
+            .execute();
+
+          await controlDatabase
+            .deleteFrom(
+              'identity.users',
+            )
+            .where(
+              'id',
+              '=',
+              targetUserId,
+            )
+            .execute();
+
+        }
+      },
+    );
+
+    it(
+      'denies Training access administration to non-owner users',
+      async () => {
+
+        const memberUserId =
+          randomUUID();
+
+        await controlDatabase
+          .insertInto(
+            'identity.users',
+          )
+          .values({
+            id:
+              memberUserId,
+
+            name:
+              'Training Admin Member',
+
+            role:
+              'member',
+
+            created_at:
+              new Date(),
+          })
+          .execute();
+
+        authenticatedUserId =
+          memberUserId;
+
+        try {
+
+          const response =
+            await app.inject({
+              method:
+                'GET',
+
+              url:
+                `/api/training/admin/users/${ownerUserId}/athlete-access`,
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            403,
+          );
+
+          expect(
+            response.json(),
+          ).toEqual({
+            error:
+              'owner_required',
+          });
+
+        } finally {
+
+          authenticatedUserId =
+            ownerUserId;
+
+          await controlDatabase
+            .deleteFrom(
+              'identity.users',
+            )
+            .where(
+              'id',
+              '=',
+              memberUserId,
+            )
+            .execute();
+
+        }
+      },
+    );
+
+    it(
+      'rejects invalid Training athlete access administration payload',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        const response =
+          await app.inject({
+            method:
+              'PUT',
+
+            url:
+              `/api/training/admin/users/${ownerUserId}/athletes/${athleteId}/access`,
+
+            payload: {
+              role:
+                'ADMIN',
+            },
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          400,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+          error:
+            'invalid_request',
+        });
+      },
+    );
+
+    it(
+      'returns 404 when administering an unknown Training athlete',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        const response =
+          await app.inject({
+            method:
+              'PUT',
+
+            url:
+              `/api/training/admin/users/${ownerUserId}/athletes/${randomUUID()}/access`,
+
+            payload: {
+              role:
+                'VIEWER',
+            },
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          404,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+          error:
+            'training_athlete_not_found',
+        });
+      },
+    );
+
+    it(
+      'returns null when no daily check-in exists',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        await setAthleteAccessRole(
+          'VIEWER',
+        );
+
+        const response =
+          await app.inject({
+            method:
+              'GET',
+
+            url:
+              `/api/training/athletes/${athleteId}/daily-checkins/2026-09-20`,
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          200,
+        );
+
+        expect(
+          response.json(),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'allows SELF to create a daily check-in',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        const response =
+          await app.inject({
+            method:
+              'PUT',
+
+            url:
+              `/api/training/athletes/${athleteId}/daily-checkins/2026-09-21`,
+
+            payload: {
+              weightKg:
+                83.2,
+
+              sleepQuality:
+                4,
+
+              fatigue:
+                2,
+
+              soreness:
+                3,
+
+              stress:
+                1,
+
+              motivation:
+                5,
+
+              notes:
+                'Buen día.',
+            },
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          200,
+        );
+
+        const body =
+          response.json();
+
+        expect(
+          body.athleteId,
+        ).toBe(
+          athleteId,
+        );
+
+        expect(
+          body.date,
+        ).toBe(
+          '2026-09-21',
+        );
+
+        expect(
+          body.weightKg,
+        ).toBe(
+          83.2,
+        );
+
+        expect(
+          body.sleepQuality,
+        ).toBe(
+          4,
+        );
+
+        expect(
+          body.recordedByUserId,
+        ).toBe(
+          ownerUserId,
+        );
+      },
+    );
+
+    it(
+      'allows VIEWER to read an existing daily check-in',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        await setAthleteAccessRole(
+          'VIEWER',
+        );
+
+        const response =
+          await app.inject({
+            method:
+              'GET',
+
+            url:
+              `/api/training/athletes/${athleteId}/daily-checkins/2026-09-21`,
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          200,
+        );
+
+        const body =
+          response.json();
+
+        expect(
+          body.date,
+        ).toBe(
+          '2026-09-21',
+        );
+
+        expect(
+          body.weightKg,
+        ).toBe(
+          83.2,
+        );
+
+        expect(
+          body.notes,
+        ).toBe(
+          'Buen día.',
+        );
+      },
+    );
+
+    it(
+      'allows COACH to update the same daily check-in without creating a duplicate',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        await setAthleteAccessRole(
+          'COACH',
+        );
+
+        const response =
+          await app.inject({
+            method:
+              'PUT',
+
+            url:
+              `/api/training/athletes/${athleteId}/daily-checkins/2026-09-21`,
+
+            payload: {
+              weightKg:
+                82.9,
+
+              sleepQuality:
+                5,
+
+              fatigue:
+                1,
+
+              soreness:
+                2,
+
+              stress:
+                2,
+
+              motivation:
+                5,
+
+              notes:
+                'Actualizado.',
+            },
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          200,
+        );
+
+        const rows =
+          await trainingDatabase
+            .selectFrom(
+              'training.daily_checkins',
+            )
+            .selectAll()
+            .where(
+              'athlete_id',
+              '=',
+              athleteId,
+            )
+            .where(
+              'date',
+              '=',
+              '2026-09-21',
+            )
+            .execute();
+
+        expect(
+          rows,
+        ).toHaveLength(
+          1,
+        );
+
+        expect(
+          rows[0]?.weight_kg,
+        ).toBe(
+          '82.90',
+        );
+
+        expect(
+          rows[0]?.notes,
+        ).toBe(
+          'Actualizado.',
+        );
+      },
+    );
+
+    it(
+      'denies VIEWER write access to daily check-ins',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        await setAthleteAccessRole(
+          'VIEWER',
+        );
+
+        const response =
+          await app.inject({
+            method:
+              'PUT',
+
+            url:
+              `/api/training/athletes/${athleteId}/daily-checkins/2026-09-22`,
+
+            payload: {
+              weightKg:
+                83,
+
+              sleepQuality:
+                4,
+
+              fatigue:
+                2,
+
+              soreness:
+                2,
+
+              stress:
+                1,
+
+              motivation:
+                4,
+
+              notes:
+                null,
+            },
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          403,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+          error:
+            'athlete_access_denied',
+        });
+      },
+    );
+
+    it(
+      'rejects invalid daily check-in payloads',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        await setAthleteAccessRole(
+          'SELF',
+        );
+
+        const response =
+          await app.inject({
+            method:
+              'PUT',
+
+            url:
+              `/api/training/athletes/${athleteId}/daily-checkins/2026-09-23`,
+
+            payload: {
+              weightKg:
+                83,
+
+              sleepQuality:
+                9,
+
+              fatigue:
+                2,
+
+              soreness:
+                2,
+
+              stress:
+                1,
+
+              motivation:
+                4,
+
+              notes:
+                null,
+            },
+          });
+
+        expect(
+          response.statusCode,
+        ).toBe(
+          400,
+        );
+
+        expect(
+          response.json(),
+        ).toEqual({
+          error:
+            'invalid_request',
+        });
+      },
+    );
+
+    it(
+      'denies daily check-in access without explicit athlete access',
+      async () => {
+
+        authenticatedUserId =
+          ownerUserId;
+
+        await trainingDatabase
+          .deleteFrom(
+            'training.athlete_access',
+          )
+          .where(
+            'athlete_id',
+            '=',
+            athleteId,
+          )
+          .where(
+            'user_id',
+            '=',
+            ownerUserId,
+          )
+          .execute();
+
+        try {
+
+          const response =
+            await app.inject({
+              method:
+                'GET',
+
+              url:
+                `/api/training/athletes/${athleteId}/daily-checkins/2026-09-21`,
+            });
+
+          expect(
+            response.statusCode,
+          ).toBe(
+            403,
+          );
+
+          expect(
+            response.json(),
+          ).toEqual({
+            error:
+              'athlete_access_denied',
+          });
+
+        } finally {
+
+          await trainingDatabase
+            .insertInto(
+              'training.athlete_access',
+            )
+            .values({
+              id:
+                athleteAccessId,
+
+              athlete_id:
+                athleteId,
+
+              user_id:
+                ownerUserId,
+
+              role:
+                'VIEWER',
+            })
+            .execute();
+
+        }
+      },
+    );
+
   },
 );

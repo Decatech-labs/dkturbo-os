@@ -32,42 +32,35 @@ import {
   SessionBlockList,
 } from './session-block-list';
 
+import {
+  SessionHeaderEditor,
+  type TrainingSessionType,
+} from './session-header-editor';
+
+import {
+  TrainingMobileEditToggle,
+} from '../../../training-mobile-edit-toggle';
+
 interface PageProps {
   params: Promise<{
-    athleteId: string;
-    sessionId: string;
+    athleteId:
+      string;
+    sessionId:
+      string;
   }>;
+  searchParams:
+    Promise<{
+      from?:
+        string;
+      weekId?:
+        string;
+    }>;
 }
-
-const sessionTypeLabel = (
-  type: string,
-): string => {
-  const labels: Record<
-    string,
-    string
-  > = {
-    STRENGTH: 'Fuerza',
-    RUNNING: 'Carrera',
-    SWIMMING: 'Natación',
-    CYCLING: 'Ciclismo',
-    POLE_VAULT: 'Pértiga',
-    JUMPS: 'Saltos',
-    THROWS: 'Lanzamientos',
-    TECHNIQUE: 'Técnica',
-    REHAB: 'Rehabilitación',
-    MOBILITY: 'Movilidad',
-    OTHER: 'Otro',
-  };
-
-  return (
-    labels[type] ??
-    type
-  );
-};
 
 export default async function TrainingSessionPage(
   {
     params,
+    searchParams,
   }: PageProps,
 ) {
   await requireAccessPermission(
@@ -78,6 +71,18 @@ export default async function TrainingSessionPage(
     athleteId,
     sessionId,
   } = await params;
+
+    const {
+    from,
+    weekId,
+  } = await searchParams;
+
+  const backHref =
+    from ===
+      'week' &&
+    weekId
+      ? `/entrenamientos/${athleteId}/semanas/${weekId}`
+      : `/entrenamientos/${athleteId}`;
 
   const detail =
     await getTrainingSessionDetail(
@@ -105,63 +110,131 @@ export default async function TrainingSessionPage(
         ) + 1;
 
   return (
-    <main className="training-page training-session-page">
+    <main
+      className="training-page training-session-page"
+      data-session-type={
+        session.type
+      }
+    >
 
       <header className="training-page-header training-session-header">
 
         <Link
           href={
-            `/entrenamientos/${athleteId}`
+            backHref
           }
           className="system-back"
-          aria-label="Volver a semanas"
+          aria-label={
+            from ===
+              'week'
+              ? 'Volver a la semana'
+              : 'Volver al mes'
+          }
         >
           <ArrowLeft />
         </Link>
 
-        <div className="training-session-heading">
+        <div className="training-plan-desktop-only">
 
-          <div className="training-session-heading-meta">
+          <SessionHeaderEditor
+            athleteId={
+              athleteId
+            }
+            sessionId={
+              sessionId
+            }
+            dayId={
+              session.dayId
+            }
+            type={
+              session.type as TrainingSessionType
+            }
+            title={
+              session.title
+            }
+            plannedStartTime={
+              session.plannedStartTime
+            }
+            plannedDurationMinutes={
+              session.plannedDurationMinutes
+            }
+            plannedNotes={
+              session.plannedNotes
+            }
+            plannedRpe={
+              session.plannedRpe
+            }
+            accessRole={
+              accessRole
+            }
+            canWrite={
+              canWrite
+            }
+            backHref={
+              backHref
+            }
+          />
 
-            <span>
-              {sessionTypeLabel(
-                session.type,
-              )}
-            </span>
+        </div>
 
-            <span>
-              {accessRole}
-            </span>
+        <div className="training-plan-mobile-readonly">
 
-            {!canWrite && (
+          <div className="training-session-heading">
+
+            <div className="training-session-heading-meta">
+
               <span>
-                Solo lectura
+                {accessRole}
               </span>
-            )}
 
-          </div>
-
-          <h1>
-            {session.title ??
-              sessionTypeLabel(
-                session.type,
-              )}
-          </h1>
-
-          <div className="training-session-summary">
-
-            {session.plannedStartTime && (
               <span>
-                {session.plannedStartTime}
+                Modo entrenamiento
               </span>
-            )}
 
-            {session.plannedDurationMinutes && (
-              <span>
+            </div>
+
+            <h1>
+              {
+                session.title
+              }
+            </h1>
+
+            <div className="training-session-summary">
+
+              {session.plannedStartTime && (
+                <span>
+                  {
+                    session.plannedStartTime
+                  }
+                </span>
+              )}
+
+              {session.plannedDurationMinutes !==
+                null && (
+                <span>
+                  {
+                    session.plannedDurationMinutes
+                  } min
+                </span>
+              )}
+
+              {session.plannedRpe !==
+                null && (
+                <span>
+                  RPE {
+                    session.plannedRpe
+                  }
+                </span>
+              )}
+
+            </div>
+
+            {session.plannedNotes && (
+              <p>
                 {
-                  session.plannedDurationMinutes
-                } min
-              </span>
+                  session.plannedNotes
+                }
+              </p>
             )}
 
           </div>
@@ -170,9 +243,15 @@ export default async function TrainingSessionPage(
 
       </header>
 
+      <TrainingMobileEditToggle
+        canWrite={
+          canWrite
+        }
+      />
+
       <section className="training-session-blocks">
 
-                <SessionBlockList
+        <SessionBlockList
 
           athleteId={
             athleteId
@@ -186,10 +265,170 @@ export default async function TrainingSessionPage(
             canWrite
           }
 
-          blocks={
+          exerciseContent={
+            blocks.flatMap(
+              ({
+                exercises,
+              }) =>
+                [...exercises]
 
+                  .sort(
+                    (
+                      a,
+                      b,
+                    ) =>
+                      a.sessionExercise.position -
+                      b.sessionExercise.position,
+                  )
+
+                  .map(
+                    ({
+                      sessionExercise,
+                      catalogItem,
+                      performanceEntries,
+                    }) => (
+
+                      <div
+                        key={
+                          sessionExercise.id
+                        }
+                        className="training-session-exercise-body"
+                      >
+
+                          {performanceEntries.length > 0 && (
+
+                            <PerformanceEntryTable
+                              athleteId={
+                                athleteId
+                              }
+                              sessionExerciseId={
+                                sessionExercise.id
+                              }
+                              metricProfile={
+                                catalogItem.metricProfile
+                              }
+                              entries={
+                                performanceEntries
+                              }
+                              canWrite={
+                                canWrite
+                              }
+                            />
+
+                          )}
+
+                          {canWrite && (
+
+                            <div className="training-plan-desktop-only">
+
+                              <AddPerformanceEntryControl
+                                athleteId={
+                                  athleteId
+                                }
+                                sessionExerciseId={
+                                  sessionExercise.id
+                                }
+                                metricProfile={
+                                  catalogItem.metricProfile
+                                }
+                                position={
+                                  performanceEntries.length ===
+                                  0
+                                    ? 0
+                                    : Math.max(
+                                        ...performanceEntries.map(
+                                          entry =>
+                                            entry.position,
+                                        ),
+                                      ) + 1
+                                }
+                              />
+
+                            </div>
+
+                          )}
+
+                          <div className="training-session-exercise-footer">
+
+                            {catalogItem.origin ===
+                              'CUSTOM' && (
+
+                              <span className="training-custom-badge">
+
+                                Personalizado
+
+                              </span>
+
+                            )}
+
+                            <span>
+
+                              {
+                                performanceEntries.length
+                              }{' '}
+
+                              {
+                                performanceEntries.length ===
+                                1
+                                  ? 'registro'
+                                  : 'registros'
+                              }
+
+                            </span>
+
+                          </div>
+
+                        </div>
+
+                    ),
+                  ),
+            )
+          }
+          blockControls={
             blocks.map(
+              ({
+                block,
+                exercises,
+              }) =>
+                canWrite ? (
 
+                  <div
+                    key={
+                      block.id
+                    }
+                    className="training-plan-desktop-only"
+                  >
+
+                    <AddExerciseControl
+                      athleteId={
+                        athleteId
+                      }
+                      blockId={
+                        block.id
+                      }
+                      position={
+                        exercises.length ===
+                        0
+                          ? 0
+                          : Math.max(
+                              ...exercises.map(
+                                ({
+                                  sessionExercise,
+                                }) =>
+                                  sessionExercise.position,
+                              ),
+                            ) + 1
+                      }
+                    />
+
+                  </div>
+
+                ) : null
+            )
+          }
+
+          blocks={
+            blocks.map(
               ({
                 block,
                 exercises,
@@ -208,258 +447,58 @@ export default async function TrainingSessionPage(
                 notes:
                   block.notes,
 
-                exerciseCount:
-                  exercises.length,
+                exercises:
+                  exercises.map(
+                    ({
+                      sessionExercise,
+                      catalogItem,
+                    }) => ({
 
-              }),
+                      id:
+                        sessionExercise.id,
 
-            )
+                      blockId:
+                        sessionExercise.blockId,
 
-          }
+                      position:
+                        sessionExercise.position,
 
-        >
+                      name:
+                        catalogItem.name,
 
-          {blocks.map(
+                      metricProfile:
+                        catalogItem.metricProfile,
 
-            ({
-              block,
-              exercises,
-            }) => (
+                      plannedNotes:
+                        sessionExercise.plannedNotes,
 
-              <div
-
-                key={
-                  block.id
-                }
-
-                className="training-session-exercises"
-
-              >
-
-                {exercises.map(
-
-                  ({
-                    sessionExercise,
-                    catalogItem,
-                    performanceEntries,
-                  }) => (
-
-                    <article
-
-                      key={
-                        sessionExercise.id
-                      }
-
-                      className="training-session-exercise"
-
-                    >
-
-                      <div className="training-session-exercise-main">
-
-                        <div className="training-session-exercise-name">
-
-                          <strong>
-
-                            {
-                              catalogItem.name
-                            }
-
-                          </strong>
-
-                          <span>
-
-                            {
-                              catalogItem.metricProfile
-                            }
-
-                          </span>
-
-                        </div>
-
-                        {sessionExercise.plannedNotes && (
-
-                          <p>
-
-                            {
-                              sessionExercise.plannedNotes
-                            }
-
-                          </p>
-
-                        )}
-
-                      </div>
-
-                      <div className="training-session-exercise-body">
-
-                        {sessionExercise.plannedNotes && (
-
-                          <p className="training-session-exercise-plan-note">
-
-                            {
-                              sessionExercise.plannedNotes
-                            }
-
-                          </p>
-
-                        )}
-
-                        {performanceEntries.length > 0 && (
-
-                          <PerformanceEntryTable
-
-                            athleteId={
-                              athleteId
-                            }
-
-                            sessionExerciseId={
-                              sessionExercise.id
-                            }
-
-                            metricProfile={
-                              catalogItem.metricProfile
-                            }
-
-                            entries={
-                              performanceEntries
-                            }
-
-                            canWrite={
-                              canWrite
-                            }
-
-                          />
-
-                        )}
-
-                        {canWrite && (
-
-                          <AddPerformanceEntryControl
-
-                            athleteId={
-                              athleteId
-                            }
-
-                            sessionExerciseId={
-                              sessionExercise.id
-                            }
-
-                            metricProfile={
-                              catalogItem.metricProfile
-                            }
-
-                            position={
-
-                              performanceEntries.length ===
-                              0
-                                ? 0
-                                : Math.max(
-
-                                    ...performanceEntries.map(
-                                      entry =>
-                                        entry.position,
-                                    ),
-
-                                  ) + 1
-
-                            }
-
-                          />
-
-                        )}
-
-                        <div className="training-session-exercise-footer">
-
-                          {catalogItem.origin ===
-                            'CUSTOM' && (
-
-                            <span className="training-custom-badge">
-
-                              Personalizado
-
-                            </span>
-
-                          )}
-
-                          <span>
-
-                            {
-                              performanceEntries.length
-                            }{' '}
-
-                            {
-                              performanceEntries.length ===
-                              1
-                                ? 'registro'
-                                : 'registros'
-                            }
-
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                    </article>
-
+                    }),
                   ),
 
-                )}
+              }),
+            )
+          }
 
-                {canWrite && (
-
-                  <AddExerciseControl
-
-                    athleteId={
-                      athleteId
-                    }
-
-                    blockId={
-                      block.id
-                    }
-
-                    position={
-
-                      exercises.length ===
-                      0
-                        ? 0
-                        : Math.max(
-
-                            ...exercises.map(
-                              ({
-                                sessionExercise,
-                              }) =>
-                                sessionExercise.position,
-                            ),
-
-                          ) + 1
-
-                    }
-
-                  />
-
-                )}
-
-              </div>
-
-            ),
-
-          )}
-
-        </SessionBlockList>
+        />
 
         {canWrite && (
-          <NewBlockControl
-            athleteId={
-              athleteId
-            }
-            sessionId={
-              sessionId
-            }
-            position={
-              nextBlockPosition
-            }
-          />
+
+          <div className="training-plan-desktop-only">
+
+            <NewBlockControl
+              athleteId={
+                athleteId
+              }
+              sessionId={
+                sessionId
+              }
+              position={
+                nextBlockPosition
+              }
+            />
+
+          </div>
+
         )}
 
       </section>

@@ -18,6 +18,14 @@ import {
   snapshotNutritionFood,
 } from './food-snapshot.js';
 
+import {
+  createTestPersonAccessRepository,
+} from './test-person-access-repository.js';
+
+import {
+  createTestFoodPreparationConversionRepository,
+} from './test-food-preparation-conversion-repository.js';
+
 export const actualTestNow =
   new Date(
     '2026-09-22T12:00:00.000Z',
@@ -105,6 +113,9 @@ export const actualTestItem:
       fiberG:
         1,
     },
+
+    preparationConversionId:
+      null,
 
     position:
       0,
@@ -336,8 +347,16 @@ export const createMealItemActualTestRepositories =
         saveQuantities:
           async () => {},
 
+        deleteQuantity:
+          async () =>
+            false,
+
         setLocations:
           async () => {},
+
+        setPreparationConversion:
+          async () =>
+            false,
 
         delete:
           async () =>
@@ -351,6 +370,9 @@ export const createMealItemActualTestRepositories =
 
               food:
                 actualTestFood,
+
+              preparation:
+                null,
 
               quantities:
                 withQuantity
@@ -442,6 +464,12 @@ export const createMealItemActualTestRepositories =
           async () =>
             [],
       },
+
+      personAccess:
+        createTestPersonAccessRepository(),
+
+      foodPreparationConversions:
+        createTestFoodPreparationConversionRepository(),
 
       plans: {
         create:

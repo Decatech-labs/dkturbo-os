@@ -86,13 +86,19 @@ const createAthleteRepository =
       findById:
         vi.fn(),
 
-      listForUser:
+      listAll:
+      vi.fn(),
+
+    listForUser:
         vi.fn(),
 
       grantAccess:
         vi.fn(),
 
-      findAccess:
+      revokeAccess:
+      vi.fn(),
+
+    findAccess:
         vi.fn()
           .mockResolvedValue(
             role
@@ -152,6 +158,9 @@ const createUnitOfWork =
               {} as never,
 
             sessionStructure:
+              {} as never,
+
+            dailyCheckins:
               {} as never,
           }),
     }) as TrainingUnitOfWork;

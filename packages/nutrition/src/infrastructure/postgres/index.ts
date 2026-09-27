@@ -8,3 +8,5 @@ export * from './postgres-nutrition-unit-of-work.js';
 export * from './postgres-plan.repository.js';
 export * from './postgres-plan-target.repository.js';
 export * from './postgres-meal-item-actual.repository.js';
+export * from './postgres-person-access.repository.js';
+export * from './postgres-food-preparation-conversion.repository.js';

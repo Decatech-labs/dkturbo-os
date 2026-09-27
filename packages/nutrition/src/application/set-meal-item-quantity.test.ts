@@ -24,6 +24,14 @@ import {
   setMealItemQuantity,
 } from './set-meal-item-quantity.js';
 
+import {
+  createTestPersonAccessRepository,
+} from './test-person-access-repository.js';
+
+import {
+  createTestFoodPreparationConversionRepository,
+} from './test-food-preparation-conversion-repository.js';
+
 const mealItemId =
   '11111111-1111-4111-8111-111111111111' as
     NutritionMealItemId;
@@ -85,6 +93,9 @@ const item:
       fiberG:
         null,
     },
+
+    preparationConversionId:
+      null,
 
     position:
       0,
@@ -181,8 +192,16 @@ const createRepositories =
       saveQuantities:
         async () => {},
 
+      deleteQuantity:
+        async () =>
+          false,
+
       setLocations:
         async () => {},
+
+      setPreparationConversion:
+        async () =>
+          false,
 
       delete:
         async () =>
@@ -217,6 +236,12 @@ const createRepositories =
         async () =>
           [],
     },
+
+    personAccess:
+      createTestPersonAccessRepository(),
+
+    foodPreparationConversions:
+      createTestFoodPreparationConversionRepository(),
 
     plans: {
       create:

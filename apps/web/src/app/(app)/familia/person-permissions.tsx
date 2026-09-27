@@ -26,6 +26,14 @@ import {
   useState,
 } from 'react';
 
+import {
+  TrainingAthleteAccess,
+} from './training-athlete-access';
+
+import {
+  NutritionPersonAccess,
+} from './nutrition-person-access';
+
 interface PersonPermissionsProps {
   userId: string;
 }
@@ -425,6 +433,14 @@ export function PersonPermissions({
               expanded ===
               app.id;
 
+            const hasDetails =
+              app.capabilities.length >
+                0 ||
+              app.id ===
+                'training' ||
+              app.id ===
+                'nutrition';
+
             return (
               <article
                 key={
@@ -444,8 +460,7 @@ export function PersonPermissions({
                     className="family-access-app-info"
                     onClick={() => {
                       if (
-                        app.capabilities.length ===
-                        0
+                        !hasDetails
                       ) {
                         return;
                       }
@@ -481,8 +496,7 @@ export function PersonPermissions({
                       </div>
                     </div>
 
-                    {app.capabilities.length >
-                      0 && (
+                    {hasDetails && (
                       <ChevronDown
                         className={
                           `family-access-chevron ${
@@ -597,6 +611,32 @@ export function PersonPermissions({
                         },
                       )}
                     </div>
+                  )}
+
+                {isExpanded &&
+                  app.id ===
+                    'training' && (
+                    <TrainingAthleteAccess
+                      userId={
+                        userId
+                      }
+                      appEnabled={
+                        appEnabled
+                      }
+                    />
+                  )}
+
+                {isExpanded &&
+                  app.id ===
+                    'nutrition' && (
+                    <NutritionPersonAccess
+                      userId={
+                        userId
+                      }
+                      appEnabled={
+                        appEnabled
+                      }
+                    />
                   )}
               </article>
             );

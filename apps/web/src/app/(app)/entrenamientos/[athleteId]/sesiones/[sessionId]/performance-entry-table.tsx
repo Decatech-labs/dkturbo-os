@@ -37,6 +37,15 @@ import {
   PerformanceEntryActions,
 } from './performance-entry-actions';
 
+import {
+  PerformanceActualEditor,
+} from './performance-actual-editor';
+
+import {
+  useTrainingMobileMode,
+  useTrainingMobileEditMode,
+} from '../../../use-training-mobile-mode';
+
 interface PerformanceEntry {
   id:
     string;
@@ -173,7 +182,10 @@ interface SortableRowProps {
   columns:
     Column[];
 
-  canWrite:
+  canRecordActual:
+    boolean;
+
+  canEditPlan:
     boolean;
 }
 
@@ -270,13 +282,82 @@ const formatDuration =
   (
     milliseconds:
       number | null,
-  ): string | null =>
-    milliseconds === null
-      ? null
-      : formatSeconds(
-          milliseconds /
-            1000,
+  ): string | null => {
+
+    if (
+      milliseconds ===
+        null
+    ) {
+      return null;
+    }
+
+    const totalSeconds =
+      milliseconds /
+      1000;
+
+    const hours =
+      Math.floor(
+        totalSeconds /
+          3600,
+      );
+
+    const remainingAfterHours =
+      totalSeconds -
+      hours *
+        3600;
+
+    const minutes =
+      Math.floor(
+        remainingAfterHours /
+          60,
+      );
+
+    const seconds =
+      remainingAfterHours -
+      minutes *
+        60;
+
+    const decimals =
+      milliseconds %
+        1000 ===
+        0
+        ? 0
+        : 3;
+
+    const secondsText =
+      seconds
+        .toFixed(
+          decimals,
+        )
+        .replace(
+          /(\.\d*?)0+$/,
+          '$1',
+        )
+        .replace(
+          /\.$/,
+          '',
         );
+
+    const paddedSeconds =
+      seconds <
+      10
+        ? `0${secondsText}`
+        : secondsText;
+
+    if (
+      hours >
+      0
+    ) {
+      return `${hours}:${String(
+        minutes,
+      ).padStart(
+        2,
+        '0',
+      )}:${paddedSeconds}`;
+    }
+
+    return `${minutes}:${paddedSeconds}`;
+  };
 
 const columnsFor =
   (
@@ -750,6 +831,1269 @@ const columnsFor =
     }
   };
 
+interface SummaryMetric {
+  label:
+    string;
+
+  value:
+    string;
+
+  detail?:
+    string | undefined;
+
+  tone?:
+    | 'neutral'
+    | 'blue'
+    | 'green'
+    | 'amber'
+    | 'violet';
+}
+
+const numberFormatter =
+  new Intl.NumberFormat(
+    'es-ES',
+    {
+      maximumFractionDigits:
+        2,
+    },
+  );
+
+const formatDecimal =
+  (
+    value:
+      number,
+  ): string =>
+    numberFormatter.format(
+      value,
+    );
+
+const formatSigned =
+  (
+    value:
+      number,
+
+    suffix =
+      '',
+  ): string => {
+
+    const rounded =
+      Math.abs(
+        value,
+      ) <
+      0.005
+        ? 0
+        : value;
+
+    if (
+      rounded ===
+      0
+    ) {
+      return `0${suffix}`;
+    }
+
+    return `${rounded > 0 ? '+' : '−'}${formatDecimal(
+      Math.abs(
+        rounded,
+      ),
+    )}${suffix}`;
+  };
+
+const formatSignedDuration =
+  (
+    milliseconds:
+      number,
+  ): string => {
+
+    if (
+      Math.abs(
+        milliseconds,
+      ) <
+      0.5
+    ) {
+      return '0 s';
+    }
+
+    const sign =
+      milliseconds >
+      0
+        ? '+'
+        : '−';
+
+    const absoluteSeconds =
+      Math.abs(
+        milliseconds,
+      ) /
+      1000;
+
+    if (
+      absoluteSeconds <
+      60
+    ) {
+      return `${sign}${formatDecimal(
+        absoluteSeconds,
+      )} s`;
+    }
+
+    return `${sign}${formatDuration(
+      Math.round(
+        Math.abs(
+          milliseconds,
+        ),
+      ),
+    )}`;
+  };
+
+const average =
+  (
+    values:
+      number[],
+  ): number | null => {
+
+    if (
+      values.length ===
+      0
+    ) {
+      return null;
+    }
+
+    return (
+      values.reduce(
+        (
+          total,
+          value,
+        ) =>
+          total +
+          value,
+        0,
+      ) /
+      values.length
+    );
+  };
+
+const hasActualForProfile =
+  (
+    profile:
+      MetricProfile,
+
+    entry:
+      PerformanceEntry,
+  ): boolean => {
+
+    switch (
+      profile
+    ) {
+      case 'STRENGTH':
+        return [
+          entry.actualReps,
+          entry.actualLoadKg,
+          entry.actualRir,
+          entry.actualRpe,
+          entry.actualRestSeconds,
+        ].some(
+          value =>
+            value !==
+            null,
+        );
+
+      case 'INTERVAL':
+        return [
+          entry.actualDistanceM,
+          entry.actualDurationMs,
+          entry.actualRpe,
+          entry.actualRestSeconds,
+        ].some(
+          value =>
+            value !==
+            null,
+        );
+
+      case 'CONTINUOUS':
+        return [
+          entry.actualDistanceM,
+          entry.actualDurationMs,
+          entry.actualRpe,
+        ].some(
+          value =>
+            value !==
+            null,
+        );
+
+      case 'ATTEMPT_DISTANCE':
+        return [
+          entry.actualResultM,
+          entry.actualRpe,
+          entry.actualRestSeconds,
+        ].some(
+          value =>
+            value !==
+            null,
+        );
+
+      case 'ATTEMPT_HEIGHT':
+        return [
+          entry.actualHeightM,
+          entry.actualRpe,
+          entry.actualRestSeconds,
+        ].some(
+          value =>
+            value !==
+            null,
+        );
+
+      case 'REHAB':
+        return [
+          entry.actualReps,
+          entry.actualLoadKg,
+          entry.actualDurationMs,
+          entry.actualRpe,
+          entry.actualRestSeconds,
+        ].some(
+          value =>
+            value !==
+            null,
+        );
+
+      case 'GENERIC':
+      default:
+        return [
+          entry.actualReps,
+          entry.actualDurationMs,
+          entry.actualRpe,
+          entry.actualRestSeconds,
+        ].some(
+          value =>
+            value !==
+            null,
+        );
+    }
+  };
+
+const buildPerformanceSummary =
+  (
+    profile:
+      MetricProfile,
+
+    entries:
+      PerformanceEntry[],
+  ): SummaryMetric[] => {
+
+    const registeredEntries =
+      entries.filter(
+        entry =>
+          hasActualForProfile(
+            profile,
+            entry,
+          ),
+      );
+
+    if (
+      registeredEntries.length ===
+      0
+    ) {
+      return [];
+    }
+
+    const registrationMetric:
+      SummaryMetric = {
+        label:
+          'Registradas',
+
+        value:
+          `${registeredEntries.length} / ${entries.length}`,
+
+        detail:
+          registeredEntries.length ===
+          entries.length
+            ? 'Registro completo'
+            : 'Progreso del ejercicio',
+
+        tone:
+          registeredEntries.length ===
+          entries.length
+            ? 'green'
+            : 'blue',
+      };
+
+    switch (
+      profile
+    ) {
+      case 'STRENGTH': {
+        const plannedVolume =
+          entries.reduce(
+            (
+              total,
+              entry,
+            ) => {
+
+              if (
+                entry.plannedReps ===
+                  null ||
+                entry.plannedLoadKg ===
+                  null
+              ) {
+                return total;
+              }
+
+              return (
+                total +
+                entry.plannedReps *
+                  entry.plannedLoadKg
+              );
+            },
+            0,
+          );
+
+        const actualVolume =
+          entries.reduce(
+            (
+              total,
+              entry,
+            ) => {
+
+              if (
+                entry.actualReps ===
+                  null ||
+                entry.actualLoadKg ===
+                  null
+              ) {
+                return total;
+              }
+
+              return (
+                total +
+                entry.actualReps *
+                  entry.actualLoadKg
+              );
+            },
+            0,
+          );
+
+        const plannedReps =
+          entries.reduce(
+            (
+              total,
+              entry,
+            ) =>
+              total +
+              (
+                entry.plannedReps ??
+                0
+              ),
+            0,
+          );
+
+        const actualReps =
+          entries.reduce(
+            (
+              total,
+              entry,
+            ) =>
+              total +
+              (
+                entry.actualReps ??
+                0
+              ),
+            0,
+          );
+
+        const actualLoads =
+          registeredEntries
+            .map(
+              entry =>
+                entry.actualLoadKg,
+            )
+            .filter(
+              (
+                value,
+              ): value is number =>
+                value !==
+                null,
+            );
+
+        const averageLoad =
+          average(
+            actualLoads,
+          );
+
+        const metrics:
+          SummaryMetric[] = [];
+
+        if (
+          plannedVolume >
+            0 ||
+          actualVolume >
+            0
+        ) {
+          metrics.push(
+            {
+              label:
+                'Volumen plan',
+
+              value:
+                `${formatDecimal(
+                  plannedVolume,
+                )} kg`,
+
+              tone:
+                'neutral',
+            },
+            {
+              label:
+                'Volumen real',
+
+              value:
+                `${formatDecimal(
+                  actualVolume,
+                )} kg`,
+
+              detail:
+                plannedVolume >
+                0
+                  ? formatSigned(
+                      actualVolume -
+                        plannedVolume,
+                      ' kg',
+                    )
+                  : undefined,
+
+              tone:
+                'blue',
+            },
+          );
+        }
+
+        if (
+          plannedReps >
+            0 ||
+          actualReps >
+            0
+        ) {
+          metrics.push({
+            label:
+              'Repeticiones',
+
+            value:
+              `${plannedReps} → ${actualReps}`,
+
+            detail:
+              formatSigned(
+                actualReps -
+                  plannedReps,
+                ' rep',
+              ),
+
+            tone:
+              'violet',
+          });
+        }
+
+        if (
+          averageLoad !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'Carga media real',
+
+            value:
+              `${formatDecimal(
+                averageLoad,
+              )} kg`,
+
+            tone:
+              'amber',
+          });
+        }
+
+        metrics.push(
+          registrationMetric,
+        );
+
+        return metrics;
+      }
+
+      case 'INTERVAL': {
+        const comparable =
+          entries.filter(
+            entry =>
+              entry.plannedDurationMs !==
+                null &&
+              entry.actualDurationMs !==
+                null,
+          );
+
+        const plannedDurations =
+          comparable.map(
+            entry =>
+              entry.plannedDurationMs!,
+          );
+
+        const actualDurations =
+          comparable.map(
+            entry =>
+              entry.actualDurationMs!,
+          );
+
+        const allActualDurations =
+          registeredEntries
+            .map(
+              entry =>
+                entry.actualDurationMs,
+            )
+            .filter(
+              (
+                value,
+              ): value is number =>
+                value !==
+                null,
+            );
+
+        const plannedAverage =
+          average(
+            plannedDurations,
+          );
+
+        const actualAverage =
+          average(
+            actualDurations,
+          );
+
+        const best =
+          allActualDurations.length >
+          0
+            ? Math.min(
+                ...allActualDurations,
+              )
+            : null;
+
+        const worst =
+          allActualDurations.length >
+          0
+            ? Math.max(
+                ...allActualDurations,
+              )
+            : null;
+
+        const metrics:
+          SummaryMetric[] = [];
+
+        if (
+          plannedAverage !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'Media plan',
+
+            value:
+              formatDuration(
+                Math.round(
+                  plannedAverage,
+                ),
+              ) ??
+              '—',
+
+            tone:
+              'neutral',
+          });
+        }
+
+        if (
+          actualAverage !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'Media real',
+
+            value:
+              formatDuration(
+                Math.round(
+                  actualAverage,
+                ),
+              ) ??
+              '—',
+
+            detail:
+              plannedAverage !==
+              null
+                ? formatSignedDuration(
+                    actualAverage -
+                      plannedAverage,
+                  )
+                : undefined,
+
+            tone:
+              'blue',
+          });
+        }
+
+        if (
+          best !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'Mejor',
+
+            value:
+              formatDuration(
+                best,
+              ) ??
+              '—',
+
+            tone:
+              'green',
+          });
+        }
+
+        if (
+          worst !==
+          null &&
+          allActualDurations.length >
+            1
+        ) {
+          metrics.push({
+            label:
+              'Peor',
+
+            value:
+              formatDuration(
+                worst,
+              ) ??
+              '—',
+
+            detail:
+              best !==
+              null
+                ? `Rango ${formatSignedDuration(
+                    worst -
+                      best,
+                  ).replace(
+                    '+',
+                    '',
+                  )}`
+                : undefined,
+
+            tone:
+              'amber',
+          });
+        }
+
+        metrics.push(
+          registrationMetric,
+        );
+
+        return metrics;
+      }
+
+      case 'CONTINUOUS': {
+        const latest =
+          [...registeredEntries]
+            .sort(
+              (
+                a,
+                b,
+              ) =>
+                a.position -
+                b.position,
+            )
+            .at(
+              -1,
+            );
+
+        if (!latest) {
+          return [];
+        }
+
+        const metrics:
+          SummaryMetric[] = [];
+
+        if (
+          latest.actualDistanceM !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'Distancia real',
+
+            value:
+              `${formatDecimal(
+                latest.actualDistanceM,
+              )} m`,
+
+            detail:
+              latest.plannedDistanceM !==
+              null
+                ? formatSigned(
+                    latest.actualDistanceM -
+                      latest.plannedDistanceM,
+                    ' m',
+                  )
+                : undefined,
+
+            tone:
+              'blue',
+          });
+        }
+
+        if (
+          latest.actualDurationMs !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'Tiempo real',
+
+            value:
+              formatDuration(
+                latest.actualDurationMs,
+              ) ??
+              '—',
+
+            detail:
+              latest.plannedDurationMs !==
+              null
+                ? formatSignedDuration(
+                    latest.actualDurationMs -
+                      latest.plannedDurationMs,
+                  )
+                : undefined,
+
+            tone:
+              'violet',
+          });
+        }
+
+        if (
+          latest.actualRpe !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'RPE real',
+
+            value:
+              formatDecimal(
+                latest.actualRpe,
+              ),
+
+            tone:
+              'amber',
+          });
+        }
+
+        metrics.push(
+          registrationMetric,
+        );
+
+        return metrics;
+      }
+
+      case 'ATTEMPT_DISTANCE': {
+        const results =
+          registeredEntries
+            .map(
+              entry =>
+                entry.actualResultM,
+            )
+            .filter(
+              (
+                value,
+              ): value is number =>
+                value !==
+                null,
+            );
+
+        if (
+          results.length ===
+          0
+        ) {
+          return [
+            registrationMetric,
+          ];
+        }
+
+        return [
+          {
+            label:
+              'Mejor resultado',
+
+            value:
+              `${formatDecimal(
+                Math.max(
+                  ...results,
+                ),
+              )} m`,
+
+            tone:
+              'green',
+          },
+          {
+            label:
+              'Media',
+
+            value:
+              `${formatDecimal(
+                average(
+                  results,
+                )!,
+              )} m`,
+
+            tone:
+              'blue',
+          },
+          {
+            label:
+              'Rango',
+
+            value:
+              `${formatDecimal(
+                Math.max(
+                  ...results,
+                ) -
+                  Math.min(
+                    ...results,
+                  ),
+              )} m`,
+
+            tone:
+              'violet',
+          },
+          registrationMetric,
+        ];
+      }
+
+      case 'ATTEMPT_HEIGHT': {
+        const results =
+          registeredEntries
+            .map(
+              entry =>
+                entry.actualHeightM,
+            )
+            .filter(
+              (
+                value,
+              ): value is number =>
+                value !==
+                null,
+            );
+
+        if (
+          results.length ===
+          0
+        ) {
+          return [
+            registrationMetric,
+          ];
+        }
+
+        return [
+          {
+            label:
+              'Mejor altura',
+
+            value:
+              `${formatDecimal(
+                Math.max(
+                  ...results,
+                ),
+              )} m`,
+
+            tone:
+              'green',
+          },
+          {
+            label:
+              'Media',
+
+            value:
+              `${formatDecimal(
+                average(
+                  results,
+                )!,
+              )} m`,
+
+            tone:
+              'blue',
+          },
+          registrationMetric,
+        ];
+      }
+
+      case 'REHAB': {
+        const actualReps =
+          registeredEntries.reduce(
+            (
+              total,
+              entry,
+            ) =>
+              total +
+              (
+                entry.actualReps ??
+                0
+              ),
+            0,
+          );
+
+        const loads =
+          registeredEntries
+            .map(
+              entry =>
+                entry.actualLoadKg,
+            )
+            .filter(
+              (
+                value,
+              ): value is number =>
+                value !==
+                null,
+            );
+
+        const durations =
+          registeredEntries
+            .map(
+              entry =>
+                entry.actualDurationMs,
+            )
+            .filter(
+              (
+                value,
+              ): value is number =>
+                value !==
+                null,
+            );
+
+        const rpes =
+          registeredEntries
+            .map(
+              entry =>
+                entry.actualRpe,
+            )
+            .filter(
+              (
+                value,
+              ): value is number =>
+                value !==
+                null,
+            );
+
+        const metrics:
+          SummaryMetric[] = [];
+
+        if (
+          actualReps >
+          0
+        ) {
+          metrics.push({
+            label:
+              'Reps reales',
+
+            value:
+              String(
+                actualReps,
+              ),
+
+            tone:
+              'blue',
+          });
+        }
+
+        const averageLoad =
+          average(
+            loads,
+          );
+
+        if (
+          averageLoad !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'Carga media',
+
+            value:
+              `${formatDecimal(
+                averageLoad,
+              )} kg`,
+
+            tone:
+              'violet',
+          });
+        }
+
+        const totalDuration =
+          durations.reduce(
+            (
+              total,
+              value,
+            ) =>
+              total +
+              value,
+            0,
+          );
+
+        if (
+          totalDuration >
+          0
+        ) {
+          metrics.push({
+            label:
+              'Duración real',
+
+            value:
+              formatDuration(
+                totalDuration,
+              ) ??
+              '—',
+
+            tone:
+              'neutral',
+          });
+        }
+
+        const averageRpe =
+          average(
+            rpes,
+          );
+
+        if (
+          averageRpe !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'RPE medio',
+
+            value:
+              formatDecimal(
+                averageRpe,
+              ),
+
+            tone:
+              'amber',
+          });
+        }
+
+        metrics.push(
+          registrationMetric,
+        );
+
+        return metrics;
+      }
+
+      case 'GENERIC':
+      default: {
+        const reps =
+          registeredEntries.reduce(
+            (
+              total,
+              entry,
+            ) =>
+              total +
+              (
+                entry.actualReps ??
+                0
+              ),
+            0,
+          );
+
+        const durations =
+          registeredEntries
+            .map(
+              entry =>
+                entry.actualDurationMs,
+            )
+            .filter(
+              (
+                value,
+              ): value is number =>
+                value !==
+                null,
+            );
+
+        const rpes =
+          registeredEntries
+            .map(
+              entry =>
+                entry.actualRpe,
+            )
+            .filter(
+              (
+                value,
+              ): value is number =>
+                value !==
+                null,
+            );
+
+        const metrics:
+          SummaryMetric[] = [];
+
+        if (
+          reps >
+          0
+        ) {
+          metrics.push({
+            label:
+              'Reps reales',
+
+            value:
+              String(
+                reps,
+              ),
+
+            tone:
+              'blue',
+          });
+        }
+
+        const totalDuration =
+          durations.reduce(
+            (
+              total,
+              value,
+            ) =>
+              total +
+              value,
+            0,
+          );
+
+        if (
+          totalDuration >
+          0
+        ) {
+          metrics.push({
+            label:
+              'Duración',
+
+            value:
+              formatDuration(
+                totalDuration,
+              ) ??
+              '—',
+
+            tone:
+              'violet',
+          });
+        }
+
+        const averageRpe =
+          average(
+            rpes,
+          );
+
+        if (
+          averageRpe !==
+          null
+        ) {
+          metrics.push({
+            label:
+              'RPE medio',
+
+            value:
+              formatDecimal(
+                averageRpe,
+              ),
+
+            tone:
+              'amber',
+          });
+        }
+
+        metrics.push(
+          registrationMetric,
+        );
+
+        return metrics;
+      }
+    }
+  };
+
+function PerformanceSummary({
+  metricProfile,
+  entries,
+}: {
+  metricProfile:
+    MetricProfile;
+
+  entries:
+    PerformanceEntry[];
+}) {
+
+  const metrics =
+    buildPerformanceSummary(
+      metricProfile,
+      entries,
+    );
+
+  if (
+    metrics.length ===
+    0
+  ) {
+    return null;
+  }
+
+  return (
+    <div
+      className={
+        styles.summary
+      }
+    >
+      <div
+        className={
+          styles.summaryIntro
+        }
+      >
+        <span>
+          Análisis
+        </span>
+
+        <strong>
+          Plan vs real
+        </strong>
+      </div>
+
+      <div
+        className={
+          styles.summaryMetrics
+        }
+      >
+        {metrics.map(
+          (
+            metric,
+            index,
+          ) => (
+            <div
+              key={`${metric.label}-${index}`}
+              className={
+                styles.summaryMetric
+              }
+              data-tone={
+                metric.tone ??
+                'neutral'
+              }
+            >
+              <span>
+                {metric.label}
+              </span>
+
+              <strong>
+                {metric.value}
+              </strong>
+
+              {metric.detail && (
+                <small>
+                  {metric.detail}
+                </small>
+              )}
+            </div>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SortableRow({
 
   athleteId,
@@ -759,7 +2103,8 @@ function SortableRow({
   index,
   duplicatePosition,
   columns,
-  canWrite,
+  canRecordActual,
+  canEditPlan,
 
 }: SortableRowProps) {
 
@@ -778,7 +2123,7 @@ function SortableRow({
       entry.id,
 
     disabled:
-      !canWrite,
+      !canEditPlan,
 
   });
 
@@ -821,7 +2166,7 @@ function SortableRow({
           }
         >
 
-          {canWrite && (
+          {canEditPlan && (
 
             <button
 
@@ -918,7 +2263,7 @@ function SortableRow({
 
       )}
 
-      {canWrite && (
+      {canRecordActual && (
 
         <td
           className={
@@ -926,33 +2271,53 @@ function SortableRow({
           }
         >
 
-          <PerformanceEntryActions
-
-            athleteId={
-              athleteId
+          <div
+            className={
+              styles.rowActions
             }
+          >
 
-            sessionExerciseId={
-              sessionExerciseId
-            }
+            <PerformanceActualEditor
+              athleteId={
+                athleteId
+              }
+              metricProfile={
+                metricProfile
+              }
+              entry={
+                entry
+              }
+              rowNumber={
+                index + 1
+              }
+            />
 
-            metricProfile={
-              metricProfile
-            }
+            {canEditPlan && (
 
-            entry={
-              entry
-            }
+              <PerformanceEntryActions
+                athleteId={
+                  athleteId
+                }
+                sessionExerciseId={
+                  sessionExerciseId
+                }
+                metricProfile={
+                  metricProfile
+                }
+                entry={
+                  entry
+                }
+                rowNumber={
+                  index + 1
+                }
+                duplicatePosition={
+                  duplicatePosition
+                }
+              />
 
-            rowNumber={
-              index + 1
-            }
+            )}
 
-            duplicatePosition={
-              duplicatePosition
-            }
-
-          />
+          </div>
 
         </td>
 
@@ -972,6 +2337,25 @@ export function PerformanceEntryTable({
   canWrite,
 
 }: PerformanceEntryTableProps) {
+
+  const mobile =
+    useTrainingMobileMode();
+
+  const {
+    enabled:
+      mobileEditEnabled,
+  } =
+    useTrainingMobileEditMode();
+
+  const canEditPlan =
+    canWrite &&
+    (
+      !mobile ||
+      mobileEditEnabled
+    );
+
+  const canRecordActual =
+    canWrite;
 
   const [
 
@@ -1092,6 +2476,11 @@ export function PerformanceEntryTable({
       event:
         DragEndEvent,
     ) => {
+      if (
+        !canEditPlan
+      ) {
+        return;
+      }
 
       const {
         active,
@@ -1321,7 +2710,9 @@ export function PerformanceEntryTable({
                     ].join(
                       ' ',
                     )}
-                  />
+                  >
+                    REAL
+                  </th>
 
                 )}
 
@@ -1372,8 +2763,11 @@ export function PerformanceEntryTable({
                       columns
                     }
 
-                    canWrite={
-                      canWrite
+                    canRecordActual={
+                      canRecordActual
+                    }
+                    canEditPlan={
+                      canEditPlan
                     }
 
                   />
@@ -1389,6 +2783,15 @@ export function PerformanceEntryTable({
         </SortableContext>
 
       </DndContext>
+
+      <PerformanceSummary
+        metricProfile={
+          metricProfile
+        }
+        entries={
+          orderedEntries
+        }
+      />
 
       {reorderError && (
 

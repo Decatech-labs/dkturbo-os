@@ -19,6 +19,14 @@ import {
   getMealDetail,
 } from './get-meal-detail.js';
 
+import {
+  createTestPersonAccessRepository,
+} from './test-person-access-repository.js';
+
+import {
+  createTestFoodPreparationConversionRepository,
+} from './test-food-preparation-conversion-repository.js';
+
 const alejandroId =
   '10000000-0000-4000-8000-000000000001' as DkturboUserId;
 
@@ -153,12 +161,20 @@ const createUnitOfWork =
             setLocations:
               async () => {},
 
+            setPreparationConversion:
+              async () =>
+                false,
+
             delete:
               async () =>
                 false,
 
             saveQuantities:
               async () => {},
+
+            deleteQuantity:
+              async () =>
+                false,
 
             listDetailsForMeal:
               async () => [
@@ -203,6 +219,9 @@ const createUnitOfWork =
                       fiberG:
                         1.2,
                     },
+
+                    preparationConversionId:
+                      null,
 
                     position:
                       0,
@@ -263,6 +282,9 @@ const createUnitOfWork =
                     updatedAt:
                       new Date(),
                   },
+
+                  preparation:
+                    null,
 
                   quantities: [
                     {
@@ -347,6 +369,9 @@ const createUnitOfWork =
                         null,
                     },
 
+                    preparationConversionId:
+                      null,
+
                     position:
                       1,
 
@@ -406,6 +431,9 @@ const createUnitOfWork =
                     updatedAt:
                       new Date(),
                   },
+
+                  preparation:
+                    null,
 
                   quantities: [
                     {
@@ -475,6 +503,12 @@ const createUnitOfWork =
               async () =>
                 [],
           },
+
+          personAccess:
+            createTestPersonAccessRepository(),
+
+          foodPreparationConversions:
+            createTestFoodPreparationConversionRepository(),
 
           plans: {
             create:

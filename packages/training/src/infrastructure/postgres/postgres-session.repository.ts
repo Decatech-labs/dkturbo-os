@@ -15,6 +15,7 @@ import type {
 import type {
   CreatePlannedSessionData,
   SessionRepository,
+  UpdatePlannedSessionData,
 } from '../../ports/index.js';
 
 import type {
@@ -203,8 +204,101 @@ implements SessionRepository {
         .returningAll()
         .executeTakeFirstOrThrow();
 
-    return mapSession(
+        return mapSession(
       row,
+    );
+  }
+
+  public async updatePlanned(
+    data:
+      UpdatePlannedSessionData,
+  ): Promise<TrainingSession | null> {
+
+    const row =
+      await this.db
+        .updateTable(
+          'training.sessions',
+        )
+        .set({
+          day_id:
+            data.dayId,
+
+          type:
+            data.type,
+
+          title:
+            data.title,
+
+          planned_start_time:
+            data.plannedStartTime,
+
+          planned_duration_minutes:
+            data.plannedDurationMinutes,
+
+          planned_notes:
+            data.plannedNotes,
+
+          planned_rpe:
+            data.plannedRpe ===
+            null
+              ? null
+              : String(
+                  data.plannedRpe,
+                ),
+
+          updated_at:
+            new Date(),
+        })
+        .where(
+          'id',
+          '=',
+          data.sessionId,
+        )
+        .where(
+          'athlete_id',
+          '=',
+          data.athleteId,
+        )
+        .returningAll()
+        .executeTakeFirst();
+
+    return row
+      ? mapSession(
+          row,
+        )
+      : null;
+  }
+
+  public async delete(
+    sessionId:
+      TrainingSessionId,
+
+    athleteId:
+      AthleteId,
+  ): Promise<boolean> {
+
+    const result =
+      await this.db
+        .deleteFrom(
+          'training.sessions',
+        )
+        .where(
+          'id',
+          '=',
+          sessionId,
+        )
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+        .executeTakeFirst();
+
+    return (
+      Number(
+        result.numDeletedRows,
+      ) >
+      0
     );
   }
 

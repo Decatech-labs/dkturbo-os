@@ -119,6 +119,26 @@ implements AthleteRepository {
       : null;
   }
 
+    public async listAll():
+    Promise<Athlete[]> {
+
+    const rows =
+      await this.db
+        .selectFrom(
+          'training.athletes',
+        )
+        .selectAll()
+        .orderBy(
+          'display_name',
+          'asc',
+        )
+        .execute();
+
+    return rows.map(
+      mapAthlete,
+    );
+  }
+
   public async listForUser(
     userId:
       DkturboUserId,
@@ -216,6 +236,20 @@ implements AthleteRepository {
           role:
             data.role,
         })
+        .onConflict(
+          (
+            conflict,
+          ) =>
+            conflict
+              .columns([
+                'athlete_id',
+                'user_id',
+              ])
+              .doUpdateSet({
+                role:
+                  data.role,
+              }),
+        )
         .returningAll()
         .executeTakeFirstOrThrow();
 
@@ -250,5 +284,34 @@ implements AthleteRepository {
     return row
       ? mapAthleteAccess(row)
       : null;
+  }
+
+  public async revokeAccess(
+    athleteId: AthleteId,
+    userId: DkturboUserId,
+  ): Promise<boolean> {
+
+    const result =
+      await this.db
+        .deleteFrom(
+          'training.athlete_access',
+        )
+        .where(
+          'athlete_id',
+          '=',
+          athleteId,
+        )
+        .where(
+          'user_id',
+          '=',
+          userId,
+        )
+        .executeTakeFirst();
+
+    return (
+      Number(
+        result.numDeletedRows,
+      ) > 0
+    );
   }
 }

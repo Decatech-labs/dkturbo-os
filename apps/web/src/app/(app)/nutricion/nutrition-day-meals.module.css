@@ -319,6 +319,24 @@
   opacity: 0.38;
 }
 
+.preparedQuantity {
+  display: block;
+
+  margin-top: 2px;
+
+  color:
+    rgba(
+      69,
+      102,
+      60,
+      0.88
+    );
+
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
 .actualReplacement {
   min-width: 0;
 
@@ -854,6 +872,78 @@
       34,
       0.07
     );
+}
+
+.preparationSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.menuSectionLabel {
+  padding:
+    5px
+    9px
+    3px;
+
+  color:
+    rgba(
+      47,
+      41,
+      34,
+      0.5
+    );
+
+  font-size: 10px;
+  font-weight: 720;
+  letter-spacing: 0.015em;
+}
+
+.preparationOption {
+  gap: 6px;
+}
+
+.preparationOptionActive {
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.08
+    );
+}
+
+.preparationCheck {
+  width: 13px;
+  height: 13px;
+
+  flex:
+    0
+    0
+    13px;
+
+  display: grid;
+  place-items: center;
+}
+
+.preparationCheck svg {
+  width: 12px;
+  height: 12px;
+}
+
+.preparationMessage {
+  padding:
+    7px
+    9px;
+
+  color:
+    rgba(
+      47,
+      41,
+      34,
+      0.48
+    );
+
+  font-size: 10px;
 }
 
 @media (

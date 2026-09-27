@@ -192,10 +192,16 @@ const createAthletes =
     findById:
       vi.fn(),
 
+    listAll:
+      vi.fn(),
+
     listForUser:
       vi.fn(),
 
     grantAccess:
+      vi.fn(),
+
+    revokeAccess:
       vi.fn(),
 
     findAccess:
@@ -247,6 +253,12 @@ const createSessions =
     createPlanned:
       vi.fn(),
 
+    updatePlanned:
+      vi.fn(),
+
+    delete:
+      vi.fn(),
+
     findById:
       vi.fn(),
 
@@ -276,6 +288,9 @@ const createUnitOfWork =
           weeks,
           sessions,
           sessionStructure,
+
+          dailyCheckins:
+            {} as never,
         }),
   });
 

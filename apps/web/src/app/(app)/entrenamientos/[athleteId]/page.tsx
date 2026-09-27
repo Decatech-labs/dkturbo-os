@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Clock3,
 } from 'lucide-react';
 
 import Link from 'next/link';
@@ -13,6 +12,7 @@ import {
 
 import {
   getTrainingAthletes,
+  getTrainingDailyCheckinRange,
   getTrainingWeekDetail,
   getTrainingWeeks,
   type TrainingAccessRole,
@@ -23,8 +23,24 @@ import {
 } from './new-week-control';
 
 import {
-  NewSessionControl,
-} from './new-session-control';
+  TrainingMonthJump,
+} from './training-month-jump';
+
+import {
+  TrainingMonthSessionBoard,
+} from './training-month-session-board';
+
+import {
+  DailyCheckinCard,
+} from './daily-checkin-card';
+
+import {
+  WeeklyCheckinSummary,
+} from './weekly-checkin-summary';
+
+import {
+  TrainingMobileEditToggle,
+} from '../training-mobile-edit-toggle';
 
 export const dynamic =
   'force-dynamic';
@@ -87,43 +103,6 @@ const accessLabel = (
 
     case 'VIEWER':
       return 'Solo lectura';
-  }
-};
-
-const sessionTypeLabel = (
-  type:
-    string,
-): string => {
-  switch (type) {
-    case 'STRENGTH':
-      return 'Fuerza';
-
-    case 'RUNNING':
-      return 'Carrera';
-
-    case 'SWIMMING':
-      return 'Natación';
-
-    case 'CYCLING':
-      return 'Ciclismo';
-
-    case 'JUMPS':
-      return 'Saltos';
-
-    case 'THROWS':
-      return 'Lanzamientos';
-
-    case 'TECHNIQUE':
-      return 'Técnica';
-
-    case 'REHAB':
-      return 'Rehabilitación';
-
-    case 'MOBILITY':
-      return 'Movilidad';
-
-    default:
-      return 'Entrenamiento';
   }
 };
 
@@ -574,6 +553,103 @@ export default async function TrainingAthletePage({
       new Date(),
     );
 
+  const today =
+    parseDate(
+      todayKey,
+    );
+
+  const todayMondayOffset =
+    (
+      today.getDay() +
+      6
+    ) %
+    7;
+
+  const currentWeekStart =
+    new Date(
+      today,
+    );
+
+  currentWeekStart.setDate(
+    currentWeekStart.getDate() -
+      todayMondayOffset,
+  );
+
+  const currentWeekEnd =
+    new Date(
+      currentWeekStart,
+    );
+
+  currentWeekEnd.setDate(
+    currentWeekEnd.getDate() +
+      6,
+  );
+
+  const currentWeekStartKey =
+    formatDateKey(
+      currentWeekStart,
+    );
+
+  const currentWeekEndKey =
+    formatDateKey(
+      currentWeekEnd,
+    );
+
+  const weeklyCheckinData =
+    await getTrainingDailyCheckinRange(
+      athleteId,
+      currentWeekStartKey,
+      currentWeekEndKey,
+    );
+
+    const calendarCells =
+    calendarDays.map(
+      (
+        date,
+      ) => {
+
+        const dateKey =
+          formatDateKey(
+            date,
+          );
+
+        const dayData =
+          daysByDate.get(
+            dateKey,
+          );
+
+        return {
+          date:
+            dateKey,
+
+          dayNumber:
+            date.getDate(),
+
+          isCurrentMonth:
+            date.getMonth() ===
+              monthIndex &&
+            date.getFullYear() ===
+              year,
+
+          isToday:
+            dateKey ===
+            todayKey,
+
+          weekId:
+            dayData?.weekId ??
+            null,
+
+          dayId:
+            dayData?.dayId ??
+            null,
+
+          sessions:
+            dayData?.sessions ??
+            [],
+        };
+      },
+    );
+
   const previousMonth =
     shiftMonth(
       year,
@@ -677,17 +753,14 @@ export default async function TrainingAthletePage({
               <ChevronLeft />
             </Link>
 
-            <div className="training-calendar-month-title">
-
-              <h2>
-                {monthName}
-              </h2>
-
-              <span>
-                {year}
-              </span>
-
-            </div>
+            <TrainingMonthJump
+              year={
+                year
+              }
+              monthIndex={
+                monthIndex
+              }
+            />
 
             <Link
               href={
@@ -736,174 +809,46 @@ export default async function TrainingAthletePage({
 
         </div>
 
-        <div className="training-calendar-grid">
+        <TrainingMobileEditToggle
+          canWrite={
+            canWrite
+          }
+        />
 
-          {calendarDays.map(
-            (
-              date,
-            ) => {
-              const dateKey =
-                formatDateKey(
-                  date,
-                );
-
-              const dayData =
-                daysByDate.get(
-                  dateKey,
-                );
-
-              const isCurrentMonth =
-                date.getMonth() ===
-                  monthIndex &&
-                date.getFullYear() ===
-                  year;
-
-              const isToday =
-                dateKey ===
-                todayKey;
-
-              return (
-                <article
-                  key={
-                    dateKey
-                  }
-                  className={[
-                    'training-calendar-day',
-
-                    isCurrentMonth
-                      ? ''
-                      : 'training-calendar-day-outside',
-
-                    isToday
-                      ? 'training-calendar-day-today'
-                      : '',
-                  ]
-                    .filter(
-                      Boolean,
-                    )
-                    .join(
-                      ' ',
-                    )}
-                >
-                  {dayData && (
-                    <Link
-                      href={
-                        `/entrenamientos/${athleteId}/semanas/${dayData.weekId}`
-                      }
-                      className="training-calendar-week-hitarea"
-                      aria-label={`Abrir semana de ${dateKey}`}
-                    />
-                  )}
-
-                  <header className="training-calendar-day-header">
-
-                    <span
-                      className="training-calendar-day-number"
-                    >
-                      {date.getDate()}
-                    </span>
-
-                    <div className="training-calendar-day-actions">
-
-                      {canWrite &&
-                        isCurrentMonth && (
-                          <NewSessionControl
-                            athleteId={
-                              athleteId
-                            }
-                            dayId={
-                              dayData?.dayId ??
-                              null
-                            }
-                            date={
-                              dateKey
-                            }
-                            dateLabel={
-                              new Intl.DateTimeFormat(
-                                'es-ES',
-                                {
-                                  weekday:
-                                    'long',
-
-                                  day:
-                                    'numeric',
-
-                                  month:
-                                    'long',
-                                },
-                              ).format(
-                                date,
-                              )
-                            }
-                          />
-                        )}
-
-                    </div>
-
-                  </header>
-
-                  <div className="training-calendar-day-sessions">
-
-                    {dayData?.sessions.map(
-                      (
-                        session,
-                      ) => (
-                        <Link
-                          key={
-                            session.id
-                          }
-                          href={
-                            `/entrenamientos/${athleteId}/sesiones/${session.id}`
-                          }
-                          className="training-session-row training-calendar-session"
-                          data-session-type={
-                            session.type
-                          }
-                          title={
-                            session.title
-                          }
-                        >
-
-                          <div className="training-calendar-session-main">
-
-                            <span className="training-calendar-session-type">
-                              {sessionTypeLabel(
-                                session.type,
-                              )}
-                            </span>
-
-                            <strong>
-                              {
-                                session.title
-                              }
-                            </strong>
-
-                            {session.plannedStartTime && (
-                              <span className="training-calendar-session-time">
-                                <Clock3 />
-
-                                {
-                                  session.plannedStartTime
-                                }
-                              </span>
-                            )}
-
-                          </div>
-
-                        </Link>
-                      ),
-                    )}
-
-                  </div>
-
-                </article>
-              );
-            },
-          )}
-
-        </div>
+        <TrainingMonthSessionBoard
+          athleteId={
+            athleteId
+          }
+          initialCells={
+            calendarCells
+          }
+          canWrite={
+            canWrite
+          }
+        />
 
       </section>
+
+      <DailyCheckinCard
+        athleteId={
+          athleteId
+        }
+        date={
+          todayKey
+        }
+        canWrite={
+          canWrite
+        }
+      />
+
+      <WeeklyCheckinSummary
+        athleteId={
+          athleteId
+        }
+        data={
+          weeklyCheckinData
+        }
+      />
 
     </main>
   );

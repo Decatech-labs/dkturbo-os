@@ -22,6 +22,12 @@ export type NutritionFoodId =
       'NutritionFoodId';
   };
 
+export type NutritionFoodPreparationConversionId =
+  string & {
+    readonly __brand:
+      'NutritionFoodPreparationConversionId';
+  };
+
 export type NutritionMealItemId =
   string & {
     readonly __brand:
@@ -33,6 +39,36 @@ export type DkturboUserId =
     readonly __brand:
       'DkturboUserId';
   };
+
+export type NutritionPersonAccessId =
+  string & {
+    readonly __brand:
+      'NutritionPersonAccessId';
+  };
+
+export type NutritionPersonAccessRole =
+  | 'VIEWER'
+  | 'MANAGER';
+
+export interface NutritionPersonAccess {
+  id:
+    NutritionPersonAccessId;
+
+  granteeUserId:
+    DkturboUserId;
+
+  subjectUserId:
+    DkturboUserId;
+
+  role:
+    NutritionPersonAccessRole;
+
+  createdAt:
+    Date;
+
+  updatedAt:
+    Date;
+}
 
 export type NutritionPlanTargetId =
   string & {
@@ -239,6 +275,35 @@ export interface NutritionFood {
     Date;
 }
 
+export interface NutritionFoodPreparationConversion {
+  id:
+    NutritionFoodPreparationConversionId;
+
+  foodId:
+    NutritionFoodId;
+
+  name:
+    string;
+
+  rawAmount:
+    number;
+
+  preparedAmount:
+    number;
+
+  preparedUnit:
+    NutritionUnit;
+
+  isDefault:
+    boolean;
+
+  createdAt:
+    Date;
+
+  updatedAt:
+    Date;
+}
+
 export interface NutritionFoodSnapshot {
   name:
     string;
@@ -283,6 +348,9 @@ export interface NutritionMealItem {
 
   foodSnapshot:
     NutritionFoodSnapshot;
+
+  preparationConversionId:
+    NutritionFoodPreparationConversionId | null;
 
   position:
     number;
@@ -361,6 +429,18 @@ export interface NutritionMealItemActual {
     Date;
 }
 
+export type NutritionMealItemPreparationSource =
+  | 'DEFAULT'
+  | 'EXPLICIT';
+
+export interface NutritionMealItemPreparation {
+  conversion:
+    NutritionFoodPreparationConversion;
+
+  source:
+    NutritionMealItemPreparationSource;
+}
+
 export interface NutritionMealItemDetail {
   item:
     NutritionMealItem;
@@ -370,6 +450,9 @@ export interface NutritionMealItemDetail {
 
   quantities:
     NutritionMealItemQuantity[];
+
+  preparation:
+    NutritionMealItemPreparation | null;
 }
 
 export interface NutritionNutrients {

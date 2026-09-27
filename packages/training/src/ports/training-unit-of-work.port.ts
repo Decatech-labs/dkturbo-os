@@ -14,6 +14,10 @@ import type {
   WeekRepository,
 } from './week-repository.port.js';
 
+import type {
+  DailyCheckinRepository,
+} from './daily-checkin-repository.port.js';
+
 export interface TrainingRepositories {
   athletes:
     AthleteRepository;
@@ -26,6 +30,9 @@ export interface TrainingRepositories {
 
   sessionStructure:
     SessionStructureRepository;
+
+  dailyCheckins:
+    DailyCheckinRepository;
 }
 
 export interface TrainingUnitOfWork {

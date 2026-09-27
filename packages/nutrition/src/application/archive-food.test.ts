@@ -18,6 +18,14 @@ import {
   archiveFood,
 } from './archive-food.js';
 
+import {
+  createTestPersonAccessRepository,
+} from './test-person-access-repository.js';
+
+import {
+  createTestFoodPreparationConversionRepository,
+} from './test-food-preparation-conversion-repository.js';
+
 const foodId =
   '20000000-0000-4000-8000-000000000001' as NutritionFoodId;
 
@@ -109,12 +117,20 @@ const createUnitOfWork =
             setLocations:
               async () => {},
 
+            setPreparationConversion:
+              async () =>
+                false,
+
             delete:
               async () =>
                 false,
 
             saveQuantities:
               async () => {},
+
+            deleteQuantity:
+              async () =>
+                false,
 
             listDetailsForMeal:
               async () =>
@@ -145,6 +161,12 @@ const createUnitOfWork =
               async () =>
                 [],
           },
+
+          personAccess:
+            createTestPersonAccessRepository(),
+
+          foodPreparationConversions:
+            createTestFoodPreparationConversionRepository(),
 
           plans: {
             create:

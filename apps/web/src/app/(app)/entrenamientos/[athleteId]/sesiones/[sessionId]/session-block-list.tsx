@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 
 import {
-  Children,
   type ReactNode,
   useEffect,
   useRef,
@@ -40,7 +39,34 @@ import {
   useRouter,
 } from 'next/navigation';
 
+import {
+  useTrainingMobileMode,
+  useTrainingMobileEditMode,
+} from '../../../use-training-mobile-mode';
+
 import styles from './session-block-list.module.css';
+
+interface SessionExerciseItem {
+
+  id:
+    string;
+
+  blockId:
+    string;
+
+  position:
+    number;
+
+  name:
+    string;
+
+  metricProfile:
+    string;
+
+  plannedNotes:
+    string | null;
+
+}
 
 interface SessionBlockItem {
 
@@ -56,8 +82,8 @@ interface SessionBlockItem {
   notes:
     string | null;
 
-  exerciseCount:
-    number;
+  exercises:
+    SessionExerciseItem[];
 
 }
 
@@ -75,8 +101,11 @@ interface SessionBlockListProps {
   canWrite:
     boolean;
 
-  children:
-    ReactNode;
+  exerciseContent:
+    ReactNode[];
+
+  blockControls:
+    ReactNode[];
 
 }
 
@@ -117,6 +146,743 @@ interface SortableSessionBlockProps {
 
 }
 
+interface SortableSessionExerciseProps {
+
+  exercise:
+    SessionExerciseItem;
+
+  canWrite:
+    boolean;
+
+  content:
+    ReactNode;
+
+  onUpdateNotes:
+    (
+      exerciseId:
+        string,
+      plannedNotes:
+        string | null,
+    ) => Promise<boolean>;
+
+  onDelete:
+    (
+      exerciseId:
+        string,
+    ) => Promise<boolean>;
+
+}
+
+function SortableSessionExercise({
+
+  exercise,
+
+  canWrite,
+
+  content,
+
+  onUpdateNotes,
+
+  onDelete,
+
+}: SortableSessionExerciseProps) {
+
+  const {
+
+    attributes,
+
+    listeners,
+
+    setNodeRef,
+
+    transform,
+
+    transition,
+
+    isDragging,
+
+  } = useSortable({
+
+    id:
+      exercise.id,
+
+    disabled:
+      !canWrite,
+
+    data: {
+
+      type:
+        'exercise',
+
+      blockId:
+        exercise.blockId,
+
+    },
+
+  });
+
+  const menuRef =
+    useRef<HTMLDivElement | null>(
+      null,
+    );
+
+  const menuButtonRef =
+    useRef<HTMLButtonElement | null>(
+      null,
+    );
+
+  const [
+
+    notes,
+
+    setNotes,
+
+  ] = useState(
+
+    exercise.plannedNotes ??
+    '',
+
+  );
+
+  const [
+
+    saving,
+
+    setSaving,
+
+  ] = useState(
+    false,
+  );
+
+  const [
+
+    menuOpen,
+
+    setMenuOpen,
+
+  ] = useState(
+    false,
+  );
+
+  const [
+
+    confirmDelete,
+
+    setConfirmDelete,
+
+  ] = useState(
+    false,
+  );
+
+  const [
+
+    deleting,
+
+    setDeleting,
+
+  ] = useState(
+    false,
+  );
+
+  const [
+
+    error,
+
+    setError,
+
+  ] = useState<string | null>(
+    null,
+  );
+
+  useEffect(
+
+    () => {
+
+      setNotes(
+
+        exercise.plannedNotes ??
+        '',
+
+      );
+
+    },
+
+    [
+      exercise.plannedNotes,
+    ],
+
+  );
+
+  useEffect(
+
+    () => {
+
+      if (!menuOpen) {
+
+        return;
+
+      }
+
+      const handlePointerDown =
+
+        (
+          event:
+            PointerEvent,
+        ) => {
+
+          const target =
+            event.target as
+              Node | null;
+
+          if (
+
+            menuRef.current?.contains(
+              target,
+            ) ||
+
+            menuButtonRef.current?.contains(
+              target,
+            )
+
+          ) {
+
+            return;
+
+          }
+
+          setMenuOpen(
+            false,
+          );
+
+          setConfirmDelete(
+            false,
+          );
+
+        };
+
+      document.addEventListener(
+
+        'pointerdown',
+
+        handlePointerDown,
+
+      );
+
+      return () => {
+
+        document.removeEventListener(
+
+          'pointerdown',
+
+          handlePointerDown,
+
+        );
+
+      };
+
+    },
+
+    [
+      menuOpen,
+    ],
+
+  );
+
+  const saveNotes =
+
+    async () => {
+
+      if (
+
+        !canWrite ||
+        saving
+
+      ) {
+
+        return;
+
+      }
+
+      const normalized =
+        notes.trim();
+
+      const current =
+        exercise.plannedNotes ??
+        '';
+
+      if (
+
+        normalized ===
+        current
+
+      ) {
+
+        if (
+
+          notes !==
+          normalized
+
+        ) {
+
+          setNotes(
+            normalized,
+          );
+
+        }
+
+        return;
+
+      }
+
+      setSaving(
+        true,
+      );
+
+      setError(
+        null,
+      );
+
+      const updated =
+
+        await onUpdateNotes(
+
+          exercise.id,
+
+          normalized ||
+            null,
+
+        );
+
+      setSaving(
+        false,
+      );
+
+      if (!updated) {
+
+        setNotes(
+          current,
+        );
+
+        setError(
+          'No se han podido guardar las notas del ejercicio.',
+        );
+
+        return;
+
+      }
+
+      setNotes(
+        normalized,
+      );
+
+    };
+
+  const remove =
+
+    async () => {
+
+      if (deleting) {
+
+        return;
+
+      }
+
+      setDeleting(
+        true,
+      );
+
+      setError(
+        null,
+      );
+
+      const deleted =
+
+        await onDelete(
+          exercise.id,
+        );
+
+      setDeleting(
+        false,
+      );
+
+      if (!deleted) {
+
+        setError(
+          'No se ha podido eliminar el ejercicio.',
+        );
+
+        setConfirmDelete(
+          false,
+        );
+
+        return;
+
+      }
+
+      setMenuOpen(
+        false,
+      );
+
+    };
+
+  return (
+
+    <article
+
+      ref={
+        setNodeRef
+      }
+
+      className={[
+        'training-session-exercise',
+        styles.exercise,
+        isDragging
+          ? styles.exerciseDragging
+          : '',
+      ].join(
+        ' ',
+      )}
+
+      style={{
+
+        transform:
+          CSS.Transform.toString(
+            transform,
+          ),
+
+        transition,
+
+      }}
+
+    >
+
+      <div
+        className={
+          styles.exerciseHeader
+        }
+      >
+
+        <div
+          className={
+            styles.exerciseHeading
+          }
+        >
+
+          {canWrite && (
+
+            <button
+
+              type="button"
+
+              className={
+                styles.exerciseDragHandle
+              }
+
+              aria-label={`Mover ${exercise.name}`}
+
+              title="Arrastrar ejercicio"
+
+              {...attributes}
+
+              {...listeners}
+
+            >
+
+              <GripVertical />
+
+            </button>
+
+          )}
+
+          <div className="training-session-exercise-name">
+
+            <strong>
+
+              {
+                exercise.name
+              }
+
+            </strong>
+
+            <span>
+
+              {
+                exercise.metricProfile
+              }
+
+            </span>
+
+          </div>
+
+        </div>
+
+        {canWrite && (
+
+          <div
+            className={
+              styles.exerciseMenuRoot
+            }
+          >
+
+            <button
+
+              ref={
+                menuButtonRef
+              }
+
+              type="button"
+
+              className={
+                styles.exerciseMenuButton
+              }
+
+              aria-label={`Acciones de ${exercise.name}`}
+
+              aria-expanded={
+                menuOpen
+              }
+
+              onClick={() => {
+
+                setMenuOpen(
+
+                  current =>
+                    !current,
+
+                );
+
+                setConfirmDelete(
+                  false,
+                );
+
+              }}
+
+            >
+
+              <MoreHorizontal />
+
+            </button>
+
+            {menuOpen && (
+
+              <div
+
+                ref={
+                  menuRef
+                }
+
+                className={
+                  styles.exerciseMenu
+                }
+
+              >
+
+                {!confirmDelete ? (
+
+                  <button
+
+                    type="button"
+
+                    className={
+                      styles.deleteAction
+                    }
+
+                    onClick={() => {
+
+                      setConfirmDelete(
+                        true,
+                      );
+
+                    }}
+
+                  >
+
+                    <Trash2 />
+
+                    Eliminar ejercicio
+
+                  </button>
+
+                ) : (
+
+                  <div
+                    className={
+                      styles.deleteConfirm
+                    }
+                  >
+
+                    <span>
+
+                      ¿Eliminar este ejercicio?
+
+                    </span>
+
+                    <div>
+
+                      <button
+
+                        type="button"
+
+                        onClick={() => {
+
+                          setConfirmDelete(
+                            false,
+                          );
+
+                        }}
+
+                      >
+
+                        Cancelar
+
+                      </button>
+
+                      <button
+
+                        type="button"
+
+                        className={
+                          styles.confirmDeleteButton
+                        }
+
+                        disabled={
+                          deleting
+                        }
+
+                        onClick={() => {
+
+                          void remove();
+
+                        }}
+
+                      >
+
+                        {deleting
+                          ? 'Eliminando…'
+                          : 'Eliminar'}
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                )}
+
+              </div>
+
+            )}
+
+          </div>
+
+        )}
+
+      </div>
+
+      {canWrite ? (
+
+        <textarea
+
+          className={
+            styles.exerciseNotesInput
+          }
+
+          value={
+            notes
+          }
+
+          rows={
+            1
+          }
+
+          placeholder="Añadir notas de planificación"
+
+          aria-label={`Notas de ${exercise.name}`}
+
+          disabled={
+            saving
+          }
+
+          onChange={(event) => {
+
+            setNotes(
+              event.target.value,
+            );
+
+            setError(
+              null,
+            );
+
+          }}
+
+          onBlur={() => {
+
+            void saveNotes();
+
+          }}
+
+          onKeyDown={(event) => {
+
+            if (
+
+              event.key ===
+              'Escape'
+
+            ) {
+
+              setNotes(
+
+                exercise.plannedNotes ??
+                  '',
+
+              );
+
+              event.currentTarget.blur();
+
+            }
+
+          }}
+
+        />
+
+      ) : (
+
+        exercise.plannedNotes && (
+
+          <p className="training-session-exercise-plan-note">
+
+            {
+              exercise.plannedNotes
+            }
+
+          </p>
+
+        )
+
+      )}
+
+      {error && (
+
+        <div
+          className={
+            styles.error
+          }
+        >
+
+          {error}
+
+        </div>
+
+      )}
+
+      {content}
+
+    </article>
+
+  );
+
+}
+
 function SortableSessionBlock({
 
   athleteId: _athleteId,
@@ -145,6 +911,16 @@ function SortableSessionBlock({
 
     disabled:
       !canWrite,
+
+    data: {
+
+      type:
+        'block',
+
+      blockId:
+        block.id,
+
+    },
 
   });
 
@@ -683,11 +1459,10 @@ function SortableSessionBlock({
           >
 
             {
-              block.exerciseCount
+              block.exercises.length
             }{' '}
-
             {
-              block.exerciseCount ===
+              block.exercises.length ===
               1
                 ? 'ejercicio'
                 : 'ejercicios'
@@ -966,22 +1741,32 @@ function SortableSessionBlock({
 }
 
 export function SessionBlockList({
-
   athleteId,
   sessionId,
   blocks,
   canWrite,
-  children,
-
+  exerciseContent,
+  blockControls,
 }: SessionBlockListProps) {
+
+  const mobile =
+    useTrainingMobileMode();
+
+  const {
+    enabled:
+      mobileEditEnabled,
+  } =
+    useTrainingMobileEditMode();
+
+  const canEditPlan =
+    canWrite &&
+    (
+      !mobile ||
+      mobileEditEnabled
+    );
 
   const router =
     useRouter();
-
-  const childNodes =
-    Children.toArray(
-      children,
-    );
 
   const originalIndexById =
     new Map(
@@ -995,6 +1780,53 @@ export function SessionBlockList({
           index,
         ],
       ),
+
+    );
+
+    const originalExerciseIndexById =
+
+    new Map(
+
+      blocks
+
+        .flatMap(
+
+          block =>
+            [...block.exercises]
+
+              .sort(
+
+                (
+
+                  a,
+
+                  b,
+
+                ) =>
+                  a.position -
+                  b.position,
+
+              ),
+
+        )
+
+        .map(
+
+          (
+
+            exercise,
+
+            index,
+
+          ) => [
+
+            exercise.id,
+
+            index,
+
+          ],
+
+        ),
 
     );
 
@@ -1232,85 +2064,208 @@ export function SessionBlockList({
 
     };
 
-  const handleDragEnd =
+    const updateExerciseNotes =
+
     async (
 
-      event:
-        DragEndEvent,
+      exerciseId:
+        string,
 
-    ) => {
+      plannedNotes:
+        string | null,
 
-      const {
-        active,
-        over,
-      } = event;
+    ): Promise<boolean> => {
 
-      if (
-        !over ||
-        active.id ===
-          over.id
-      ) {
-        return;
+      try {
+
+        const response =
+
+          await fetch(
+
+            `/api/training/athletes/${encodeURIComponent(
+              athleteId,
+            )}/session-exercises/${encodeURIComponent(
+              exerciseId,
+            )}`,
+
+            {
+
+              method:
+                'PATCH',
+
+              headers: {
+
+                'content-type':
+                  'application/json',
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  plannedNotes,
+
+                }),
+
+            },
+
+          );
+
+        if (!response.ok) {
+
+          return false;
+
+        }
+
+        setOrderedBlocks(
+
+          current =>
+
+            current.map(
+
+              block => ({
+
+                ...block,
+
+                exercises:
+
+                  block.exercises.map(
+
+                    exercise =>
+
+                      exercise.id ===
+                      exerciseId
+
+                        ? {
+
+                            ...exercise,
+
+                            plannedNotes,
+
+                          }
+
+                        : exercise,
+
+                  ),
+
+              }),
+
+            ),
+
+        );
+
+        return true;
+
+      } catch {
+
+        return false;
+
       }
 
-      const previous =
-        orderedBlocks;
+    };
 
-      const oldIndex =
-        previous.findIndex(
-          block =>
-            block.id ===
-            active.id,
+  const deleteExercise =
+
+    async (
+
+      exerciseId:
+        string,
+
+    ): Promise<boolean> => {
+
+      try {
+
+        const response =
+
+          await fetch(
+
+            `/api/training/athletes/${encodeURIComponent(
+              athleteId,
+            )}/session-exercises/${encodeURIComponent(
+              exerciseId,
+            )}`,
+
+            {
+
+              method:
+                'DELETE',
+
+            },
+
+          );
+
+        if (!response.ok) {
+
+          return false;
+
+        }
+
+        setOrderedBlocks(
+
+          current =>
+
+            current.map(
+
+              block => ({
+
+                ...block,
+
+                exercises:
+
+                  block.exercises
+
+                    .filter(
+
+                      exercise =>
+                        exercise.id !==
+                        exerciseId,
+
+                    )
+
+                    .map(
+
+                      (
+
+                        exercise,
+
+                        position,
+
+                      ) => ({
+
+                        ...exercise,
+
+                        position,
+
+                      }),
+
+                    ),
+
+              }),
+
+            ),
+
         );
 
-      const newIndex =
-        previous.findIndex(
-          block =>
-            block.id ===
-            over.id,
-        );
+        router.refresh();
 
-      if (
-        oldIndex ===
-          -1 ||
-        newIndex ===
-          -1
-      ) {
-        return;
+        return true;
+
+      } catch {
+
+        return false;
+
       }
 
-      const next =
+    };
 
-        arrayMove(
+    const persistExerciseLayout =
 
-          previous,
+    async (
 
-          oldIndex,
+      next:
+        SessionBlockItem[],
 
-          newIndex,
-
-        ).map(
-
-          (
-            block,
-            position,
-          ) => ({
-
-            ...block,
-
-            position,
-
-          }),
-
-        );
-
-      setOrderedBlocks(
-        next,
-      );
-
-      setReorderError(
-        null,
-      );
+    ): Promise<boolean> => {
 
       try {
 
@@ -1322,7 +2277,7 @@ export function SessionBlockList({
               athleteId,
             )}/sessions/${encodeURIComponent(
               sessionId,
-            )}/blocks/order`,
+            )}/exercises/layout`,
 
             {
 
@@ -1339,10 +2294,35 @@ export function SessionBlockList({
               body:
                 JSON.stringify({
 
-                  orderedIds:
+                  blocks:
+
                     next.map(
-                      block =>
-                        block.id,
+
+                      block => ({
+
+                        blockId:
+                          block.id,
+
+                        orderedIds:
+
+                          [...block.exercises]
+
+                            .sort(
+                              (
+                                a,
+                                b,
+                              ) =>
+                                a.position -
+                                b.position,
+                            )
+
+                            .map(
+                              exercise =>
+                                exercise.id,
+                            ),
+
+                      }),
+
                     ),
 
                 }),
@@ -1351,42 +2331,706 @@ export function SessionBlockList({
 
           );
 
-        if (!response.ok) {
+        return response.ok;
 
-          throw new Error();
+      } catch {
+
+        return false;
+
+      }
+
+    };
+
+  const handleDragEnd =
+
+    async (
+
+      event:
+        DragEndEvent,
+
+    ) => {
+
+      const {
+
+        active,
+
+        over,
+
+      } = event;
+
+      if (!over) {
+
+        return;
+
+      }
+
+      const activeType =
+
+        active.data.current
+          ?.type;
+
+      const overType =
+
+        over.data.current
+          ?.type;
+
+      /*
+       * BLOCK DRAG
+       */
+
+      if (
+
+        activeType ===
+        'block'
+
+      ) {
+
+        const activeBlockId =
+          String(
+            active.id,
+          );
+
+        const targetBlockId =
+
+          overType ===
+          'exercise'
+
+            ? String(
+                over.data.current
+                  ?.blockId ??
+                '',
+              )
+
+            : String(
+                over.id,
+              );
+
+        if (
+
+          !targetBlockId ||
+
+          activeBlockId ===
+          targetBlockId
+
+        ) {
+
+          return;
 
         }
 
-      } catch {
+        const previous =
+          orderedBlocks;
+
+        const oldIndex =
+
+          previous.findIndex(
+
+            block =>
+              block.id ===
+              activeBlockId,
+
+          );
+
+        const newIndex =
+
+          previous.findIndex(
+
+            block =>
+              block.id ===
+              targetBlockId,
+
+          );
+
+        if (
+
+          oldIndex === -1 ||
+
+          newIndex === -1
+
+        ) {
+
+          return;
+
+        }
+
+        const next =
+
+          arrayMove(
+
+            previous,
+
+            oldIndex,
+
+            newIndex,
+
+          ).map(
+
+            (
+              block,
+              position,
+            ) => ({
+
+              ...block,
+
+              position,
+
+            }),
+
+          );
+
+        setOrderedBlocks(
+          next,
+        );
+
+        setReorderError(
+          null,
+        );
+
+        try {
+
+          const response =
+
+            await fetch(
+
+              `/api/training/athletes/${encodeURIComponent(
+                athleteId,
+              )}/sessions/${encodeURIComponent(
+                sessionId,
+              )}/blocks/order`,
+
+              {
+
+                method:
+                  'PUT',
+
+                headers: {
+
+                  'content-type':
+                    'application/json',
+
+                },
+
+                body:
+                  JSON.stringify({
+
+                    orderedIds:
+
+                      next.map(
+                        block =>
+                          block.id,
+                      ),
+
+                  }),
+
+              },
+
+            );
+
+          if (!response.ok) {
+
+            throw new Error();
+
+          }
+
+        } catch {
+
+          setOrderedBlocks(
+            previous,
+          );
+
+          setReorderError(
+
+            'No se ha podido guardar el nuevo orden de los bloques.',
+
+          );
+
+        }
+
+        return;
+
+      }
+
+      /*
+       * EXERCISE DRAG
+       */
+
+      if (
+
+        activeType !==
+        'exercise'
+
+      ) {
+
+        return;
+
+      }
+
+      const activeExerciseId =
+        String(
+          active.id,
+        );
+
+      const previous =
+        orderedBlocks;
+
+      let sourceBlockIndex =
+        -1;
+
+      let sourceExerciseIndex =
+        -1;
+
+      for (
+
+        let blockIndex = 0;
+
+        blockIndex <
+        previous.length;
+
+        blockIndex += 1
+
+      ) {
+
+        const exerciseIndex =
+
+          previous[
+            blockIndex
+          ]?.exercises.findIndex(
+
+            exercise =>
+              exercise.id ===
+              activeExerciseId,
+
+          ) ?? -1;
+
+        if (
+
+          exerciseIndex !==
+          -1
+
+        ) {
+
+          sourceBlockIndex =
+            blockIndex;
+
+          sourceExerciseIndex =
+            exerciseIndex;
+
+          break;
+
+        }
+
+      }
+
+      if (
+
+        sourceBlockIndex ===
+          -1 ||
+
+        sourceExerciseIndex ===
+          -1
+
+      ) {
+
+        return;
+
+      }
+
+      const sourceBlock =
+
+        previous[
+          sourceBlockIndex
+        ];
+
+      if (!sourceBlock) {
+
+        return;
+
+      }
+
+      const activeExercise =
+
+        sourceBlock.exercises[
+          sourceExerciseIndex
+        ];
+
+      if (!activeExercise) {
+
+        return;
+
+      }
+
+      let targetBlockId:
+        string;
+
+      let targetExerciseId:
+        string | null =
+          null;
+
+      if (
+
+        overType ===
+        'exercise'
+
+      ) {
+
+        targetBlockId =
+
+          String(
+
+            over.data.current
+              ?.blockId ??
+            '',
+
+          );
+
+        targetExerciseId =
+
+          String(
+            over.id,
+          );
+
+      } else if (
+
+        overType ===
+        'block'
+
+      ) {
+
+        targetBlockId =
+          String(
+            over.id,
+          );
+
+      } else {
+
+        return;
+
+      }
+
+      const targetBlockIndex =
+
+        previous.findIndex(
+
+          block =>
+            block.id ===
+            targetBlockId,
+
+        );
+
+      if (
+
+        targetBlockIndex ===
+        -1
+
+      ) {
+
+        return;
+
+      }
+
+      /*
+       * Same block:
+       * normal sortable reorder.
+       */
+
+      if (
+
+        sourceBlock.id ===
+        targetBlockId &&
+
+        targetExerciseId
+
+      ) {
+
+        const targetExerciseIndex =
+
+          sourceBlock.exercises.findIndex(
+
+            exercise =>
+              exercise.id ===
+              targetExerciseId,
+
+          );
+
+        if (
+
+          targetExerciseIndex ===
+          -1 ||
+
+          targetExerciseIndex ===
+          sourceExerciseIndex
+
+        ) {
+
+          return;
+
+        }
+
+        const next =
+
+          previous.map(
+
+            (
+              block,
+              blockIndex,
+            ) => {
+
+              if (
+
+                blockIndex !==
+                sourceBlockIndex
+
+              ) {
+
+                return block;
+
+              }
+
+              return {
+
+                ...block,
+
+                exercises:
+
+                  arrayMove(
+
+                    block.exercises,
+
+                    sourceExerciseIndex,
+
+                    targetExerciseIndex,
+
+                  ).map(
+
+                    (
+                      exercise,
+                      position,
+                    ) => ({
+
+                      ...exercise,
+
+                      blockId:
+                        block.id,
+
+                      position,
+
+                    }),
+
+                  ),
+
+              };
+
+            },
+
+          );
+
+        setOrderedBlocks(
+          next,
+        );
+
+        setReorderError(
+          null,
+        );
+
+        const saved =
+
+          await persistExerciseLayout(
+            next,
+          );
+
+        if (!saved) {
+
+          setOrderedBlocks(
+            previous,
+          );
+
+          setReorderError(
+
+            'No se ha podido guardar el nuevo orden de los ejercicios.',
+
+          );
+
+          return;
+
+        }
+
+        router.refresh();
+
+        return;
+
+      }
+
+      /*
+       * Cross-block movement, or dropping
+       * directly over a block.
+       */
+
+      const next =
+
+        previous.map(
+
+          block => ({
+
+            ...block,
+
+            exercises:
+              [...block.exercises],
+
+          }),
+
+        );
+
+      const nextSourceBlock =
+
+        next[
+          sourceBlockIndex
+        ];
+
+      const nextTargetBlock =
+
+        next[
+          targetBlockIndex
+        ];
+
+      if (
+
+        !nextSourceBlock ||
+
+        !nextTargetBlock
+
+      ) {
+
+        return;
+
+      }
+
+      nextSourceBlock.exercises.splice(
+
+        sourceExerciseIndex,
+
+        1,
+
+      );
+
+      let insertIndex =
+
+        nextTargetBlock
+          .exercises.length;
+
+      if (
+
+        targetExerciseId
+
+      ) {
+
+        const foundIndex =
+
+          nextTargetBlock
+            .exercises
+            .findIndex(
+
+              exercise =>
+                exercise.id ===
+                targetExerciseId,
+
+            );
+
+        if (
+
+          foundIndex !==
+          -1
+
+        ) {
+
+          insertIndex =
+            foundIndex;
+
+        }
+
+      }
+
+      nextTargetBlock.exercises.splice(
+
+        insertIndex,
+
+        0,
+
+        {
+
+          ...activeExercise,
+
+          blockId:
+            nextTargetBlock.id,
+
+        },
+
+      );
+
+      const normalized =
+
+        next.map(
+
+          block => ({
+
+            ...block,
+
+            exercises:
+
+              block.exercises.map(
+
+                (
+                  exercise,
+                  position,
+                ) => ({
+
+                  ...exercise,
+
+                  blockId:
+                    block.id,
+
+                  position,
+
+                }),
+
+              ),
+
+          }),
+
+        );
+
+      setOrderedBlocks(
+        normalized,
+      );
+
+      setReorderError(
+        null,
+      );
+
+      const saved =
+
+        await persistExerciseLayout(
+          normalized,
+        );
+
+      if (!saved) {
 
         setOrderedBlocks(
           previous,
         );
 
         setReorderError(
-          'No se ha podido guardar el nuevo orden de los bloques.',
+
+          'No se ha podido mover el ejercicio.',
+
         );
+
+        return;
 
       }
 
+      router.refresh();
+
     };
-
-  if (
-    orderedBlocks.length ===
-    0
-  ) {
-
-    return (
-
-      <div className="training-session-empty">
-
-        Esta sesión todavía no tiene bloques.
-
-      </div>
-
-    );
-
-  }
 
   return (
 
@@ -1438,18 +3082,137 @@ export function SessionBlockList({
               index,
             ) => {
 
-              const originalIndex =
+                            const originalIndex =
+
                 originalIndexById.get(
+
                   block.id,
+
                 );
 
-              const content =
+              const control =
+
                 originalIndex ===
+
                 undefined
+
                   ? null
-                  : childNodes[
+
+                  : blockControls[
                       originalIndex
                     ];
+
+                            const content = (
+
+                <div
+                  className="training-session-exercises"
+                >
+
+                  <SortableContext
+
+                    items={
+                      [...block.exercises]
+
+                        .sort(
+                          (
+                            a,
+                            b,
+                          ) =>
+                            a.position -
+                            b.position,
+                        )
+
+                        .map(
+                          exercise =>
+                            exercise.id,
+                        )
+                    }
+
+                    strategy={
+                      verticalListSortingStrategy
+                    }
+
+                  >
+
+                    {[...block.exercises]
+
+                      .sort(
+                        (
+                          a,
+                          b,
+                        ) =>
+                          a.position -
+                          b.position,
+                      )
+
+                      .map(
+
+                        exercise => {
+
+                          const exerciseIndex =
+
+                            originalExerciseIndexById.get(
+
+                              exercise.id,
+
+                            );
+
+                          if (
+
+                            exerciseIndex ===
+                            undefined
+
+                          ) {
+
+                            return null;
+
+                          }
+
+                          return (
+
+                            <SortableSessionExercise
+
+                              key={
+                                exercise.id
+                              }
+
+                              exercise={
+                                exercise
+                              }
+
+                              canWrite={
+                                canEditPlan
+                              }
+
+                              content={
+                                exerciseContent[
+                                  exerciseIndex
+                                ]
+                              }
+
+                              onUpdateNotes={
+                                updateExerciseNotes
+                              }
+
+                              onDelete={
+                                deleteExercise
+                              }
+
+                            />
+
+                          );
+
+                        },
+
+                      )}
+
+                  </SortableContext>
+
+                  {control}
+
+                </div>
+
+              );
 
               return (
 
@@ -1472,7 +3235,7 @@ export function SessionBlockList({
                   }
 
                   canWrite={
-                    canWrite
+                    canEditPlan
                   }
 
                   content={

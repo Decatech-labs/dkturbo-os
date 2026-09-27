@@ -27,6 +27,14 @@ import {
   NutritionPlanNotFoundForDetailError,
 } from './get-weekly-plan-detail.js';
 
+import {
+  createTestPersonAccessRepository,
+} from './test-person-access-repository.js';
+
+import {
+  createTestFoodPreparationConversionRepository,
+} from './test-food-preparation-conversion-repository.js';
+
 const userId =
   '10000000-0000-4000-8000-000000000001' as
     DkturboUserId;
@@ -438,12 +446,20 @@ const createUnitOfWork =
             setLocations:
               async () => {},
 
+            setPreparationConversion:
+              async () =>
+                false,
+
             delete:
               async () =>
                 false,
 
             saveQuantities:
               async () => {},
+
+            deleteQuantity:
+              async () =>
+                false,
 
             listDetailsForMeal:
               async mealId =>
@@ -463,6 +479,9 @@ const createUnitOfWork =
 
                           foodSnapshot:
                             riceSnapshot,
+
+                          preparationConversionId:
+                            null,
 
                           position:
                             0,
@@ -524,6 +543,9 @@ const createUnitOfWork =
                             new Date(),
                         },
 
+                        preparation:
+                          null,
+
                         quantities: [
                           {
                             id:
@@ -578,6 +600,12 @@ const createUnitOfWork =
               async () =>
                 [],
           },
+
+          personAccess:
+            createTestPersonAccessRepository(),
+
+          foodPreparationConversions:
+            createTestFoodPreparationConversionRepository(),
 
           ...overrides,
         }),

@@ -6,3 +6,5 @@ export * from './nutrition-unit-of-work.port.js';
 export * from './plan-repository.port.js';
 export * from './plan-target-repository.port.js';
 export * from './meal-item-actual-repository.port.js';
+export * from './person-access-repository.port.js';
+export * from './food-preparation-conversion-repository.port.js';

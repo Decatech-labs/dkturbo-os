@@ -27,6 +27,10 @@ import {
   PostgresSessionStructureRepository,
 } from './postgres-session-structure.repository.js';
 
+import {
+  PostgresDailyCheckinRepository,
+} from './postgres-daily-checkin.repository.js';
+
 export class PostgresTrainingUnitOfWork
 implements TrainingUnitOfWork {
 
@@ -66,6 +70,11 @@ implements TrainingUnitOfWork {
 
             sessionStructure:
               new PostgresSessionStructureRepository(
+                transaction,
+              ),
+
+            dailyCheckins:
+              new PostgresDailyCheckinRepository(
                 transaction,
               ),
           }),

@@ -269,10 +269,16 @@ const createAthletes =
     findById:
       vi.fn(),
 
+    listAll:
+      vi.fn(),
+
     listForUser:
       vi.fn(),
 
     grantAccess:
+      vi.fn(),
+
+    revokeAccess:
       vi.fn(),
 
     findAccess:
@@ -369,6 +375,14 @@ const createStructure =
     reorderBlocks:
       vi.fn(),
 
+    updateSessionExercisePlanned:
+      vi.fn(),
+
+    deleteSessionExercise:
+      vi.fn(),
+
+    applySessionExerciseLayout:
+      vi.fn(),
   });
 
 const weeks =
@@ -387,6 +401,7 @@ const createUnitOfWork =
     sessionStructure:
       SessionStructureRepository,
 
+
   ): TrainingUnitOfWork => ({
 
     execute:
@@ -402,6 +417,9 @@ const createUnitOfWork =
           sessions,
 
           sessionStructure,
+
+          dailyCheckins:
+            {} as never,
 
         }),
 

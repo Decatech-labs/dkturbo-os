@@ -59,6 +59,7 @@ import type {
   NutritionMealItemDetailResponse,
   NutritionPersonResponse,
   NutritionMealItemActualResponse,
+  NutritionFoodPreparationConversionResponse,
 } from '../../../lib/nutrition-api';
 
 import {
@@ -114,6 +115,9 @@ interface NutritionDayMealsProps {
 
   userId:
     string;
+
+  readOnly:
+    boolean;
 }
 
 const unitLabel =
@@ -127,6 +131,34 @@ const unitLabel =
 
     switch (
       food.referenceUnit
+    ) {
+      case 'G':
+        return 'g';
+
+      case 'KG':
+        return 'kg';
+
+      case 'ML':
+        return 'ml';
+
+      case 'L':
+        return 'l';
+
+      case 'UNIT':
+        return 'ud';
+    }
+  };
+
+const preparationUnitLabel =
+  (
+    unit:
+      NutritionFoodPreparationConversionResponse[
+        'preparedUnit'
+      ],
+  ): string => {
+
+    switch (
+      unit
     ) {
       case 'G':
         return 'g';
@@ -201,11 +233,15 @@ interface SortableFoodRowProps {
 
   userId:
     string;
+
+  readOnly:
+    boolean;
 }
 
 function SortableFoodRow({
   detail,
   userId,
+  readOnly,
 }: SortableFoodRowProps) {
 
   const router =
@@ -222,6 +258,9 @@ function SortableFoodRow({
     useSortable({
       id:
         detail.item.id,
+
+      disabled:
+        readOnly,
 
       data: {
         type:
@@ -414,8 +453,16 @@ function SortableFoodRow({
     };
 
   const [
-    removing,
-    setRemoving,
+    removingPersonal,
+    setRemovingPersonal,
+  ] =
+    useState(
+      false,
+    );
+
+  const [
+    removingGlobal,
+    setRemovingGlobal,
   ] =
     useState(
       false,
@@ -432,6 +479,32 @@ function SortableFoodRow({
   const [
     replaceOpen,
     setReplaceOpen,
+  ] =
+    useState(
+      false,
+    );
+
+  const [
+    preparationConversions,
+    setPreparationConversions,
+  ] =
+    useState<
+      NutritionFoodPreparationConversionResponse[] | null
+    >(
+      null,
+    );
+
+  const [
+    preparationLoading,
+    setPreparationLoading,
+  ] =
+    useState(
+      false,
+    );
+
+  const [
+    preparationSaving,
+    setPreparationSaving,
   ] =
     useState(
       false,
@@ -493,6 +566,116 @@ function SortableFoodRow({
     },
     [
       detail.personalQuantity,
+    ],
+  );
+
+    useEffect(
+    () => {
+
+      if (
+        !menuOpen ||
+        readOnly ||
+        preparationConversions !==
+          null ||
+        preparationLoading
+      ) {
+        return;
+      }
+
+      let cancelled =
+        false;
+
+      const loadPreparationConversions =
+        async () => {
+
+          setPreparationLoading(
+            true,
+          );
+
+          try {
+
+            const response =
+              await fetch(
+                `/api/nutrition/foods/${encodeURIComponent(
+                  detail.food.id,
+                )}/preparation-conversions`,
+                {
+                  cache:
+                    'no-store',
+                },
+              );
+
+            if (
+              !response.ok
+            ) {
+
+              if (
+                !cancelled
+              ) {
+                setError(
+                  'No se han podido cargar las preparaciones.',
+                );
+
+                setPreparationConversions(
+                  [],
+                );
+              }
+
+              return;
+            }
+
+            const data =
+              await response.json() as
+                NutritionFoodPreparationConversionResponse[];
+
+            if (
+              !cancelled
+            ) {
+              setPreparationConversions(
+                data,
+              );
+            }
+
+          } catch {
+
+            if (
+              !cancelled
+            ) {
+              setError(
+                'No se han podido cargar las preparaciones.',
+              );
+
+              setPreparationConversions(
+                [],
+              );
+            }
+
+          } finally {
+
+            if (
+              !cancelled
+            ) {
+              setPreparationLoading(
+                false,
+              );
+            }
+          }
+        };
+
+      void loadPreparationConversions();
+
+      return () => {
+
+        cancelled =
+          true;
+      };
+    },
+    [
+      detail.food.id,
+      menuOpen,
+      preparationConversions,
+      preparationLoading,
+      readOnly,
     ],
   );
 
@@ -614,7 +797,7 @@ function SortableFoodRow({
             menuPopoverRef.current
               ?.getBoundingClientRect()
               .height ??
-            230;
+            260;
 
           const margin =
             10;
@@ -714,6 +897,91 @@ function SortableFoodRow({
       menuOpen,
     ],
   );
+
+  const savePreparation =
+    async (
+      preparationConversionId:
+        string | null,
+    ) => {
+
+      if (
+        preparationSaving
+      ) {
+        return;
+      }
+
+      if (
+        preparationConversionId ===
+          detail.item
+            .preparationConversionId
+      ) {
+        setMenuOpen(
+          false,
+        );
+
+        return;
+      }
+
+      setPreparationSaving(
+        true,
+      );
+
+      setError(
+        null,
+      );
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/nutrition/meal-items/${encodeURIComponent(
+              detail.item.id,
+            )}`,
+            {
+              method:
+                'PATCH',
+
+              headers: {
+                'content-type':
+                  'application/json',
+              },
+
+              body:
+                JSON.stringify({
+                  preparationConversionId,
+                }),
+            },
+          );
+
+        if (
+          !response.ok
+        ) {
+          setError(
+            'No se ha podido cambiar la preparación.',
+          );
+
+          return;
+        }
+
+        setMenuOpen(
+          false,
+        );
+
+        router.refresh();
+
+      } catch {
+
+        setError(
+          'No se ha podido conectar.',
+        );
+
+      } finally {
+
+        setPreparationSaving(
+          false,
+        );
+      }
+    };
 
   const saveQuantity =
     async () => {
@@ -853,7 +1121,7 @@ function SortableFoodRow({
       }
     };
 
-  const remove =
+  const removePersonalQuantity =
     async () => {
 
       setMenuOpen(
@@ -862,14 +1130,79 @@ function SortableFoodRow({
 
       const confirmed =
         window.confirm(
-          `¿Quitar “${detail.food.name}” de esta comida?`,
+          `¿Quitar “${detail.food.name}” solo de tu planificación?`,
         );
 
       if (!confirmed) {
         return;
       }
 
-      setRemoving(
+      setRemovingPersonal(
+        true,
+      );
+
+      setError(
+        null,
+      );
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/nutrition/meal-items/${encodeURIComponent(
+              detail.item.id,
+            )}/quantities/${encodeURIComponent(
+              userId,
+            )}`,
+            {
+              method:
+                'DELETE',
+            },
+          );
+
+        if (
+          !response.ok
+        ) {
+          setError(
+            'No se ha podido quitar el alimento de tu planificación.',
+          );
+
+          return;
+        }
+
+        router.refresh();
+
+      } catch {
+
+        setError(
+          'No se ha podido conectar.',
+        );
+
+      } finally {
+
+        setRemovingPersonal(
+          false,
+        );
+      }
+    };
+
+  const removeFromPlan =
+    async () => {
+
+      setMenuOpen(
+        false,
+      );
+
+      const confirmed =
+        window.confirm(
+          `¿Eliminar “${detail.food.name}” del plan para todas las personas?`,
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      setRemovingGlobal(
         true,
       );
 
@@ -893,16 +1226,24 @@ function SortableFoodRow({
         if (
           !response.ok
         ) {
+
+          if (
+            response.status ===
+            403
+          ) {
+            setError(
+              'No tienes permiso para eliminar este alimento del plan de todas las personas.',
+            );
+
+            return;
+          }
+
           setError(
-            'No se ha podido quitar el alimento.',
+            'No se ha podido eliminar el alimento del plan.',
           );
 
           return;
         }
-
-        setMenuOpen(
-          false,
-        );
 
         router.refresh();
 
@@ -914,7 +1255,7 @@ function SortableFoodRow({
 
       } finally {
 
-        setRemoving(
+        setRemovingGlobal(
           false,
         );
       }
@@ -923,6 +1264,51 @@ function SortableFoodRow({
   const visualProfile =
     getFoodVisualProfile(
       detail.food,
+    );
+
+  const preparationConversion =
+    detail.preparation
+      ?.conversion ??
+    null;
+
+  const preparedQuantity =
+    preparationConversion
+      ? (
+          detail.personalQuantity *
+          preparationConversion
+            .preparedAmount
+        ) /
+        preparationConversion
+          .rawAmount
+      : null;
+
+  const preparedQuantityLabel =
+    preparationConversion &&
+    preparedQuantity !==
+      null
+      ? `≈ ${formatNumber(
+          preparedQuantity,
+        )} ${preparationUnitLabel(
+          preparationConversion
+            .preparedUnit,
+        )} ${preparationConversion.name.toLocaleLowerCase(
+          'es-ES',
+        )}`
+      : null;
+
+  const defaultPreparation =
+    preparationConversions
+      ?.find(
+        conversion =>
+          conversion.isDefault,
+      ) ??
+    (
+      detail.preparation
+        ?.source ===
+        'DEFAULT'
+        ? detail.preparation
+            .conversion
+        : null
     );
 
   const actualStatus =
@@ -998,17 +1384,19 @@ function SortableFoodRow({
         transition,
       }}
     >
-      <button
-        type="button"
-        className={
-          styles.dragHandle
-        }
-        aria-label={`Mover ${detail.food.name}`}
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical />
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          className={
+            styles.dragHandle
+          }
+          aria-label={`Mover ${detail.food.name}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical />
+        </button>
+      )}
 
       <div
         className={
@@ -1062,6 +1450,18 @@ function SortableFoodRow({
             }
           </span>
 
+          {preparedQuantityLabel && (
+            <span
+              className={
+                styles.preparedQuantity
+              }
+            >
+              {
+                preparedQuantityLabel
+              }
+            </span>
+          )}
+
           {replacementLabel && (
             <span
               className={
@@ -1089,64 +1489,115 @@ function SortableFoodRow({
           styles.rowControls
         }
       >
-                {actualStatus ===
-        'PENDING' ? (
-          <button
-            type="button"
-            className={
-              styles.quickEatenButton
-            }
-            onClick={
-              () =>
-                void setActual({
-                  status:
-                    'EATEN',
-                })
-            }
-            disabled={
-              actualSaving
-            }
-            title="Marcar como comido"
-            aria-label={`Marcar ${detail.food.name} como comido`}
-          >
-            <Check />
-          </button>
-        ) : (
-          <span
-            className={[
-              styles.statusBadge,
+      {readOnly ? (
+        <span
+          className={[
+            styles.statusBadge,
 
-              styles[
-                `statusBadge_${actualStatus}`
-              ],
-            ].join(
-              ' ',
-            )}
-            title={
-              actualStatusLabel
-            }
-          >
+            styles[
+              `statusBadge_${actualStatus}`
+            ],
+          ].join(
+            ' ',
+          )}
+          title={
+            actualStatusLabel
+          }
+        >
           {actualStatus ===
-              'EATEN' && (
-                <Check />
-              )}
+            'EATEN' && (
+            <Check />
+          )}
 
-            {actualStatus ===
-              'SKIPPED' && (
-                <Ban />
-              )}
+          {actualStatus ===
+            'SKIPPED' && (
+            <Ban />
+          )}
 
-            {actualStatus ===
-              'REPLACED' && (
-                <ArrowRightLeft />
-              )}
+          {actualStatus ===
+            'REPLACED' && (
+            <ArrowRightLeft />
+          )}
 
-            <span>
-              {actualStatusLabel}
-            </span>
+          <span>
+            {actualStatusLabel}
           </span>
-        )}
-        {editingQuantity ? (
+        </span>
+      ) : actualStatus ===
+        'PENDING' ? (
+        <button
+          type="button"
+          className={
+            styles.quickEatenButton
+          }
+          onClick={
+            () =>
+              void setActual({
+                status:
+                  'EATEN',
+              })
+          }
+          disabled={
+            actualSaving
+          }
+          title="Marcar como comido"
+          aria-label={`Marcar ${detail.food.name} como comido`}
+        >
+          <Check />
+        </button>
+      ) : (
+        <span
+          className={[
+            styles.statusBadge,
+
+            styles[
+              `statusBadge_${actualStatus}`
+            ],
+          ].join(
+            ' ',
+          )}
+          title={
+            actualStatusLabel
+          }
+        >
+          {actualStatus ===
+            'EATEN' && (
+            <Check />
+          )}
+
+          {actualStatus ===
+            'SKIPPED' && (
+            <Ban />
+          )}
+
+          {actualStatus ===
+            'REPLACED' && (
+            <ArrowRightLeft />
+          )}
+
+          <span>
+            {actualStatusLabel}
+          </span>
+        </span>
+      )}
+
+        {readOnly ? (
+          <span
+            className={
+              styles.quantityButton
+            }
+          >
+            {formatNumber(
+              detail.personalQuantity,
+            )}{' '}
+            {unitLabel(
+              detail.food,
+            )}
+            {detail.preparation
+              ? ' crudo'
+              : ''}
+          </span>
+        ) : editingQuantity ? (
           <div
             className={
               styles.quantityEditor
@@ -1207,6 +1658,9 @@ function SortableFoodRow({
               {unitLabel(
                 detail.food,
               )}
+              {detail.preparation
+                ? ' crudo'
+                : ''}
             </span>
           </div>
         ) : (
@@ -1235,184 +1689,375 @@ function SortableFoodRow({
             {unitLabel(
               detail.food,
             )}
+            {detail.preparation
+              ? ' crudo'
+              : ''}
           </button>
         )}
 
-        <div
-          ref={
-            menuRef
-          }
-          className={
-            styles.menu
-          }
-        >
-          <button
+        {!readOnly && (
+          <div
             ref={
-              menuButtonRef
+              menuRef
             }
-            type="button"
             className={
-              styles.menuButton
-            }
-            onClick={
-              () =>
-                setMenuOpen(
-                  current =>
-                    !current,
-                )
-            }
-            aria-label={`Opciones de ${detail.food.name}`}
-            aria-expanded={
-              menuOpen
+              styles.menu
             }
           >
-            <MoreHorizontal />
-          </button>
+            <button
+              ref={
+                menuButtonRef
+              }
+              type="button"
+              className={
+                styles.menuButton
+              }
+              onClick={
+                () =>
+                  setMenuOpen(
+                    current =>
+                      !current,
+                  )
+              }
+              aria-label={`Opciones de ${detail.food.name}`}
+              aria-expanded={
+                menuOpen
+              }
+            >
+              <MoreHorizontal />
+            </button>
 
-                    {menuOpen &&
-            menuPosition &&
-            createPortal(
-              <div
-                ref={
-                  menuPopoverRef
-                }
-                className={
-                  styles.menuPopover
-                }
-                style={{
-                  top:
-                    menuPosition.top,
-
-                  left:
-                    menuPosition.left,
-                }}
-              >
-                {actualStatus !==
-                  'EATEN' && (
-                  <button
-                    type="button"
-                    className={
-                      styles.actionButton
-                    }
-                    onClick={
-                      () =>
-                        void setActual({
-                          status:
-                            'EATEN',
-                        })
-                    }
-                    disabled={
-                      actualSaving
-                    }
-                  >
-                    <Check />
-
-                    Marcar como comido
-                  </button>
-                )}
-
-                {actualStatus !==
-                  'SKIPPED' && (
-                  <button
-                    type="button"
-                    className={
-                      styles.actionButton
-                    }
-                    onClick={
-                      () =>
-                        void setActual({
-                          status:
-                            'SKIPPED',
-
-                          notes:
-                            null,
-                        })
-                    }
-                    disabled={
-                      actualSaving
-                    }
-                  >
-                    <Ban />
-
-                    Marcar como no comido
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  className={
-                    styles.actionButton
-                  }
-                  onClick={
-                    () => {
-
-                      setMenuOpen(
-                        false,
-                      );
-
-                      setReplaceOpen(
-                        true,
-                      );
-                    }
-                  }
-                  disabled={
-                    actualSaving
-                  }
-                >
-                  <ArrowRightLeft />
-
-                  Sustituir alimento
-                </button>
-
-                {detail.actual && (
-                  <button
-                    type="button"
-                    className={
-                      styles.actionButton
-                    }
-                    onClick={
-                      () =>
-                        void resetActual()
-                    }
-                    disabled={
-                      actualSaving
-                    }
-                  >
-                    <RotateCcw />
-
-                    Restablecer
-                  </button>
-                )}
-
+                      {menuOpen &&
+              menuPosition &&
+              createPortal(
                 <div
-                  className={
-                    styles.menuSeparator
+                  ref={
+                    menuPopoverRef
                   }
-                />
+                  className={
+                    styles.menuPopover
+                  }
+                  style={{
+                    top:
+                      menuPosition.top,
 
-                <button
-                  type="button"
-                  className={
-                    styles.deleteButton
-                  }
-                  onClick={
-                    () =>
-                      void remove()
-                  }
-                  disabled={
-                    removing
-                  }
+                    left:
+                      menuPosition.left,
+                  }}
                 >
-                  <Trash2 />
+                  {actualStatus !==
+                    'EATEN' && (
+                    <button
+                      type="button"
+                      className={
+                        styles.actionButton
+                      }
+                      onClick={
+                        () =>
+                          void setActual({
+                            status:
+                              'EATEN',
+                          })
+                      }
+                      disabled={
+                        actualSaving
+                      }
+                    >
+                      <Check />
 
-                  {removing
-                    ? 'Quitando…'
-                    : 'Quitar de esta comida'}
-                </button>
-              </div>,
-              document.body,
-            )}
-        </div>
+                      Marcar como comido
+                    </button>
+                  )}
+
+                  {actualStatus !==
+                    'SKIPPED' && (
+                    <button
+                      type="button"
+                      className={
+                        styles.actionButton
+                      }
+                      onClick={
+                        () =>
+                          void setActual({
+                            status:
+                              'SKIPPED',
+
+                            notes:
+                              null,
+                          })
+                      }
+                      disabled={
+                        actualSaving
+                      }
+                    >
+                      <Ban />
+
+                      Marcar como no comido
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    className={
+                      styles.actionButton
+                    }
+                    onClick={
+                      () => {
+
+                        setMenuOpen(
+                          false,
+                        );
+
+                        setReplaceOpen(
+                          true,
+                        );
+                      }
+                    }
+                    disabled={
+                      actualSaving
+                    }
+                  >
+                    <ArrowRightLeft />
+
+                    Sustituir alimento
+                  </button>
+
+                  {detail.actual && (
+                    <button
+                      type="button"
+                      className={
+                        styles.actionButton
+                      }
+                      onClick={
+                        () =>
+                          void resetActual()
+                      }
+                      disabled={
+                        actualSaving
+                      }
+                    >
+                      <RotateCcw />
+
+                      Restablecer
+                    </button>
+                  )}
+
+                  <div
+                    className={
+                      styles.menuSeparator
+                    }
+                  />
+
+                  <div
+                    className={
+                      styles.preparationSection
+                    }
+                  >
+                    <div
+                      className={
+                        styles.menuSectionLabel
+                      }
+                    >
+                      Preparación
+                    </div>
+
+                    <button
+                      type="button"
+                      className={[
+                        styles.actionButton,
+                        styles.preparationOption,
+
+                        detail.item
+                          .preparationConversionId ===
+                          null
+                          ? styles.preparationOptionActive
+                          : '',
+                      ]
+                        .filter(
+                          Boolean,
+                        )
+                        .join(
+                          ' ',
+                        )}
+                      onClick={
+                        () =>
+                          void savePreparation(
+                            null,
+                          )
+                      }
+                      disabled={
+                        preparationSaving
+                      }
+                    >
+                      <span
+                        className={
+                          styles.preparationCheck
+                        }
+                        aria-hidden="true"
+                      >
+                        {detail.item
+                          .preparationConversionId ===
+                          null
+                          ? (
+                              <Check />
+                            )
+                          : null}
+                      </span>
+
+                      <span>
+                        Automática
+                        {defaultPreparation
+                          ? ` · ${defaultPreparation.name}`
+                          : ''}
+                      </span>
+                    </button>
+
+                    {preparationLoading && (
+                      <div
+                        className={
+                          styles.preparationMessage
+                        }
+                      >
+                        Cargando…
+                      </div>
+                    )}
+
+                    {!preparationLoading &&
+                      preparationConversions !==
+                        null &&
+                      preparationConversions.length ===
+                        0 && (
+                        <div
+                          className={
+                            styles.preparationMessage
+                          }
+                        >
+                          Sin preparaciones registradas
+                        </div>
+                      )}
+
+                    {!preparationLoading &&
+                      preparationConversions
+                        ?.map(
+                          conversion => {
+
+                            const active =
+                              detail.item
+                                .preparationConversionId ===
+                              conversion.id;
+
+                            return (
+                              <button
+                                key={
+                                  conversion.id
+                                }
+                                type="button"
+                                className={[
+                                  styles.actionButton,
+                                  styles.preparationOption,
+
+                                  active
+                                    ? styles.preparationOptionActive
+                                    : '',
+                                ]
+                                  .filter(
+                                    Boolean,
+                                  )
+                                  .join(
+                                    ' ',
+                                  )}
+                                onClick={
+                                  () =>
+                                    void savePreparation(
+                                      conversion.id,
+                                    )
+                                }
+                                disabled={
+                                  preparationSaving
+                                }
+                              >
+                                <span
+                                  className={
+                                    styles.preparationCheck
+                                  }
+                                  aria-hidden="true"
+                                >
+                                  {active
+                                    ? (
+                                        <Check />
+                                      )
+                                    : null}
+                                </span>
+
+                                <span>
+                                  {
+                                    conversion.name
+                                  }
+
+                                  {conversion.isDefault
+                                    ? ' · Predeterminada'
+                                    : ''}
+                                </span>
+                              </button>
+                            );
+                          },
+                        )}
+                  </div>
+
+                  <div
+                    className={
+                      styles.menuSeparator
+                    }
+                  />
+
+                  <button
+                    type="button"
+                    className={
+                      styles.actionButton
+                    }
+                    onClick={
+                      () =>
+                        void removePersonalQuantity()
+                    }
+                    disabled={
+                      removingPersonal ||
+                      removingGlobal ||
+                      preparationSaving
+                    }
+                  >
+                    <Trash2 />
+
+                    {removingPersonal
+                      ? 'Quitando…'
+                      : 'Quitar para mí'}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      styles.deleteButton
+                    }
+                    onClick={
+                      () =>
+                        void removeFromPlan()
+                    }
+                    disabled={
+                      removingPersonal ||
+                      removingGlobal ||
+                      preparationSaving
+                    }
+                  >
+                    <Trash2 />
+
+                    {removingGlobal
+                      ? 'Eliminando…'
+                      : 'Eliminar del plan'}
+                  </button>
+                </div>,
+                document.body,
+              )}
+          </div>
+        )}
       </div>
 
       {error && (
@@ -1427,30 +2072,32 @@ function SortableFoodRow({
       )}
     </div>
 
-      <ReplaceFoodModal
-        mealItemId={
-          detail.item.id
-        }
-        userId={
-          userId
-        }
-        plannedFoodName={
-          detail.food.name
-        }
-        open={
-          replaceOpen
-        }
-        onClose={
-          () =>
-            setReplaceOpen(
-              false,
-            )
-        }
-        onSaved={
-          () =>
-            router.refresh()
-        }
-      />
+      {!readOnly && (
+        <ReplaceFoodModal
+          mealItemId={
+            detail.item.id
+          }
+          userId={
+            userId
+          }
+          plannedFoodName={
+            detail.food.name
+          }
+          open={
+            replaceOpen
+          }
+          onClose={
+            () =>
+              setReplaceOpen(
+                false,
+              )
+          }
+          onSaved={
+            () =>
+              router.refresh()
+          }
+        />
+      )}
     </>
   );
 }
@@ -1461,11 +2108,15 @@ interface MealDropZoneProps {
 
   userId:
     string;
+
+  readOnly:
+    boolean;
 }
 
 function MealDropZone({
   meal,
   userId,
+  readOnly,
 }: MealDropZoneProps) {
 
   const {
@@ -1475,6 +2126,9 @@ function MealDropZone({
     useDroppable({
       id:
         `meal:${meal.meal.id}`,
+
+      disabled:
+        readOnly,
 
       data: {
         type:
@@ -1529,13 +2183,18 @@ function MealDropZone({
                 userId={
                   userId
                 }
+                readOnly={
+                  readOnly
+                }
               />
             ),
           )
         ) : (
           <div className="nutrition-day-meal-empty">
             <span>
-              Arrastra aquí un alimento o añade uno.
+              {readOnly
+                ? 'No hay alimentos planificados.'
+                : 'Arrastra aquí un alimento o añade uno.'}
             </span>
           </div>
         )}
@@ -1548,6 +2207,7 @@ export function NutritionDayMeals({
   meals,
   people,
   userId,
+  readOnly,
 }: NutritionDayMealsProps) {
 
   const router =
@@ -1626,6 +2286,7 @@ export function NutritionDayMeals({
         event;
 
       if (
+        readOnly ||
         !over ||
         moving
       ) {
@@ -2030,12 +2691,36 @@ export function NutritionDayMeals({
                 className="nutrition-day-meal-card"
               >
                 <header>
-                  <MealHeadingEditor
-                    meal={
-                      mealDetail
+                  {readOnly ? (
+                    <div>
+                      <strong>
+                        {
+                          mealDetail
+                            .meal
+                            .name
+                        }
+                      </strong>
+
+                      {mealDetail
                         .meal
-                    }
-                  />
+                        .plannedTime && (
+                        <span>
+                          {
+                            mealDetail
+                              .meal
+                              .plannedTime
+                          }
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <MealHeadingEditor
+                      meal={
+                        mealDetail
+                          .meal
+                      }
+                    />
+                  )}
                 </header>
 
                 <MealDropZone
@@ -2045,24 +2730,29 @@ export function NutritionDayMeals({
                   userId={
                     userId
                   }
+                  readOnly={
+                    readOnly
+                  }
                 />
 
-                <div className="nutrition-day-meal-actions">
-                  <AddFoodForm
-                    mealId={
-                      mealDetail
-                        .meal
-                        .id
-                    }
-                    position={
-                      mealDetail
-                        .totalItemCount
-                    }
-                    people={
-                      people
-                    }
-                  />
-                </div>
+                {!readOnly && (
+                  <div className="nutrition-day-meal-actions">
+                    <AddFoodForm
+                      mealId={
+                        mealDetail
+                          .meal
+                          .id
+                      }
+                      position={
+                        mealDetail
+                          .totalItemCount
+                      }
+                      people={
+                        people
+                      }
+                    />
+                  </div>
+                )}
               </article>
             ),
           )}

@@ -23,6 +23,14 @@ import {
   NutritionMealItemNotFoundError,
 } from './move-meal-item.js';
 
+import {
+  createTestPersonAccessRepository,
+} from './test-person-access-repository.js';
+
+import {
+  createTestFoodPreparationConversionRepository,
+} from './test-food-preparation-conversion-repository.js';
+
 const dayId =
   '11111111-1111-4111-8111-111111111111' as
     NutritionDayId;
@@ -198,6 +206,9 @@ const createDetail =
             null,
         },
 
+        preparationConversionId:
+          null,
+
         position,
 
         notes:
@@ -265,6 +276,9 @@ const createDetail =
         updatedAt:
           now,
       },
+
+      preparation:
+        null,
 
       quantities:
         [],
@@ -417,8 +431,16 @@ const createRepositories =
       saveQuantities:
         async () => {},
 
+      deleteQuantity:
+        async () =>
+          false,
+
       setLocations:
         async () => {},
+
+      setPreparationConversion:
+        async () =>
+          false,
 
       delete:
         async () =>
@@ -474,6 +496,12 @@ const createRepositories =
         async () =>
           [],
     },
+
+    personAccess:
+      createTestPersonAccessRepository(),
+
+    foodPreparationConversions:
+      createTestFoodPreparationConversionRepository(),
 
     plans: {
       create:

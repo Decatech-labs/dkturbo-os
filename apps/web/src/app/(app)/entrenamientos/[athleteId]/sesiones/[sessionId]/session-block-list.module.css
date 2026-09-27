@@ -317,3 +317,153 @@
   }
 
 }
+
+.exercise {
+  position: relative;
+}
+
+.exerciseHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exerciseHeading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.exerciseDragHandle {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 26px;
+  margin-left: -6px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(47, 41, 34, 0.22);
+  cursor: grab;
+  touch-action: none;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.exerciseDragHandle:hover {
+  background: rgba(76, 65, 51, 0.05);
+  color: rgba(47, 41, 34, 0.55);
+}
+
+.exerciseDragHandle:active {
+  cursor: grabbing;
+}
+
+.exerciseDragHandle svg {
+  width: 14px;
+  height: 14px;
+}
+
+.exerciseMenuRoot {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.exerciseMenuButton {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(47, 41, 34, 0.35);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.exercise:hover .exerciseMenuButton,
+.exerciseMenuButton:focus-visible,
+.exerciseMenuButton[aria-expanded='true'] {
+  opacity: 1;
+}
+
+.exerciseMenuButton:hover {
+  background: rgba(76, 65, 51, 0.05);
+  color: rgba(47, 41, 34, 0.72);
+}
+
+.exerciseMenuButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.exerciseMenu {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  z-index: 40;
+  min-width: 178px;
+  padding: 5px;
+  border: 1px solid rgba(62, 53, 43, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow:
+    0 12px 32px rgba(44, 37, 29, 0.11);
+}
+
+.exerciseNotesInput {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 30px;
+  margin: 2px 0 0;
+  padding: 5px 7px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.exerciseNotesInput:hover {
+  background: rgba(76, 65, 51, 0.025);
+}
+
+.exerciseNotesInput:focus {
+  border-color: rgba(76, 65, 51, 0.09);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.exerciseNotesInput::placeholder {
+  color: rgba(47, 41, 34, 0.3);
+}
+
+.exerciseDragging {
+  z-index: 25;
+  opacity: 0.88;
+  box-shadow:
+    0 14px 34px rgba(44, 37, 29, 0.11);
+}
+
+@media (max-width: 760px) {
+  .exerciseMenuButton {
+    opacity: 1;
+  }
+}

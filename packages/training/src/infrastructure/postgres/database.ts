@@ -429,6 +429,59 @@ export interface TrainingPerformanceEntryTable {
     >;
 }
 
+export interface TrainingDailyCheckinTable {
+  id:
+    Generated<string>;
+
+  athlete_id:
+    string;
+
+  date:
+    ColumnType<
+      string | Date,
+      string,
+      string
+    >;
+
+  weight_kg:
+    string | null;
+
+  sleep_quality:
+    number | null;
+
+  fatigue:
+    number | null;
+
+  soreness:
+    number | null;
+
+  stress:
+    number | null;
+
+  motivation:
+    number | null;
+
+  notes:
+    string | null;
+
+  recorded_by_user_id:
+    string;
+
+  created_at:
+    ColumnType<
+      Date,
+      Date | undefined,
+      never
+    >;
+
+  updated_at:
+    ColumnType<
+      Date,
+      Date | undefined,
+      Date
+    >;
+}
+
 export interface TrainingDatabase {
   'training.athletes':
     TrainingAthleteTable;
@@ -456,4 +509,7 @@ export interface TrainingDatabase {
 
   'training.performance_entries':
     TrainingPerformanceEntryTable;
+
+  'training.daily_checkins':
+    TrainingDailyCheckinTable;
 }

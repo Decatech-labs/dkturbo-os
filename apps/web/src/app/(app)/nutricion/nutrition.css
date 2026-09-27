@@ -132,6 +132,44 @@
   font-size: 0.78rem;
 }
 
+.nutrition-week-header-main {
+  min-width: 0;
+  width: 100%;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nutrition-week-header-main
+  > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.nutrition-week-header-main h1 {
+  margin: 0;
+}
+
+.nutrition-week-header-main p {
+  margin:
+    4px
+    0
+    0;
+}
+
+@media (
+  max-width: 700px
+) {
+
+  .nutrition-week-header-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+}
+
 .nutrition-week-nav-button {
   width: 42px;
   height: 42px;
@@ -3306,4 +3344,1609 @@ header strong {
       left;
   }
 
+}
+
+.nutrition-person-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin:
+    0
+    0
+    16px;
+
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nutrition-person-switcher::-webkit-scrollbar {
+  display: none;
+}
+
+.nutrition-person-option {
+  min-height: 34px;
+
+  padding:
+    0
+    12px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;
+
+  border:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.09
+    );
+
+  border-radius: 10px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.56
+    );
+
+  color: inherit;
+
+  font-size: 0.78rem;
+  font-weight: 650;
+
+  text-decoration: none;
+
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.nutrition-person-option:hover {
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.06
+    );
+}
+
+.nutrition-person-option-active {
+  border-color:
+    rgba(
+      94,
+      132,
+      85,
+      0.22
+    );
+
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.1
+    );
+}
+
+@media (
+  max-width: 700px
+) {
+  .nutrition-person-option {
+    min-height: 40px;
+
+    padding:
+      0
+      14px;
+  }
+}
+
+.nutrition-read-only-notice {
+  margin:
+    -4px
+    0
+    16px;
+
+  padding:
+    10px
+    12px;
+
+  border:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.08
+    );
+
+  border-radius: 10px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.52
+    );
+
+  color:
+    rgba(
+      47,
+      41,
+      34,
+      0.68
+    );
+
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   NUTRITION — WEEK PERSONAL V2
+   ========================================================================== */
+
+.nutrition-week-day-summary {
+  gap: 18px;
+}
+
+.nutrition-week-day-summary
+  > .nutrition-week-macros {
+  margin-left: auto;
+
+  justify-content: flex-end;
+}
+
+.nutrition-week-meal {
+  border-radius: 16px;
+}
+
+.nutrition-week-meal-header {
+  padding:
+    12px
+    14px;
+
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.04
+    );
+}
+
+.nutrition-week-meal-header
+  > div:first-child
+  > strong {
+  font-size: 0.88rem;
+  font-weight: 720;
+}
+
+.nutrition-week-food-personal {
+  min-height: 52px;
+
+  padding:
+    9px
+    14px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(
+      0,
+      1fr
+    )
+    auto;
+
+  align-items: center;
+  gap: 20px;
+}
+
+.nutrition-week-food-personal
+  + .nutrition-week-food-personal {
+  border-top:
+    1px solid
+    rgba(
+      127,
+      127,
+      127,
+      0.08
+    );
+}
+
+.nutrition-week-food-copy {
+  min-width: 0;
+
+  display: grid;
+  gap: 2px;
+}
+
+.nutrition-week-food-name {
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.nutrition-week-food-brand {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.68rem;
+  opacity: 0.48;
+}
+
+.nutrition-week-food-amounts {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+
+  white-space: nowrap;
+}
+
+.nutrition-week-food-amounts
+  > strong {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.nutrition-week-food-prepared {
+  color:
+    rgba(
+      69,
+      102,
+      60,
+      0.88
+    );
+
+  font-size: 0.69rem;
+  font-weight: 650;
+}
+
+.nutrition-day-summary {
+  gap: 9px;
+}
+
+.nutrition-week-day-total-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nutrition-week-day-total-heading
+  > span {
+  font-size: 0.72rem;
+  font-weight: 720;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+  opacity: 0.56;
+}
+
+.nutrition-week-day-total-heading
+  > small {
+  font-size: 0.67rem;
+  opacity: 0.38;
+}
+
+.nutrition-week-day-targets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap:
+    6px
+    14px;
+}
+
+.nutrition-week-day-targets
+  > span {
+  font-size: 0.77rem;
+  opacity: 0.64;
+}
+
+.nutrition-week-day-targets
+  strong {
+  color: inherit;
+  font-size: 0.84rem;
+  opacity: 1;
+}
+
+.nutrition-week-day-targets
+  small {
+  font-size: inherit;
+  opacity: 0.62;
+}
+
+@media (
+  max-width: 760px
+) {
+
+  /*
+   * The previous Week CSS hides the day macros on mobile.
+   * Week V2 keeps the daily overview visible.
+   */
+  .nutrition-week-day-summary
+    > .nutrition-week-macros {
+    display: flex;
+
+    margin-left: 0;
+    margin-top: 7px;
+
+    justify-content: flex-start;
+  }
+
+  .nutrition-week-day-summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .nutrition-week-food-personal {
+    min-height: 50px;
+
+    padding:
+      9px
+      11px;
+
+    gap: 12px;
+  }
+
+  .nutrition-week-food-name {
+    font-size: 0.83rem;
+  }
+
+  .nutrition-week-food-amounts
+    > strong {
+    font-size: 0.79rem;
+  }
+
+  .nutrition-week-food-prepared {
+    font-size: 0.65rem;
+  }
+
+  .nutrition-week-day-total-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nutrition-week-day-targets {
+    gap:
+      5px
+      11px;
+  }
+}
+
+@media (
+  max-width: 430px
+) {
+
+  .nutrition-week-food-personal {
+    grid-template-columns:
+      minmax(
+        0,
+        1fr
+      )
+      auto;
+  }
+
+  .nutrition-week-food-brand {
+    font-size: 0.64rem;
+  }
+
+  .nutrition-week-food-amounts {
+    max-width: 132px;
+  }
+}
+
+/* ==========================================================================
+   NUTRITION — WEEK PERSONAL V2 COLOR POLISH
+   ========================================================================== */
+
+.nutrition-week-day {
+  border:
+    1px solid
+    rgba(
+      212,
+      176,
+      86,
+      0.18
+    );
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(
+        255,
+        248,
+        226,
+        0.82
+      )
+      0%,
+      rgba(
+        255,
+        253,
+        246,
+        0.96
+      )
+      100%
+    );
+
+  box-shadow:
+    0 14px 30px
+    rgba(
+      96,
+      78,
+      28,
+      0.05
+    );
+}
+
+.nutrition-week-day-summary {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(
+        255,
+        243,
+        204,
+        0.62
+      )
+      0%,
+      rgba(
+        255,
+        248,
+        228,
+        0.82
+      )
+      100%
+    );
+
+  border-bottom:
+    1px solid
+    rgba(
+      212,
+      176,
+      86,
+      0.16
+    );
+}
+
+.nutrition-week-day-summary
+  > div:first-child
+  strong {
+  color:
+    rgba(
+      88,
+      66,
+      19,
+      0.96
+    );
+}
+
+.nutrition-week-day-summary
+  > div:first-child
+  span {
+  color:
+    rgba(
+      128,
+      96,
+      27,
+      0.72
+    );
+}
+
+.nutrition-week-meal {
+  border:
+    1px solid
+    rgba(
+      195,
+      202,
+      213,
+      0.42
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.88
+    );
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(
+      255,
+      255,
+      255,
+      0.6
+    );
+}
+
+.nutrition-week-meal-header {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(
+        248,
+        250,
+        255,
+        0.95
+      )
+      0%,
+      rgba(
+        239,
+        244,
+        252,
+        0.88
+      )
+      100%
+    );
+
+  border-bottom:
+    1px solid
+    rgba(
+      165,
+      183,
+      214,
+      0.24
+    );
+}
+
+.nutrition-week-meal-header
+  > div:first-child
+  strong {
+  color:
+    rgba(
+      49,
+      69,
+      103,
+      0.96
+    );
+}
+
+.nutrition-week-meal-header span {
+  color:
+    rgba(
+      78,
+      95,
+      126,
+      0.72
+    );
+}
+
+.nutrition-week-macros {
+  gap: 8px;
+}
+
+.nutrition-week-macros span {
+  padding:
+    4px 8px;
+
+  border-radius: 999px;
+
+  border:
+    1px solid
+    transparent;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.64
+    );
+}
+
+.nutrition-week-macros span:nth-child(1) {
+  color:
+    rgba(
+      126,
+      79,
+      8,
+      0.92
+    );
+
+  background:
+    rgba(
+      255,
+      214,
+      132,
+      0.22
+    );
+
+  border-color:
+    rgba(
+      224,
+      170,
+      68,
+      0.24
+    );
+}
+
+.nutrition-week-macros span:nth-child(2) {
+  color:
+    rgba(
+      40,
+      99,
+      65,
+      0.94
+    );
+
+  background:
+    rgba(
+      169,
+      226,
+      191,
+      0.22
+    );
+
+  border-color:
+    rgba(
+      99,
+      177,
+      127,
+      0.26
+    );
+}
+
+.nutrition-week-macros span:nth-child(3) {
+  color:
+    rgba(
+      39,
+      82,
+      154,
+      0.94
+    );
+
+  background:
+    rgba(
+      171,
+      203,
+      255,
+      0.22
+    );
+
+  border-color:
+    rgba(
+      103,
+      148,
+      227,
+      0.26
+    );
+}
+
+.nutrition-week-macros span:nth-child(4) {
+  color:
+    rgba(
+      117,
+      60,
+      128,
+      0.94
+    );
+
+  background:
+    rgba(
+      222,
+      186,
+      245,
+      0.2
+    );
+
+  border-color:
+    rgba(
+      170,
+      110,
+      209,
+      0.24
+    );
+}
+
+.nutrition-week-food-personal {
+  transition:
+    background-color
+      160ms ease,
+    transform
+      160ms ease;
+}
+
+.nutrition-week-food-personal:hover {
+  background:
+    rgba(
+      248,
+      250,
+      253,
+      0.82
+    );
+}
+
+.nutrition-week-food-name {
+  color:
+    rgba(
+      35,
+      42,
+      53,
+      0.96
+    );
+}
+
+.nutrition-week-food-brand {
+  color:
+    rgba(
+      99,
+      109,
+      123,
+      0.78
+    );
+  opacity: 1;
+}
+
+.nutrition-week-food-amounts
+  > strong {
+  color:
+    rgba(
+      45,
+      56,
+      74,
+      0.96
+    );
+}
+
+.nutrition-week-food-prepared {
+  color:
+    rgba(
+      46,
+      116,
+      73,
+      0.96
+    );
+
+  background:
+    rgba(
+      170,
+      226,
+      188,
+      0.18
+    );
+
+  border-radius: 999px;
+
+  padding:
+    2px 8px;
+}
+
+.nutrition-day-summary {
+  border:
+    1px solid
+    rgba(
+      143,
+      179,
+      120,
+      0.22
+    );
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(
+        242,
+        250,
+        238,
+        0.96
+      )
+      0%,
+      rgba(
+        233,
+        246,
+        227,
+        0.94
+      )
+      100%
+    );
+
+  box-shadow:
+    0 12px 26px
+    rgba(
+      67,
+      112,
+      73,
+      0.06
+    );
+}
+
+.nutrition-week-day-total-heading
+  > span {
+  color:
+    rgba(
+      57,
+      92,
+      48,
+      0.74
+    );
+
+  opacity: 1;
+}
+
+.nutrition-week-day-total-heading
+  > small {
+  color:
+    rgba(
+      74,
+      106,
+      63,
+      0.62
+    );
+
+  opacity: 1;
+}
+
+.nutrition-week-day-targets
+  > span {
+  padding:
+    4px 0;
+
+  color:
+    rgba(
+      53,
+      72,
+      50,
+      0.82
+    );
+
+  opacity: 1;
+}
+
+.nutrition-week-day-targets
+  > span:nth-child(1) strong {
+  color:
+    rgba(
+      132,
+      88,
+      18,
+      0.96
+    );
+}
+
+.nutrition-week-day-targets
+  > span:nth-child(2) strong {
+  color:
+    rgba(
+      39,
+      106,
+      66,
+      0.96
+    );
+}
+
+.nutrition-week-day-targets
+  > span:nth-child(3) strong {
+  color:
+    rgba(
+      41,
+      87,
+      165,
+      0.96
+    );
+}
+
+.nutrition-week-day-targets
+  > span:nth-child(4) strong {
+  color:
+    rgba(
+      121,
+      61,
+      137,
+      0.96
+    );
+}
+
+@media (
+  max-width: 760px
+) {
+
+  .nutrition-week-day {
+    box-shadow:
+      0 10px 22px
+      rgba(
+        96,
+        78,
+        28,
+        0.045
+      );
+  }
+
+  .nutrition-week-macros span {
+    padding:
+      3px 7px;
+  }
+
+  .nutrition-day-summary {
+    box-shadow:
+      0 10px 20px
+      rgba(
+        67,
+        112,
+        73,
+        0.05
+      );
+  }
+}
+
+/* ==========================================================================
+   NUTRITION — FAMILY COOKING V1
+   ========================================================================== */
+
+.nutrition-family-people {
+  display: grid;
+  gap: 12px;
+
+  padding:
+    15px
+    16px;
+
+  border:
+    1px solid
+    rgba(
+      84,
+      121,
+      78,
+      0.16
+    );
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(
+        239,
+        248,
+        235,
+        0.86
+      ),
+      rgba(
+        249,
+        251,
+        246,
+        0.94
+      )
+    );
+}
+
+.nutrition-family-people-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.nutrition-family-people-heading
+  > div {
+  display: grid;
+  gap: 2px;
+}
+
+.nutrition-family-people-heading
+  span {
+  font-size: 0.72rem;
+  font-weight: 720;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+
+  color:
+    rgba(
+      65,
+      93,
+      59,
+      0.68
+    );
+}
+
+.nutrition-family-people-heading
+  strong {
+  font-size: 0.91rem;
+}
+
+.nutrition-family-people-heading
+  > small {
+  max-width: 390px;
+
+  text-align: right;
+
+  font-size: 0.7rem;
+  line-height: 1.35;
+
+  opacity: 0.5;
+}
+
+.nutrition-family-people-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.nutrition-family-person-option {
+  min-height: 38px;
+
+  padding:
+    0
+    12px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  border:
+    1px solid
+    rgba(
+      47,
+      41,
+      34,
+      0.09
+    );
+
+  border-radius: 11px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.65
+    );
+
+  color: inherit;
+
+  font-size: 0.78rem;
+  font-weight: 650;
+
+  text-decoration: none;
+
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.nutrition-family-person-option:hover {
+  background:
+    rgba(
+      94,
+      132,
+      85,
+      0.08
+    );
+}
+
+.nutrition-family-person-option-active {
+  border-color:
+    rgba(
+      79,
+      132,
+      71,
+      0.25
+    );
+
+  background:
+    rgba(
+      113,
+      167,
+      101,
+      0.13
+    );
+}
+
+.nutrition-family-person-check {
+  width: 17px;
+  height: 17px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid
+    rgba(
+      69,
+      105,
+      63,
+      0.2
+    );
+
+  border-radius: 6px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.58
+    );
+
+  color:
+    rgba(
+      58,
+      111,
+      57,
+      0.96
+    );
+
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.nutrition-family-person-option-active
+  .nutrition-family-person-check {
+  background:
+    rgba(
+      104,
+      161,
+      91,
+      0.15
+    );
+}
+
+.nutrition-family-day-count {
+  padding:
+    5px
+    9px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(
+      105,
+      145,
+      93,
+      0.1
+    );
+
+  color:
+    rgba(
+      65,
+      101,
+      59,
+      0.9
+    );
+
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.nutrition-family-preparation {
+  display: grid;
+  gap: 11px;
+
+  padding:
+    14px;
+
+  border:
+    1px solid
+    rgba(
+      80,
+      139,
+      94,
+      0.18
+    );
+
+  border-radius: 17px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        235,
+        248,
+        237,
+        0.92
+      ),
+      rgba(
+        248,
+        252,
+        247,
+        0.94
+      )
+    );
+}
+
+.nutrition-family-section-heading
+  > div {
+  display: grid;
+  gap: 2px;
+}
+
+.nutrition-family-section-heading
+  span {
+  font-size: 0.68rem;
+  font-weight: 760;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+
+  color:
+    rgba(
+      54,
+      108,
+      66,
+      0.72
+    );
+}
+
+.nutrition-family-section-heading
+  strong {
+  font-size: 0.9rem;
+}
+
+.nutrition-family-preparation-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap: 9px;
+}
+
+.nutrition-family-preparation-card {
+  min-width: 0;
+
+  display: grid;
+  gap: 10px;
+
+  padding:
+    13px;
+
+  border:
+    1px solid
+    rgba(
+      83,
+      129,
+      78,
+      0.13
+    );
+
+  border-radius: 14px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.7
+    );
+}
+
+.nutrition-family-food-heading {
+  min-width: 0;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nutrition-family-food-heading
+  > div {
+  min-width: 0;
+
+  display: grid;
+  gap: 2px;
+}
+
+.nutrition-family-food-heading
+  > div
+  > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.84rem;
+}
+
+.nutrition-family-food-heading
+  > div
+  > small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.66rem;
+  opacity: 0.46;
+}
+
+.nutrition-family-food-heading
+  > span {
+  flex:
+    0
+    0
+    auto;
+
+  padding:
+    3px
+    7px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(
+      112,
+      158,
+      99,
+      0.11
+    );
+
+  color:
+    rgba(
+      61,
+      110,
+      61,
+      0.88
+    );
+
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.nutrition-family-preparation-amount {
+  display: grid;
+  gap: 3px;
+}
+
+.nutrition-family-preparation-amount
+  > strong {
+  font-size: 1rem;
+  font-weight: 760;
+}
+
+.nutrition-family-preparation-amount
+  > span {
+  width: fit-content;
+
+  padding:
+    3px
+    8px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(
+      104,
+      173,
+      118,
+      0.12
+    );
+
+  color:
+    rgba(
+      45,
+      111,
+      65,
+      0.94
+    );
+
+  font-size: 0.72rem;
+  font-weight: 680;
+}
+
+.nutrition-family-preparation-people {
+  font-size: 0.67rem;
+  opacity: 0.45;
+}
+
+.nutrition-family-empty,
+.nutrition-family-meal-empty {
+  padding:
+    11px
+    12px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(
+      127,
+      127,
+      127,
+      0.045
+    );
+
+  font-size: 0.76rem;
+  opacity: 0.52;
+}
+
+.nutrition-family-meal-food {
+  padding:
+    12px
+    14px;
+
+  display: grid;
+  gap: 9px;
+
+  border-top:
+    1px solid
+    rgba(
+      127,
+      127,
+      127,
+      0.09
+    );
+}
+
+.nutrition-family-meal-food-main {
+  display: grid;
+  grid-template-columns:
+    minmax(
+      0,
+      1fr
+    )
+    auto;
+
+  align-items: center;
+  gap: 18px;
+}
+
+.nutrition-family-meal-total {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+
+  white-space: nowrap;
+}
+
+.nutrition-family-meal-total
+  > strong {
+  font-size: 0.82rem;
+}
+
+.nutrition-family-meal-total
+  > span {
+  color:
+    rgba(
+      46,
+      116,
+      73,
+      0.95
+    );
+
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.nutrition-family-person-breakdown {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap:
+    4px
+    12px;
+
+  font-size: 0.7rem;
+
+  color:
+    rgba(
+      64,
+      71,
+      80,
+      0.61
+    );
+}
+
+.nutrition-family-person-breakdown
+  strong {
+  font-weight: 680;
+
+  color:
+    rgba(
+      55,
+      65,
+      74,
+      0.82
+    );
+}
+
+@media (
+  max-width: 760px
+) {
+
+  .nutrition-family-people-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .nutrition-family-people-heading
+    > small {
+    max-width: none;
+
+    text-align: left;
+  }
+
+  .nutrition-family-person-option {
+    min-height: 42px;
+
+    padding:
+      0
+      11px;
+  }
+
+  .nutrition-family-preparation-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .nutrition-family-meal-food-main {
+    gap: 10px;
+  }
+}
+
+@media (
+  max-width: 430px
+) {
+
+  .nutrition-family-people {
+    padding:
+      13px;
+  }
+
+  .nutrition-family-people-options {
+    flex-wrap: nowrap;
+
+    margin:
+      0
+      -3px;
+
+    padding:
+      0
+      3px
+      3px;
+
+    overflow-x: auto;
+
+    scrollbar-width: none;
+  }
+
+  .nutrition-family-people-options::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nutrition-family-person-option {
+    flex:
+      0
+      0
+      auto;
+  }
+
+  .nutrition-family-meal-food-main {
+    grid-template-columns:
+      minmax(
+        0,
+        1fr
+      )
+      auto;
+  }
+
+  .nutrition-family-meal-total {
+    max-width:
+      140px;
+  }
+
+  .nutrition-family-person-breakdown {
+    display: grid;
+    gap: 3px;
+  }
 }

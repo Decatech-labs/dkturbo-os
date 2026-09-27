@@ -279,6 +279,9 @@ export interface NutritionMealItemTable {
   food_snapshot:
     NutritionFoodSnapshot;
 
+  preparation_conversion_id:
+    string | null;
+
   position:
     number;
 
@@ -328,6 +331,71 @@ export interface NutritionMealItemQuantityTable {
     >;
 }
 
+export interface NutritionPersonAccessTable {
+  id:
+    Generated<string>;
+
+  grantee_user_id:
+    string;
+
+  subject_user_id:
+    string;
+
+  role:
+    string;
+
+  created_at:
+    ColumnType<
+      Date,
+      Date | undefined,
+      never
+    >;
+
+  updated_at:
+    ColumnType<
+      Date,
+      Date | undefined,
+      Date
+    >;
+}
+
+export interface NutritionFoodPreparationConversionTable {
+  id:
+    Generated<string>;
+
+  food_id:
+    string;
+
+  name:
+    string;
+
+  raw_amount:
+    string;
+
+  prepared_amount:
+    string;
+
+  prepared_unit:
+    string;
+
+  is_default:
+    boolean;
+
+  created_at:
+    ColumnType<
+      Date,
+      Date | undefined,
+      never
+    >;
+
+  updated_at:
+    ColumnType<
+      Date,
+      Date | undefined,
+      Date
+    >;
+}
+
 export interface NutritionDatabase {
   'nutrition.plans':
     NutritionPlanTable;
@@ -344,6 +412,9 @@ export interface NutritionDatabase {
   'nutrition.foods':
     NutritionFoodTable;
 
+  'nutrition.food_preparation_conversions':
+    NutritionFoodPreparationConversionTable;
+
   'nutrition.meal_items':
     NutritionMealItemTable;
 
@@ -352,4 +423,7 @@ export interface NutritionDatabase {
 
   'nutrition.meal_item_actuals':
     NutritionMealItemActualTable;
+
+  'nutrition.person_access':
+    NutritionPersonAccessTable;
 }

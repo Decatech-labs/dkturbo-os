@@ -5,4 +5,5 @@ export {
   type RegisterHttpRoutes,
   type RequireAccessPermission,
   type RequireAuthenticatedActor,
+  type RequireOwnerActor,
 } from './create-http-server.js';

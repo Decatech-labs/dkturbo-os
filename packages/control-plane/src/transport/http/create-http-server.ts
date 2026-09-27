@@ -172,12 +172,24 @@ export type RequireAccessPermission =
       AccessPermissionKey,
   ) => Promise<ActorRef | null>;
 
+export type RequireOwnerActor =
+  (
+    request:
+      FastifyRequest,
+
+    reply:
+      FastifyReply,
+  ) => Promise<ActorRef | null>;
+
 export interface HttpRouteRegistrationContext {
   app:
     FastifyInstance;
 
   requireAuthenticatedActor:
     RequireAuthenticatedActor;
+
+  requireOwnerActor:
+    RequireOwnerActor;
 
   requireAccessPermission:
     RequireAccessPermission;
@@ -3142,6 +3154,7 @@ export const createHttpServer = ({
     void registerRoutes({
       app,
       requireAuthenticatedActor,
+      requireOwnerActor,
       requireAccessPermission,
     });
   }

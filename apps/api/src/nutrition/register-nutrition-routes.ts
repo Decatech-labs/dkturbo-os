@@ -3,6 +3,15 @@ import type {
 } from '@dkturbo/control-plane';
 
 import {
+  buildNutritionWeekPdf,
+} from './build-nutrition-week-pdf.js';
+
+import {
+  buildPdfContentDisposition,
+  normalizePdfFilename,
+} from '../pdf/report-pdf.js';
+
+import {
   createWeeklyPlan,
   getWeeklyPlanDetail,
   InvalidNutritionTargetError,
@@ -37,6 +46,24 @@ import {
   NutritionMealItemActualItemNotFoundError,
   NutritionMealItemActualMealNotFoundError,
   NutritionMealItemActualPlannedQuantityNotFoundError,
+  listNutritionPersonAccessAdministration,
+  setNutritionPersonAccessAdministration,
+  NutritionSelfAccessAdministrationError,
+  NutritionPersonManageAccessDeniedError,
+  requireNutritionPersonManageAccess,
+  removeMealItemQuantity,
+  NutritionMealItemQuantityNotFoundError,
+  createFoodPreparationConversion,
+  updateFoodPreparationConversion,
+  deleteFoodPreparationConversion,
+  listFoodPreparationConversions,
+  InvalidFoodPreparationConversionError,
+  FoodPreparationConversionFoodNotFoundError,
+  FoodPreparationConversionNotFoundError,
+  setMealItemPreparation,
+  NutritionMealItemPreparationItemNotFoundError,
+  NutritionMealItemPreparationConversionNotFoundError,
+  NutritionMealItemPreparationFoodMismatchError,
   type DkturboUserId,
   type Nutrition,
   type NutritionPlanId,
@@ -46,6 +73,9 @@ import {
   type NutritionUnit,
   type NutritionMealItemId,
   type NutritionFoodCategory,
+  type NutritionPersonAccessRole,
+  type NutritionWeeklyPlanDetail,
+  type NutritionFoodPreparationConversionId,
 } from '@dkturbo/nutrition';
 
 export interface NutritionPerson {
@@ -54,6 +84,11 @@ export interface NutritionPerson {
 
   name:
     string;
+
+  accessRole?:
+    | 'SELF'
+    | 'VIEWER'
+    | 'MANAGER';
 }
 
 export interface RegisterNutritionRoutesOptions {
@@ -80,6 +115,24 @@ interface TargetParams {
 
   userId:
     string;
+}
+
+interface NutritionAdminUserParams {
+  userId:
+    string;
+}
+
+interface NutritionAdminPersonAccessParams {
+  userId:
+    string;
+
+  subjectUserId:
+    string;
+}
+
+interface SetNutritionPersonAccessBody {
+  role:
+    NutritionPersonAccessRole | null;
 }
 
 interface MealItemParams {
@@ -134,6 +187,11 @@ interface SetMealItemQuantityBody {
     number;
 }
 
+interface SetMealItemPreparationBody {
+  preparationConversionId:
+    string | null;
+}
+
 interface MoveMealItemBody {
   targetMealId:
     string;
@@ -180,6 +238,45 @@ interface MealParams {
 interface FoodParams {
   foodId:
     string;
+}
+
+interface FoodPreparationConversionParams {
+  conversionId:
+    string;
+}
+
+interface CreateFoodPreparationConversionBody {
+  name:
+    string;
+
+  rawAmount:
+    number;
+
+  preparedAmount:
+    number;
+
+  preparedUnit:
+    NutritionUnit;
+
+  isDefault:
+    boolean;
+}
+
+interface UpdateFoodPreparationConversionBody {
+  name:
+    string;
+
+  rawAmount:
+    number;
+
+  preparedAmount:
+    number;
+
+  preparedUnit:
+    NutritionUnit;
+
+  isDefault:
+    boolean;
 }
 
 interface FoodSearchQuery {
@@ -315,6 +412,124 @@ const isUuid =
     uuidPattern.test(
       value,
     );
+
+const parseNutritionAdminUserParams =
+  (
+    value:
+      unknown,
+  ): NutritionAdminUserParams | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as
+        Record<
+          string,
+          unknown
+        >;
+
+    if (
+      !isUuid(
+        candidate.userId,
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      userId:
+        candidate.userId,
+    };
+  };
+
+const parseNutritionAdminPersonAccessParams =
+  (
+    value:
+      unknown,
+  ): NutritionAdminPersonAccessParams | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as
+        Record<
+          string,
+          unknown
+        >;
+
+    if (
+      !isUuid(
+        candidate.userId,
+      ) ||
+      !isUuid(
+        candidate.subjectUserId,
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      userId:
+        candidate.userId,
+
+      subjectUserId:
+        candidate.subjectUserId,
+    };
+  };
+
+const parseSetNutritionPersonAccessBody =
+  (
+    value:
+      unknown,
+  ): SetNutritionPersonAccessBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as
+        Record<
+          string,
+          unknown
+        >;
+
+    if (
+      candidate.role !==
+        null &&
+      candidate.role !==
+        'VIEWER' &&
+      candidate.role !==
+        'MANAGER'
+    ) {
+      return null;
+    }
+
+    return {
+      role:
+        candidate.role as
+          NutritionPersonAccessRole | null,
+    };
+  };
 
 const parsePlanParams =
   (
@@ -636,6 +851,45 @@ const parseMealItemParams =
     return {
       mealItemId:
         candidate.mealItemId,
+    };
+  };
+
+const parseSetMealItemPreparationBody =
+  (
+    value:
+      unknown,
+  ): SetMealItemPreparationBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as
+        Record<
+          string,
+          unknown
+        >;
+
+    if (
+      candidate.preparationConversionId !==
+        null &&
+      !isUuid(
+        candidate.preparationConversionId,
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      preparationConversionId:
+        candidate.preparationConversionId as
+          string | null,
     };
   };
 
@@ -1134,6 +1388,67 @@ const nutritionUnits =
     'UNIT',
   ]);
 
+const parseFoodPreparationConversionBody =
+  (
+    value:
+      unknown,
+  ):
+    CreateFoodPreparationConversionBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as
+        Record<
+          string,
+          unknown
+        >;
+
+    if (
+      typeof candidate.name !==
+        'string' ||
+      typeof candidate.rawAmount !==
+        'number' ||
+      typeof candidate.preparedAmount !==
+        'number' ||
+      typeof candidate.preparedUnit !==
+        'string' ||
+      !nutritionUnits.has(
+        candidate.preparedUnit as
+          NutritionUnit,
+      ) ||
+      typeof candidate.isDefault !==
+        'boolean'
+    ) {
+      return null;
+    }
+
+    return {
+      name:
+        candidate.name,
+
+      rawAmount:
+        candidate.rawAmount,
+
+      preparedAmount:
+        candidate.preparedAmount,
+
+      preparedUnit:
+        candidate.preparedUnit as
+          NutritionUnit,
+
+      isDefault:
+        candidate.isDefault,
+    };
+  };
+
 const parseCreateFoodBody =
   (
     value:
@@ -1523,6 +1838,94 @@ const parseMoveMealItemBody =
     };
   };
 
+const filterWeeklyPlanDetailForUsers =
+  (
+    detail:
+      NutritionWeeklyPlanDetail,
+
+    readableUserIds:
+      ReadonlySet<string>,
+  ): NutritionWeeklyPlanDetail => ({
+    ...detail,
+
+    targets:
+      detail.targets.filter(
+        target =>
+          readableUserIds.has(
+            target.userId,
+          ),
+      ),
+
+    days:
+      detail.days.map(
+        day => ({
+          ...day,
+
+          meals:
+            day.meals.map(
+              meal => ({
+                ...meal,
+
+                items:
+                  meal.items.map(
+                    item => ({
+                      ...item,
+
+                      quantities:
+                        item.quantities.filter(
+                          quantity =>
+                            readableUserIds.has(
+                              quantity.userId,
+                            ),
+                        ),
+                    }),
+                  ),
+
+                totalsByUser:
+                  meal.totalsByUser.filter(
+                    total =>
+                      readableUserIds.has(
+                        total.userId,
+                      ),
+                  ),
+              }),
+            ),
+
+          actuals:
+            day.actuals.filter(
+              actual =>
+                readableUserIds.has(
+                  actual.userId,
+                ),
+            ),
+
+          dailyTotalsByUser:
+            day.dailyTotalsByUser.filter(
+              total =>
+                readableUserIds.has(
+                  total.userId,
+                ),
+            ),
+
+          progressByUser:
+            day.progressByUser.filter(
+              progress =>
+                readableUserIds.has(
+                  progress.userId,
+                ),
+            ),
+        }),
+      ),
+
+    weeklyTotalsByUser:
+      detail.weeklyTotalsByUser.filter(
+        total =>
+          readableUserIds.has(
+            total.userId,
+          ),
+      ),
+  });
+
 export const registerNutritionRoutes =
   ({
     http,
@@ -1534,7 +1937,446 @@ export const registerNutritionRoutes =
     const {
       app,
       requireAccessPermission,
+      requireOwnerActor,
     } = http;
+
+    const requirePersonManageAccess =
+      async (
+        actorUserId:
+          DkturboUserId,
+
+        subjectUserId:
+          DkturboUserId,
+      ): Promise<void> =>
+        nutrition.unitOfWork.execute(
+          async ({
+            personAccess,
+          }) =>
+            requireNutritionPersonManageAccess(
+              personAccess,
+              actorUserId,
+              subjectUserId,
+            ),
+        );
+
+    const requireManageAccessForUserIds =
+      async (
+        actorUserId:
+          DkturboUserId,
+
+        userIds:
+          Iterable<DkturboUserId>,
+      ): Promise<void> => {
+
+        const uniqueUserIds =
+          new Set(
+            userIds,
+          );
+
+        for (
+          const userId of
+            uniqueUserIds
+        ) {
+          await requirePersonManageAccess(
+            actorUserId,
+            userId,
+          );
+        }
+      };
+
+    const getMealItemAffectedUserIds =
+      async (
+        mealItemId:
+          NutritionMealItemId,
+      ): Promise<DkturboUserId[]> =>
+        nutrition.unitOfWork.execute(
+          async ({
+            meals,
+            mealItems,
+            mealItemActuals,
+          }) => {
+
+            const item =
+              await mealItems.findById(
+                mealItemId,
+              );
+
+            if (!item) {
+              throw new NutritionMealItemNotFoundError(
+                'Nutrition meal item not found',
+              );
+            }
+
+            const meal =
+              await meals.findById(
+                item.mealId,
+              );
+
+            if (!meal) {
+              throw new NutritionMealNotFoundError(
+                'Nutrition meal not found',
+              );
+            }
+
+            const details =
+              await mealItems.listDetailsForMeal(
+                item.mealId,
+              );
+
+            const detail =
+              details.find(
+                candidate =>
+                  candidate.item.id ===
+                  item.id,
+              );
+
+            if (!detail) {
+              throw new NutritionMealItemNotFoundError(
+                'Nutrition meal item detail not found',
+              );
+            }
+
+            const actuals =
+              await mealItemActuals.listForDay(
+                meal.dayId,
+              );
+
+            return Array.from(
+              new Set<DkturboUserId>([
+                ...detail.quantities.map(
+                  quantity =>
+                    quantity.userId,
+                ),
+
+                ...actuals
+                  .filter(
+                    actual =>
+                      actual.mealItemId ===
+                      item.id,
+                  )
+                  .map(
+                    actual =>
+                      actual.userId,
+                  ),
+              ]),
+            );
+          },
+        );
+
+    const getMealAffectedUserIds =
+      async (
+        mealId:
+          NutritionMealId,
+      ): Promise<DkturboUserId[]> =>
+        nutrition.unitOfWork.execute(
+          async ({
+            meals,
+            mealItems,
+            mealItemActuals,
+          }) => {
+
+            const meal =
+              await meals.findById(
+                mealId,
+              );
+
+            if (!meal) {
+              throw new NutritionMealNotFoundError(
+                'Nutrition meal not found',
+              );
+            }
+
+            const items =
+              await mealItems.listDetailsForMeal(
+                mealId,
+              );
+
+            const mealItemIds =
+              new Set(
+                items.map(
+                  item =>
+                    item.item.id,
+                ),
+              );
+
+            const actuals =
+              await mealItemActuals.listForDay(
+                meal.dayId,
+              );
+
+            return Array.from(
+              new Set<DkturboUserId>([
+                ...items.flatMap(
+                  item =>
+                    item.quantities.map(
+                      quantity =>
+                        quantity.userId,
+                    ),
+                ),
+
+                ...actuals
+                  .filter(
+                    actual =>
+                      actual.mealItemId !==
+                        null &&
+                      mealItemIds.has(
+                        actual.mealItemId,
+                      ),
+                  )
+                  .map(
+                    actual =>
+                      actual.userId,
+                  ),
+              ]),
+            );
+          },
+        );
+
+    const listReadablePersonIds =
+      async (
+        actorUserId:
+          DkturboUserId,
+      ): Promise<Set<string>> =>
+        nutrition.unitOfWork.execute(
+          async ({
+            personAccess,
+          }) => {
+
+            const accesses =
+              await personAccess.listForGrantee(
+                actorUserId,
+              );
+
+            return new Set<string>([
+              actorUserId,
+
+              ...accesses.map(
+                access =>
+                  access.subjectUserId,
+              ),
+            ]);
+          },
+        );
+
+    /*
+    * Owner-only Nutrition person access administration.
+    *
+    * Administering person_access does not itself grant
+    * ordinary Nutrition app access.
+    */
+
+    app.get(
+      '/api/nutrition/admin/users/:userId/person-access',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireOwnerActor(
+            request,
+            reply,
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        const params =
+          parseNutritionAdminUserParams(
+            request.params,
+          );
+
+        if (!params) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        const people =
+          await listPeople();
+
+        const granteeExists =
+          people.some(
+            person =>
+              person.id ===
+              params.userId,
+          );
+
+        if (!granteeExists) {
+          return reply
+            .code(404)
+            .send({
+              error:
+                'nutrition_user_not_found',
+            });
+        }
+
+        const entries =
+          await listNutritionPersonAccessAdministration(
+            nutrition.unitOfWork,
+            {
+              granteeUserId:
+                params.userId as
+                  DkturboUserId,
+
+              people:
+                people.map(
+                  person => ({
+                    id:
+                      person.id as
+                        DkturboUserId,
+
+                    name:
+                      person.name,
+                  }),
+                ),
+            },
+          );
+
+        return entries;
+      },
+    );
+
+    app.put(
+      '/api/nutrition/admin/users/:userId/people/:subjectUserId/access',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireOwnerActor(
+            request,
+            reply,
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        const params =
+          parseNutritionAdminPersonAccessParams(
+            request.params,
+          );
+
+        const body =
+          parseSetNutritionPersonAccessBody(
+            request.body,
+          );
+
+        if (
+          !params ||
+          !body
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        const people =
+          await listPeople();
+
+        const granteeExists =
+          people.some(
+            person =>
+              person.id ===
+              params.userId,
+          );
+
+        const subjectExists =
+          people.some(
+            person =>
+              person.id ===
+              params.subjectUserId,
+          );
+
+        if (
+          !granteeExists ||
+          !subjectExists
+        ) {
+          return reply
+            .code(404)
+            .send({
+              error:
+                'nutrition_user_not_found',
+            });
+        }
+
+        try {
+
+          const result =
+            await setNutritionPersonAccessAdministration(
+              nutrition.unitOfWork,
+              {
+                granteeUserId:
+                  params.userId as
+                    DkturboUserId,
+
+                subjectUserId:
+                  params.subjectUserId as
+                    DkturboUserId,
+
+                role:
+                  body.role,
+              },
+            );
+
+          return {
+            userId:
+              params.userId,
+
+            subjectUserId:
+              params.subjectUserId,
+
+            role:
+              result.access?.role ??
+              (
+                params.userId ===
+                params.subjectUserId
+                  ? 'MANAGER'
+                  : null
+              ),
+          };
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+              NutritionSelfAccessAdministrationError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'nutrition_self_access_is_implicit',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to administer Nutrition person access',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
 
     /*
      * Shared family Nutrition space.
@@ -1575,7 +2417,78 @@ export const registerNutritionRoutes =
             });
         }
 
-        return listPeople();
+        const [
+          people,
+          accesses,
+        ] =
+          await Promise.all([
+            listPeople(),
+
+            nutrition.unitOfWork.execute(
+              async ({
+                personAccess,
+              }) =>
+                personAccess.listForGrantee(
+                  actor.id as
+                    DkturboUserId,
+                ),
+            ),
+          ]);
+
+        const accessBySubject =
+          new Map(
+            accesses.map(
+              access => [
+                access.subjectUserId,
+                access.role,
+              ] as const,
+            ),
+          );
+
+        return people
+        .map(
+          person => {
+
+            if (
+              person.id ===
+              actor.id
+            ) {
+              return {
+                ...person,
+
+                accessRole:
+                  'SELF' as const,
+              };
+            }
+
+            const role =
+              accessBySubject.get(
+                person.id as
+                  DkturboUserId,
+              );
+
+            if (!role) {
+              return null;
+            }
+
+            return {
+              ...person,
+
+              accessRole:
+                role,
+            };
+          },
+        )
+        .filter(
+          (
+            person,
+          ): person is
+            NonNullable<
+              typeof person
+            > =>
+            person !==
+            null,
+        );
       },
     );
 
@@ -1635,6 +2548,388 @@ export const registerNutritionRoutes =
                 query.category,
               )
           );
+      },
+    );
+
+    app.get<{
+      Params:
+        FoodParams;
+    }>(
+      '/api/nutrition/foods/:foodId/preparation-conversions',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        if (
+          !isUuid(
+            request.params
+              .foodId,
+          )
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+          return await listFoodPreparationConversions(
+            nutrition.unitOfWork,
+            request.params
+              .foodId as
+              NutritionFoodId,
+          );
+        } catch (
+          error
+        ) {
+          if (
+            error instanceof
+            FoodPreparationConversionFoodNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_food_not_found',
+              });
+          }
+
+          throw error;
+        }
+      },
+    );
+
+    app.post<{
+      Params:
+        FoodParams;
+
+      Body:
+        CreateFoodPreparationConversionBody;
+    }>(
+      '/api/nutrition/foods/:foodId/preparation-conversions',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        if (
+          !isUuid(
+            request.params
+              .foodId,
+          )
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        const body =
+          parseFoodPreparationConversionBody(
+            request.body,
+          );
+
+        if (!body) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+          const conversion =
+            await createFoodPreparationConversion(
+              nutrition.unitOfWork,
+              {
+                foodId:
+                  request.params
+                    .foodId as
+                    NutritionFoodId,
+
+                ...body,
+              },
+            );
+
+          return reply
+            .code(201)
+            .send(
+              conversion,
+            );
+        } catch (
+          error
+        ) {
+          if (
+            error instanceof
+            FoodPreparationConversionFoodNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_food_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+            InvalidFoodPreparationConversionError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'invalid_food_preparation_conversion',
+              });
+          }
+
+          throw error;
+        }
+      },
+    );
+
+    app.patch<{
+      Params:
+        FoodPreparationConversionParams;
+
+      Body:
+        UpdateFoodPreparationConversionBody;
+    }>(
+      '/api/nutrition/food-preparation-conversions/:conversionId',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        if (
+          !isUuid(
+            request.params
+              .conversionId,
+          )
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        const body =
+          parseFoodPreparationConversionBody(
+            request.body,
+          );
+
+        if (!body) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+          return await updateFoodPreparationConversion(
+            nutrition.unitOfWork,
+            {
+              conversionId:
+                request.params
+                  .conversionId as
+                  NutritionFoodPreparationConversionId,
+
+              ...body,
+            },
+          );
+        } catch (
+          error
+        ) {
+          if (
+            error instanceof
+            FoodPreparationConversionNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'food_preparation_conversion_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+            InvalidFoodPreparationConversionError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'invalid_food_preparation_conversion',
+              });
+          }
+
+          throw error;
+        }
+      },
+    );
+
+    app.delete<{
+      Params:
+        FoodPreparationConversionParams;
+    }>(
+      '/api/nutrition/food-preparation-conversions/:conversionId',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        if (
+          !isUuid(
+            request.params
+              .conversionId,
+          )
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+          await deleteFoodPreparationConversion(
+            nutrition.unitOfWork,
+            {
+              conversionId:
+                request.params
+                  .conversionId as
+                  NutritionFoodPreparationConversionId,
+            },
+          );
+
+          return reply
+            .code(204)
+            .send();
+        } catch (
+          error
+        ) {
+          if (
+            error instanceof
+            FoodPreparationConversionNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'food_preparation_conversion_not_found',
+              });
+          }
+
+          throw error;
+        }
       },
     );
 
@@ -2042,7 +3337,7 @@ export const registerNutritionRoutes =
       },
     );
 
-        app.patch(
+    app.patch(
       '/api/nutrition/meals/:mealId',
 
       async (
@@ -2097,6 +3392,19 @@ export const registerNutritionRoutes =
 
         try {
 
+          const affectedUserIds =
+            await getMealAffectedUserIds(
+              params.mealId as
+                NutritionMealId,
+            );
+
+          await requireManageAccessForUserIds(
+            actor.id as
+              DkturboUserId,
+
+            affectedUserIds,
+          );
+
           const meal =
             await updateMeal(
               nutrition.unitOfWork,
@@ -2118,6 +3426,18 @@ export const registerNutritionRoutes =
         } catch (
           error
         ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
 
           if (
             error instanceof
@@ -2205,6 +3525,19 @@ export const registerNutritionRoutes =
 
         try {
 
+          const affectedUserIds =
+            await getMealAffectedUserIds(
+              params.mealId as
+                NutritionMealId,
+            );
+
+          await requireManageAccessForUserIds(
+            actor.id as
+              DkturboUserId,
+
+            affectedUserIds,
+          );
+
           await deleteMeal(
             nutrition.unitOfWork,
             {
@@ -2221,6 +3554,18 @@ export const registerNutritionRoutes =
         } catch (
           error
         ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
 
           if (
             error instanceof
@@ -2304,6 +3649,14 @@ export const registerNutritionRoutes =
 
         try {
 
+          await requirePersonManageAccess(
+            actor.id as
+              DkturboUserId,
+
+            params.userId as
+              DkturboUserId,
+          );
+
           await setMealItemQuantity(
             nutrition.unitOfWork,
             {
@@ -2327,6 +3680,18 @@ export const registerNutritionRoutes =
         } catch (
           error
         ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
 
           if (
             error instanceof
@@ -2355,6 +3720,133 @@ export const registerNutritionRoutes =
           request.log.error(
             error,
             'Failed to update Nutrition meal item quantity',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    app.delete(
+      '/api/nutrition/meal-items/:mealItemId/quantities/:userId',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseMealItemQuantityParams(
+            request.params,
+          );
+
+        if (!params) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          await requirePersonManageAccess(
+            actor.id as
+              DkturboUserId,
+
+            params.userId as
+              DkturboUserId,
+          );
+
+          await removeMealItemQuantity(
+            nutrition.unitOfWork,
+            {
+              mealItemId:
+                params.mealItemId as
+                  NutritionMealItemId,
+
+              userId:
+                params.userId as
+                  DkturboUserId,
+            },
+          );
+
+          return reply
+            .code(204)
+            .send();
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionMealItemNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_meal_item_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionMealItemQuantityNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_meal_item_quantity_not_found',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to remove Nutrition meal item quantity',
           );
 
           return reply
@@ -2421,6 +3913,14 @@ export const registerNutritionRoutes =
         }
 
         try {
+
+          await requirePersonManageAccess(
+            actor.id as
+              DkturboUserId,
+
+            params.userId as
+              DkturboUserId,
+          );
 
           if (
             body.status ===
@@ -2508,6 +4008,18 @@ export const registerNutritionRoutes =
         } catch (
           error
         ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
 
           if (
             error instanceof
@@ -2643,6 +4155,14 @@ export const registerNutritionRoutes =
 
         try {
 
+          await requirePersonManageAccess(
+            actor.id as
+              DkturboUserId,
+
+            params.userId as
+              DkturboUserId,
+          );
+
           await resetMealItemActual(
             nutrition.unitOfWork,
             {
@@ -2663,6 +4183,18 @@ export const registerNutritionRoutes =
         } catch (
           error
         ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
 
           if (
             error instanceof
@@ -2738,6 +4270,19 @@ export const registerNutritionRoutes =
 
         try {
 
+          const affectedUserIds =
+            await getMealItemAffectedUserIds(
+              params.mealItemId as
+                NutritionMealItemId,
+            );
+
+          await requireManageAccessForUserIds(
+            actor.id as
+              DkturboUserId,
+
+            affectedUserIds,
+          );
+
           await removeMealItem(
             nutrition.unitOfWork,
             {
@@ -2754,6 +4299,18 @@ export const registerNutritionRoutes =
         } catch (
           error
         ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
 
           if (
             error instanceof
@@ -2782,7 +4339,161 @@ export const registerNutritionRoutes =
       },
     );
 
-        app.post(
+    app.patch(
+      '/api/nutrition/meal-items/:mealItemId/preparation',
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+            'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseMealItemParams(
+            request.params,
+          );
+
+        const body =
+          parseSetMealItemPreparationBody(
+            request.body,
+          );
+
+        if (
+          !params ||
+          !body
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          const affectedUserIds =
+            await getMealItemAffectedUserIds(
+              params.mealItemId as
+                NutritionMealItemId,
+            );
+
+          await requireManageAccessForUserIds(
+            actor.id as
+              DkturboUserId,
+
+            affectedUserIds,
+          );
+
+          await setMealItemPreparation(
+            nutrition.unitOfWork,
+            {
+              mealItemId:
+                params.mealItemId as
+                  NutritionMealItemId,
+
+              preparationConversionId:
+                body.preparationConversionId ===
+                  null
+                  ? null
+                  : body.preparationConversionId as
+                      NutritionFoodPreparationConversionId,
+            },
+          );
+
+          return reply
+            .code(204)
+            .send();
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionMealItemPreparationItemNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_meal_item_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionMealItemPreparationConversionNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_food_preparation_conversion_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionMealItemPreparationFoodMismatchError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'nutrition_food_preparation_conversion_food_mismatch',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to update Nutrition meal item preparation',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    app.post(
       '/api/nutrition/meal-items/:mealItemId/move',
 
       async (
@@ -2837,6 +4548,19 @@ export const registerNutritionRoutes =
 
         try {
 
+          const affectedUserIds =
+            await getMealItemAffectedUserIds(
+              params.mealItemId as
+                NutritionMealItemId,
+            );
+
+          await requireManageAccessForUserIds(
+            actor.id as
+              DkturboUserId,
+
+            affectedUserIds,
+          );
+
           await moveMealItem(
             nutrition.unitOfWork,
             {
@@ -2860,6 +4584,18 @@ export const registerNutritionRoutes =
         } catch (
           error
         ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
 
           if (
             error instanceof
@@ -2951,6 +4687,37 @@ export const registerNutritionRoutes =
               error:
                 'invalid_request',
             });
+        }
+
+        for (
+          const quantity of
+            body.quantities
+        ) {
+          try {
+            await requirePersonManageAccess(
+              actor.id as
+                DkturboUserId,
+
+              quantity.userId as
+                DkturboUserId,
+            );
+          } catch (
+            error
+          ) {
+            if (
+              error instanceof
+                NutritionPersonManageAccessDeniedError
+            ) {
+              return reply
+                .code(403)
+                .send({
+                  error:
+                    'nutrition_person_manage_access_denied',
+                });
+            }
+
+            throw error;
+          }
         }
 
         try {
@@ -3232,11 +4999,29 @@ export const registerNutritionRoutes =
         }
 
         try {
-          return await getWeeklyPlanDetail(
-            nutrition.unitOfWork,
-            params.planId as
-              NutritionPlanId,
+
+          const [
+            detail,
+            readableUserIds,
+          ] =
+            await Promise.all([
+              getWeeklyPlanDetail(
+                nutrition.unitOfWork,
+                params.planId as
+                  NutritionPlanId,
+              ),
+
+              listReadablePersonIds(
+                actor.id as
+                  DkturboUserId,
+              ),
+            ]);
+
+          return filterWeeklyPlanDetailForUsers(
+            detail,
+            readableUserIds,
           );
+
         } catch (
           error
         ) {
@@ -3255,6 +5040,216 @@ export const registerNutritionRoutes =
           request.log.error(
             error,
             'Failed to get Nutrition plan detail',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    app.get(
+      '/api/nutrition/plans/:planId/export',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parsePlanParams(
+            request.params,
+          );
+
+        const query =
+          request.query as
+            Record<
+              string,
+              unknown
+            >;
+
+        const userId =
+          typeof query.userId ===
+            'string'
+            ? query.userId
+            : null;
+
+        const requestedFilename =
+          typeof query.filename ===
+            'string'
+            ? query.filename
+            : null;
+
+        if (
+          !params ||
+          !userId ||
+          !isUuid(
+            userId,
+          )
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          const [
+            detail,
+            readableUserIds,
+            people,
+          ] =
+            await Promise.all([
+              getWeeklyPlanDetail(
+                nutrition.unitOfWork,
+                params.planId as
+                  NutritionPlanId,
+              ),
+
+              listReadablePersonIds(
+                actor.id as
+                  DkturboUserId,
+              ),
+
+              listPeople(),
+            ]);
+
+          if (
+            !readableUserIds.has(
+              userId,
+            )
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_access_denied',
+              });
+          }
+
+          const person =
+            people.find(
+              candidate =>
+                candidate.id ===
+                userId,
+            );
+
+          if (!person) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_person_not_found',
+              });
+          }
+
+          const personalDetail =
+            filterWeeklyPlanDetailForUsers(
+              detail,
+              new Set([
+                userId,
+              ]),
+            );
+
+          const pdf =
+            await buildNutritionWeekPdf({
+              personId:
+                userId,
+
+              personName:
+                person.name,
+
+              detail:
+                personalDetail,
+            });
+
+          const filename =
+            normalizePdfFilename(
+              requestedFilename ??
+              `Nutrición semanal - ${person.name} - ${detail.plan.startDate}`,
+            );
+
+          reply.header(
+            'Content-Type',
+            'application/pdf',
+          );
+
+          reply.header(
+            'Content-Disposition',
+            buildPdfContentDisposition(
+              filename,
+            ),
+          );
+
+          reply.header(
+            'Cache-Control',
+            'private, no-store',
+          );
+
+          reply.header(
+            'Content-Length',
+            String(
+              pdf.length,
+            ),
+          );
+
+          return reply
+            .code(200)
+            .send(
+              Buffer.from(
+                pdf,
+              ),
+            );
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+            NutritionPlanNotFoundForDetailError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_plan_not_found',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to export Nutrition week PDF',
           );
 
           return reply
@@ -3321,6 +5316,15 @@ export const registerNutritionRoutes =
         }
 
         try {
+
+          await requirePersonManageAccess(
+            actor.id as
+              DkturboUserId,
+
+            params.userId as
+              DkturboUserId,
+          );
+
           return await setPlanTarget(
             nutrition.unitOfWork,
             {
@@ -3351,6 +5355,19 @@ export const registerNutritionRoutes =
         } catch (
           error
         ) {
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
+
           if (
             error instanceof
               InvalidNutritionTargetError

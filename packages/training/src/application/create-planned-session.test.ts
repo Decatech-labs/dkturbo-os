@@ -157,10 +157,16 @@ const createAthleteRepository =
     findById:
       vi.fn(),
 
+    listAll:
+      vi.fn(),
+
     listForUser:
       vi.fn(),
 
     grantAccess:
+      vi.fn(),
+
+    revokeAccess:
       vi.fn(),
 
     findAccess:
@@ -208,6 +214,12 @@ const createSessionRepository =
           session,
         ),
 
+    updatePlanned:
+      vi.fn(),
+
+    delete:
+      vi.fn(),
+
     findById:
       vi.fn(),
 
@@ -235,6 +247,9 @@ const createUnitOfWork =
 
           sessionStructure:
             sessionStructureRepository,
+
+          dailyCheckins:
+            {} as never,
         }),
   });
 
