@@ -569,15 +569,12 @@ function SortableFoodRow({
     ],
   );
 
-    useEffect(
+  useEffect(
     () => {
-
       if (
         !menuOpen ||
         readOnly ||
-        preparationConversions !==
-          null ||
-        preparationLoading
+        preparationConversions !== null
       ) {
         return;
       }
@@ -587,13 +584,11 @@ function SortableFoodRow({
 
       const loadPreparationConversions =
         async () => {
-
           setPreparationLoading(
             true,
           );
 
           try {
-
             const response =
               await fetch(
                 `/api/nutrition/foods/${encodeURIComponent(
@@ -608,7 +603,6 @@ function SortableFoodRow({
             if (
               !response.ok
             ) {
-
               if (
                 !cancelled
               ) {
@@ -635,9 +629,7 @@ function SortableFoodRow({
                 data,
               );
             }
-
           } catch {
-
             if (
               !cancelled
             ) {
@@ -649,9 +641,7 @@ function SortableFoodRow({
                 [],
               );
             }
-
           } finally {
-
             if (
               !cancelled
             ) {
@@ -665,7 +655,6 @@ function SortableFoodRow({
       void loadPreparationConversions();
 
       return () => {
-
         cancelled =
           true;
       };
@@ -674,7 +663,6 @@ function SortableFoodRow({
       detail.food.id,
       menuOpen,
       preparationConversions,
-      preparationLoading,
       readOnly,
     ],
   );
