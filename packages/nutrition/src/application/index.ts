@@ -28,3 +28,5 @@ export * from './update-food-preparation-conversion.js';
 export * from './delete-food-preparation-conversion.js';
 export * from './list-food-preparation-conversions.js';
 export * from './set-meal-item-preparation.js';
+export * from './copy-nutrition-day.js';
+export * from './copy-nutrition-week.js';

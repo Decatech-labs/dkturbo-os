@@ -34,8 +34,16 @@ import {
 } from './add-meal-form';
 
 import {
+  CopyNutritionDayForm,
+} from './copy-nutrition-day-form';
+
+import {
   NutritionDayMeals,
 } from './nutrition-day-meals';
+
+import {
+  CopyNutritionWeekForm,
+} from './semanas/[planId]/copy-nutrition-week-form';
 
 export const dynamic =
   'force-dynamic';
@@ -136,6 +144,69 @@ const formatInputDate =
       );
 
     return `${year}-${month}-${day}`;
+  };
+
+const addDays =
+  (
+    value:
+      string,
+
+    amount:
+      number,
+  ): string => {
+
+    const date =
+      parseDate(
+        value,
+      );
+
+    if (!date) {
+      return value;
+    }
+
+    date.setDate(
+      date.getDate() +
+        amount,
+    );
+
+    return formatInputDate(
+      date,
+    );
+  };
+
+const getMonday =
+  (
+    value:
+      string,
+  ): string => {
+
+    const date =
+      parseDate(
+        value,
+      );
+
+    if (!date) {
+      return value;
+    }
+
+    const weekday =
+      date.getDay();
+
+    const distance =
+      weekday ===
+        0
+        ? -6
+        : 1 -
+          weekday;
+
+    date.setDate(
+      date.getDate() +
+        distance,
+    );
+
+    return formatInputDate(
+      date,
+    );
   };
 
 const getTodayDate =
@@ -537,6 +608,15 @@ export default async function NutritionPage({
   const readOnly =
     !canManageActivePerson;
 
+  const manageablePeople =
+    accessiblePeople.filter(
+      person =>
+        person.accessRole ===
+          'SELF' ||
+        person.accessRole ===
+          'MANAGER',
+    );
+
   const buildTodayHref =
     (
       date?:
@@ -585,22 +665,37 @@ export default async function NutritionPage({
 
   const currentPlan =
     plans.find(
-      (plan) =>
+      plan =>
         plan.startDate <=
           requestedDate &&
         plan.endDate >=
           requestedDate,
     ) ??
-    plans.find(
-      (plan) =>
-        plan.startDate <=
-          today &&
-        plan.endDate >=
-          today,
-    ) ??
+    null;
+
+  const requestedWeekStart =
+    getMonday(
+      requestedDate,
+    );
+
+  const requestedWeekEnd =
+    addDays(
+      requestedWeekStart,
+      6,
+    );
+
+  const previousPlan =
     [...plans]
+      .filter(
+        plan =>
+          plan.endDate <
+          requestedWeekStart,
+      )
       .sort(
-        (a, b) =>
+        (
+          a,
+          b,
+        ) =>
           b.startDate.localeCompare(
             a.startDate,
           ),
@@ -611,27 +706,183 @@ export default async function NutritionPage({
     return (
       <main className="app-page nutrition-home-page">
 
-        <header className="training-page-header">
+        <header className="app-page-header nutrition-home-header">
 
-          <Link
-            href="/"
-            className="system-back"
-            aria-label="Volver al inicio"
-          >
-            <ArrowLeft />
-          </Link>
+          <div className="nutrition-home-title">
 
-          <div>
-            <h1>
-              Nutrición
-            </h1>
+            <Link
+              href="/"
+              className="system-back"
+              aria-label="Volver al inicio"
+            >
+              <ArrowLeft />
+            </Link>
 
-            <p>
-              Todavía no hay ninguna semana nutricional.
-            </p>
+            <div>
+              <h1>
+                Nutrición
+              </h1>
+
+              <span>
+                Semana{' '}
+                {formatWeekRange(
+                  requestedWeekStart,
+                  requestedWeekEnd,
+                )}
+              </span>
+            </div>
+
           </div>
 
         </header>
+
+        <nav
+          className="nutrition-primary-nav"
+          aria-label="Secciones de Nutrición"
+        >
+          <Link
+            href={
+              buildTodayHref(
+                requestedDate,
+              )
+            }
+            className="nutrition-primary-nav-active"
+          >
+            Hoy
+          </Link>
+
+          <span
+            className="nutrition-primary-nav-disabled"
+            title="Crea esta semana para abrir la vista semanal"
+          >
+            Semana
+          </span>
+
+          <span
+            className="nutrition-primary-nav-disabled"
+            title="Disponible próximamente"
+          >
+            <ShoppingBasket />
+            Compra
+          </span>
+
+          <span
+            className="nutrition-primary-nav-disabled"
+            title="Crea esta semana para abrir la vista familiar"
+          >
+            <UsersRound />
+            Familia
+          </span>
+        </nav>
+
+        <section className="nutrition-week-strip">
+
+          <div className="nutrition-week-strip-heading">
+
+            <Link
+              href={
+                buildTodayHref(
+                  addDays(
+                    requestedDate,
+                    -1,
+                  ),
+                )
+              }
+              aria-label="Día anterior"
+            >
+              <ChevronLeft />
+            </Link>
+
+            <strong>
+              {requestedDate ===
+              today
+                ? 'Hoy'
+                : formatLongDate(
+                    requestedDate,
+                  )}
+            </strong>
+
+            <Link
+              href={
+                buildTodayHref(
+                  addDays(
+                    requestedDate,
+                    1,
+                  ),
+                )
+              }
+              aria-label="Día siguiente"
+            >
+              <ChevronRight />
+            </Link>
+
+          </div>
+
+          <div className="nutrition-week-days-strip">
+
+            {buildWeekDates(
+              requestedWeekStart,
+            ).map(
+              date => {
+
+                const selected =
+                  date ===
+                  requestedDate;
+
+                const isToday =
+                  date ===
+                  today;
+
+                return (
+                  <Link
+                    key={
+                      date
+                    }
+                    href={
+                      buildTodayHref(
+                        date,
+                      )
+                    }
+                    className={[
+                      'nutrition-week-day-button',
+                      selected
+                        ? 'nutrition-week-day-button-selected'
+                        : '',
+                      isToday
+                        ? 'nutrition-week-day-button-today'
+                        : '',
+                    ]
+                      .filter(
+                        Boolean,
+                      )
+                      .join(
+                        ' ',
+                      )}
+                    aria-current={
+                      selected
+                        ? 'date'
+                        : undefined
+                    }
+                  >
+                    <span>
+                      {formatWeekday(
+                        date,
+                      )}
+                    </span>
+
+                    <strong>
+                      {formatDayNumber(
+                        date,
+                      )}
+                    </strong>
+                  </Link>
+                );
+              },
+            )}
+
+          </div>
+
+        </section>
 
         <section className="nutrition-home-empty">
 
@@ -641,19 +892,58 @@ export default async function NutritionPage({
 
           <div>
             <strong>
-              Empieza tu planificación
+              Esta semana todavía no tiene planificación
             </strong>
 
             <span>
-              Crea una semana para empezar a organizar comidas y cantidades.
+              {formatWeekRange(
+                requestedWeekStart,
+                requestedWeekEnd,
+              )}
+              . Puedes crearla vacía o copiar la planificación de la semana anterior.
             </span>
           </div>
 
-          <NewWeekForm
-            today={
-              today
-            }
-          />
+          <div className="nutrition-empty-week-actions">
+
+            <NewWeekForm
+              today={
+                requestedWeekStart
+              }
+            />
+
+            {previousPlan &&
+              activePerson &&
+              canManageActivePerson && (
+                <CopyNutritionWeekForm
+                  sourcePlanId={
+                    previousPlan.id
+                  }
+                  sourceWeekStart={
+                    previousPlan.startDate
+                  }
+                  sourceUserId={
+                    activeUserId
+                  }
+                  sourceUserName={
+                    activePerson.name
+                  }
+                  people={
+                    manageablePeople
+                  }
+                  existingWeekStarts={
+                    plans.map(
+                      plan =>
+                        plan.startDate,
+                    )
+                  }
+                  sessionUserId={
+                    session.user.id
+                  }
+                />
+              )}
+
+          </div>
 
         </section>
 
@@ -906,33 +1196,17 @@ export default async function NutritionPage({
       currentPlan.startDate,
     );
 
-  const selectedIndex =
-    weekDates.indexOf(
+  const previousDate =
+    addDays(
       selectedDate,
+      -1,
     );
 
-  const previousDate =
-    selectedIndex >
-    0
-      ? weekDates[
-          selectedIndex -
-            1
-        ] ??
-        null
-      : null;
-
   const nextDate =
-    selectedIndex >=
-      0 &&
-    selectedIndex <
-      weekDates.length -
-        1
-      ? weekDates[
-          selectedIndex +
-            1
-        ] ??
-        null
-      : null;
+    addDays(
+      selectedDate,
+      1,
+    );
 
   return (
     <main className="app-page nutrition-home-page">
@@ -1123,22 +1397,16 @@ export default async function NutritionPage({
 
         <div className="nutrition-week-strip-heading">
 
-          {previousDate ? (
-            <Link
-              href={
-                buildTodayHref(
-                  previousDate,
-                )
-              }
-              aria-label="Día anterior"
-            >
-              <ChevronLeft />
-            </Link>
-          ) : (
-            <span className="nutrition-week-strip-arrow-disabled">
-              <ChevronLeft />
-            </span>
-          )}
+          <Link
+            href={
+              buildTodayHref(
+                previousDate,
+              )
+            }
+            aria-label="Día anterior"
+          >
+            <ChevronLeft />
+          </Link>
 
           <strong>
             {selectedDate ===
@@ -1149,22 +1417,16 @@ export default async function NutritionPage({
                 )}
           </strong>
 
-          {nextDate ? (
-            <Link
-              href={
-                buildTodayHref(
-                  nextDate,
-                )
-              }
-              aria-label="Día siguiente"
-            >
-              <ChevronRight />
-            </Link>
-          ) : (
-            <span className="nutrition-week-strip-arrow-disabled">
-              <ChevronRight />
-            </span>
-          )}
+          <Link
+            href={
+              buildTodayHref(
+                nextDate,
+              )
+            }
+            aria-label="Día siguiente"
+          >
+            <ChevronRight />
+          </Link>
 
         </div>
 
@@ -1252,6 +1514,39 @@ export default async function NutritionPage({
               )}
             </h2>
           </div>
+
+          {selectedDay &&
+            !readOnly &&
+            selectedDay.meals.length >
+              0 && (
+              <CopyNutritionDayForm
+                sourcePlanId={
+                  currentPlan.id
+                }
+                sourceDayId={
+                  selectedDay.day.id
+                }
+                sourceDate={
+                  selectedDay.day.date
+                }
+                sourceUserId={
+                  activeUserId
+                }
+                sourceUserName={
+                  activePerson?.name ??
+                  'Usuario'
+                }
+                people={
+                  manageablePeople
+                }
+                plans={
+                  plans
+                }
+                sessionUserId={
+                  session.user.id
+                }
+              />
+            )}
 
           {selectedDay &&
             !readOnly && (

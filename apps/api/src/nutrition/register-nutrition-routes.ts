@@ -64,6 +64,20 @@ import {
   NutritionMealItemPreparationItemNotFoundError,
   NutritionMealItemPreparationConversionNotFoundError,
   NutritionMealItemPreparationFoodMismatchError,
+  copyNutritionDay,
+  InvalidNutritionQuantityCopyMappingError,
+  NutritionCopyPlanNotFoundError,
+  NutritionCopyDayNotFoundError,
+  NutritionCopySameDayError,
+  NutritionCopySourceDayEmptyError,
+  NutritionCopyTargetDayNotEmptyError,
+  copyNutritionWeek,
+  InvalidNutritionWeekCopyError,
+  NutritionCopyTargetWeekAlreadyExistsError,
+  NutritionCopySourceWeekInvalidError,
+  NutritionCopyWeekSourcePlanNotFoundError,
+  NutritionPersonReadAccessDeniedError,
+  requireNutritionPersonReadAccess,
   type DkturboUserId,
   type Nutrition,
   type NutritionPlanId,
@@ -228,6 +242,39 @@ interface SetPlanTargetBody {
 interface DayParams {
   dayId:
     string;
+}
+
+interface NutritionQuantityCopyMappingBody {
+  sourceUserId:
+    string;
+
+  targetUserId:
+    string;
+}
+
+interface CopyNutritionDayBody {
+  sourcePlanId:
+    string;
+
+  targetPlanId:
+    string;
+
+  targetDayId:
+    string;
+
+  quantityMappings:
+    NutritionQuantityCopyMappingBody[];
+}
+
+interface CopyNutritionWeekBody {
+  targetWeekStart:
+    string;
+
+  title:
+    string;
+
+  quantityMappings:
+    NutritionQuantityCopyMappingBody[];
 }
 
 interface MealParams {
@@ -1167,6 +1214,190 @@ const parseSetMealItemActualBody =
     return null;
   };
 
+const parseCopyNutritionDayBody =
+  (
+    value:
+      unknown,
+  ): CopyNutritionDayBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as
+        Record<
+          string,
+          unknown
+        >;
+
+    if (
+      !isUuid(
+        candidate.sourcePlanId,
+      ) ||
+      !isUuid(
+        candidate.targetPlanId,
+      ) ||
+      !isUuid(
+        candidate.targetDayId,
+      ) ||
+      !Array.isArray(
+        candidate.quantityMappings,
+      )
+    ) {
+      return null;
+    }
+
+    const quantityMappings:
+      NutritionQuantityCopyMappingBody[] = [];
+
+    for (
+      const value of
+      candidate.quantityMappings
+    ) {
+      if (
+        typeof value !==
+          'object' ||
+        value ===
+          null
+      ) {
+        return null;
+      }
+
+      const mapping =
+        value as
+          Record<
+            string,
+            unknown
+          >;
+
+      if (
+        !isUuid(
+          mapping.sourceUserId,
+        ) ||
+        !isUuid(
+          mapping.targetUserId,
+        )
+      ) {
+        return null;
+      }
+
+      quantityMappings.push({
+        sourceUserId:
+          mapping.sourceUserId,
+
+        targetUserId:
+          mapping.targetUserId,
+      });
+    }
+
+    return {
+      sourcePlanId:
+        candidate.sourcePlanId,
+
+      targetPlanId:
+        candidate.targetPlanId,
+
+      targetDayId:
+        candidate.targetDayId,
+
+      quantityMappings,
+    };
+  };
+
+const parseCopyNutritionWeekBody =
+  (
+    value:
+      unknown,
+  ): CopyNutritionWeekBody | null => {
+
+    if (
+      typeof value !==
+        'object' ||
+      value ===
+        null
+    ) {
+      return null;
+    }
+
+    const candidate =
+      value as
+        Record<
+          string,
+          unknown
+        >;
+
+    if (
+      typeof candidate.targetWeekStart !==
+        'string' ||
+      typeof candidate.title !==
+        'string' ||
+      !Array.isArray(
+        candidate.quantityMappings,
+      )
+    ) {
+      return null;
+    }
+
+    const quantityMappings:
+      NutritionQuantityCopyMappingBody[] = [];
+
+    for (
+      const value of
+      candidate.quantityMappings
+    ) {
+      if (
+        typeof value !==
+          'object' ||
+        value ===
+          null
+      ) {
+        return null;
+      }
+
+      const mapping =
+        value as
+          Record<
+            string,
+            unknown
+          >;
+
+      if (
+        !isUuid(
+          mapping.sourceUserId,
+        ) ||
+        !isUuid(
+          mapping.targetUserId,
+        )
+      ) {
+        return null;
+      }
+
+      quantityMappings.push({
+        sourceUserId:
+          mapping.sourceUserId,
+
+        targetUserId:
+          mapping.targetUserId,
+      });
+    }
+
+    return {
+      targetWeekStart:
+        candidate.targetWeekStart,
+
+      title:
+        candidate.title,
+
+      quantityMappings,
+    };
+  };
+
 const parseCreateMealBody =
   (
     value:
@@ -1939,6 +2170,50 @@ export const registerNutritionRoutes =
       requireAccessPermission,
       requireOwnerActor,
     } = http;
+
+    const requirePersonReadAccess =
+      async (
+        actorUserId:
+          DkturboUserId,
+
+        subjectUserId:
+          DkturboUserId,
+      ): Promise<void> =>
+        nutrition.unitOfWork.execute(
+          async ({
+            personAccess,
+          }) =>
+            requireNutritionPersonReadAccess(
+              personAccess,
+              actorUserId,
+              subjectUserId,
+            ),
+        );
+
+    const requireReadAccessForUserIds =
+      async (
+        actorUserId:
+          DkturboUserId,
+
+        userIds:
+          Iterable<DkturboUserId>,
+      ): Promise<void> => {
+
+        const uniqueUserIds =
+          new Set(
+            userIds,
+          );
+
+        for (
+          const userId of
+          uniqueUserIds
+        ) {
+          await requirePersonReadAccess(
+            actorUserId,
+            userId,
+          );
+        }
+      };
 
     const requirePersonManageAccess =
       async (
@@ -3214,6 +3489,229 @@ export const registerNutritionRoutes =
           request.log.error(
             error,
             'Failed to create Nutrition food',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    app.post(
+      '/api/nutrition/days/:dayId/copy',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parseDayParams(
+            request.params,
+          );
+
+        const body =
+          parseCopyNutritionDayBody(
+            request.body,
+          );
+
+        if (
+          !params ||
+          !body
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          await requireReadAccessForUserIds(
+            actor.id as
+              DkturboUserId,
+
+            body.quantityMappings.map(
+              mapping =>
+                mapping.sourceUserId as
+                  DkturboUserId,
+            ),
+          );
+
+          await requireManageAccessForUserIds(
+            actor.id as
+              DkturboUserId,
+
+            body.quantityMappings.map(
+              mapping =>
+                mapping.targetUserId as
+                  DkturboUserId,
+            ),
+          );
+
+          const result =
+            await copyNutritionDay(
+              nutrition.unitOfWork,
+              {
+                sourcePlanId:
+                  body.sourcePlanId as
+                    NutritionPlanId,
+
+                sourceDayId:
+                  params.dayId as
+                    NutritionDayId,
+
+                targetPlanId:
+                  body.targetPlanId as
+                    NutritionPlanId,
+
+                targetDayId:
+                  body.targetDayId as
+                    NutritionDayId,
+
+                quantityMappings:
+                  body.quantityMappings.map(
+                    mapping => ({
+                      sourceUserId:
+                        mapping.sourceUserId as
+                          DkturboUserId,
+
+                      targetUserId:
+                        mapping.targetUserId as
+                          DkturboUserId,
+                    }),
+                  ),
+              },
+            );
+
+          return reply
+            .code(201)
+            .send(
+              result,
+            );
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+              NutritionPersonReadAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_read_access_denied',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionCopyPlanNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_copy_plan_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionCopyDayNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_copy_day_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionCopySameDayError ||
+            error instanceof
+              InvalidNutritionQuantityCopyMappingError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'invalid_nutrition_day_copy',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionCopySourceDayEmptyError
+          ) {
+            return reply
+              .code(409)
+              .send({
+                error:
+                  'nutrition_copy_source_day_empty',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionCopyTargetDayNotEmptyError
+          ) {
+            return reply
+              .code(409)
+              .send({
+                error:
+                  'nutrition_copy_target_day_not_empty',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to copy Nutrition day',
           );
 
           return reply
@@ -4941,6 +5439,215 @@ export const registerNutritionRoutes =
           request.log.error(
             error,
             'Failed to create Nutrition plan',
+          );
+
+          return reply
+            .code(500)
+            .send({
+              error:
+                'internal_error',
+            });
+        }
+      },
+    );
+
+    app.post(
+      '/api/nutrition/plans/:planId/copy',
+
+      async (
+        request,
+        reply,
+      ) => {
+
+        const actor =
+          await requireAccessPermission(
+            request,
+            reply,
+            'app.nutrition.access',
+          );
+
+        if (!actor) {
+          return;
+        }
+
+        if (
+          actor.kind !==
+          'user'
+        ) {
+          return reply
+            .code(403)
+            .send({
+              error:
+                'authorization_denied',
+            });
+        }
+
+        const params =
+          parsePlanParams(
+            request.params,
+          );
+
+        const body =
+          parseCopyNutritionWeekBody(
+            request.body,
+          );
+
+        if (
+          !params ||
+          !body
+        ) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                'invalid_request',
+            });
+        }
+
+        try {
+
+          await requireReadAccessForUserIds(
+            actor.id as
+              DkturboUserId,
+
+            body.quantityMappings.map(
+              mapping =>
+                mapping.sourceUserId as
+                  DkturboUserId,
+            ),
+          );
+
+          await requireManageAccessForUserIds(
+            actor.id as
+              DkturboUserId,
+
+            body.quantityMappings.map(
+              mapping =>
+                mapping.targetUserId as
+                  DkturboUserId,
+            ),
+          );
+
+          const result =
+            await copyNutritionWeek(
+              nutrition.unitOfWork,
+              {
+                sourcePlanId:
+                  params.planId as
+                    NutritionPlanId,
+
+                targetWeekStart:
+                  body.targetWeekStart,
+
+                title:
+                  body.title,
+
+                createdByUserId:
+                  actor.id as
+                    DkturboUserId,
+
+                quantityMappings:
+                  body.quantityMappings.map(
+                    mapping => ({
+                      sourceUserId:
+                        mapping.sourceUserId as
+                          DkturboUserId,
+
+                      targetUserId:
+                        mapping.targetUserId as
+                          DkturboUserId,
+                    }),
+                  ),
+              },
+            );
+
+          return reply
+            .code(201)
+            .send(
+              result,
+            );
+
+        } catch (
+          error
+        ) {
+
+          if (
+            error instanceof
+              NutritionPersonReadAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_read_access_denied',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionPersonManageAccessDeniedError
+          ) {
+            return reply
+              .code(403)
+              .send({
+                error:
+                  'nutrition_person_manage_access_denied',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionCopyWeekSourcePlanNotFoundError
+          ) {
+            return reply
+              .code(404)
+              .send({
+                error:
+                  'nutrition_copy_source_week_not_found',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionCopyTargetWeekAlreadyExistsError
+          ) {
+            return reply
+              .code(409)
+              .send({
+                error:
+                  'nutrition_copy_target_week_already_exists',
+              });
+          }
+
+          if (
+            error instanceof
+              NutritionCopySourceWeekInvalidError
+          ) {
+            return reply
+              .code(409)
+              .send({
+                error:
+                  'nutrition_copy_source_week_invalid',
+              });
+          }
+
+          if (
+            error instanceof
+              InvalidNutritionWeekCopyError ||
+            error instanceof
+              InvalidNutritionQuantityCopyMappingError
+          ) {
+            return reply
+              .code(400)
+              .send({
+                error:
+                  'invalid_nutrition_week_copy',
+              });
+          }
+
+          request.log.error(
+            error,
+            'Failed to copy Nutrition week',
           );
 
           return reply

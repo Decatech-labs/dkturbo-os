@@ -31,6 +31,10 @@ import {
   NutritionWeekExport,
 } from './nutrition-week-export';
 
+import {
+  CopyNutritionWeekForm,
+} from './copy-nutrition-week-form';
+
 export const dynamic =
   'force-dynamic';
 
@@ -307,6 +311,15 @@ export default async function NutritionWeekPage({
 
   const accessiblePeople =
     people;
+
+  const manageablePeople =
+    accessiblePeople.filter(
+      person =>
+        person.accessRole ===
+          'SELF' ||
+        person.accessRole ===
+          'MANAGER',
+    );
 
   const activePerson =
     accessiblePeople.find(
@@ -743,6 +756,36 @@ export default async function NutritionWeekPage({
               )}
             </p>
           </div>
+
+          {!familyView &&
+          activePerson && (
+            <CopyNutritionWeekForm
+              sourcePlanId={
+                detail.plan.id
+              }
+              sourceWeekStart={
+                detail.plan.startDate
+              }
+              sourceUserId={
+                activeUserId
+              }
+              sourceUserName={
+                activePerson.name
+              }
+              people={
+                manageablePeople
+              }
+              existingWeekStarts={
+                plans.map(
+                  plan =>
+                    plan.startDate,
+                )
+              }
+              sessionUserId={
+                session.user.id
+              }
+            />
+          )}
 
           {!familyView && (
             <NutritionWeekExport

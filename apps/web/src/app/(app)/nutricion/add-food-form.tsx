@@ -1686,6 +1686,20 @@ export function AddFoodForm({
           normalizedQuantities.length ===
           0
         ) {
+          if (
+            creatingFood
+          ) {
+            setOpen(
+              false,
+            );
+
+            reset();
+
+            router.refresh();
+
+            return;
+          }
+
           setError(
             'Indica al menos una cantidad.',
           );
